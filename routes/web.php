@@ -11,10 +11,25 @@ Route::get('/', function () {
 })->name('home');
 
 Route::get('dashboard', function () {
+    $user = auth()->user();
+
+    if ($user->isAdministrative()) {
+        return redirect()->route('admin.dashboard');
+    }
+
+    if ($user->isApplicant()) {
+        return redirect()->route('applicant.dashboard');
+    }
+
+    if ($user->isEvaluator()) {
+        return redirect()->route('evaluator.dashboard');
+    }
+
     return Inertia::render('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware(['auth', 'verified', 'role:applicant'])->prefix('applicant')->name('applicant.')->group(function () {
+    Route::get('dashboard', \App\Http\Controllers\Applicant\DashboardController::class)->name('dashboard');
     Route::resource('portfolios', \App\Http\Controllers\Applicant\PortfolioController::class)->except(['edit']);
     Route::post('portfolios/{portfolio}/submit', [\App\Http\Controllers\Applicant\PortfolioController::class, 'submit'])->name('portfolios.submit');
     Route::post('portfolios/{portfolio}/documents', [\App\Http\Controllers\Applicant\PortfolioDocumentController::class, 'store'])->name('portfolios.documents.store');
@@ -43,6 +58,12 @@ Route::middleware(['auth', 'verified', 'role:evaluator'])->prefix('evaluator')->
     Route::get('portfolios/{assignment}', [\App\Http\Controllers\Evaluator\PortfolioController::class, 'show'])->name('portfolios.show');
     Route::post('portfolios/{assignment}/save', [\App\Http\Controllers\Evaluator\PortfolioController::class, 'saveEvaluation'])->name('portfolios.save');
     Route::post('portfolios/{assignment}/submit', [\App\Http\Controllers\Evaluator\PortfolioController::class, 'submitEvaluation'])->name('portfolios.submit');
+});
+
+Route::middleware(['auth', 'verified'])->prefix('notifications')->name('notifications.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\NotificationController::class, 'index'])->name('index');
+    Route::patch('{id}/read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('read');
+    Route::post('mark-all-read', [\App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('mark-all-read');
 });
 
 require __DIR__.'/settings.php';

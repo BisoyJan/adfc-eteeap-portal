@@ -50,6 +50,7 @@ class HandleInertiaRequests extends Middleware
                     'manage_rubrics' => $user->can('manage-rubrics'),
                     'manage_system' => $user->can('manage-system'),
                 ] : [],
+                'notificationCount' => $user ? $user->unreadNotifications()->count() : 0,
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];

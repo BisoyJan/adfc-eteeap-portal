@@ -106,4 +106,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(Portfolio::class);
     }
+
+    public function evaluatorAssignments(): HasMany
+    {
+        return $this->hasMany(PortfolioAssignment::class, 'evaluator_id');
+    }
 }

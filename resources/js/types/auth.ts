@@ -25,6 +25,7 @@ export type Permissions = {
 export type Auth = {
     user: User;
     permissions: Permissions;
+    notificationCount: number;
 };
 
 export type TwoFactorSetupData = {
