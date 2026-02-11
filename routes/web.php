@@ -24,6 +24,14 @@ Route::middleware(['auth', 'verified', 'role:applicant'])->prefix('applicant')->
 
 Route::middleware(['auth', 'verified', 'role:super_admin,admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::resource('users', \App\Http\Controllers\Admin\UserController::class)->except(['show']);
+
+    Route::get('dashboard', \App\Http\Controllers\Admin\DashboardController::class)->name('dashboard');
+
+    Route::get('portfolios', [\App\Http\Controllers\Admin\PortfolioController::class, 'index'])->name('portfolios.index');
+    Route::get('portfolios/{portfolio}', [\App\Http\Controllers\Admin\PortfolioController::class, 'show'])->name('portfolios.show');
+    Route::post('portfolios/{portfolio}/assign', [\App\Http\Controllers\Admin\PortfolioController::class, 'assign'])->name('portfolios.assign');
+    Route::put('portfolios/{portfolio}/status', [\App\Http\Controllers\Admin\PortfolioController::class, 'updateStatus'])->name('portfolios.status');
+    Route::delete('portfolios/{portfolio}/assignments/{assignment}', [\App\Http\Controllers\Admin\PortfolioController::class, 'removeAssignment'])->name('portfolios.assignments.destroy');
 });
 
 require __DIR__.'/settings.php';
