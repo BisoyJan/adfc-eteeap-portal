@@ -1,5 +1,5 @@
-import { Link } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid } from 'lucide-react';
+import { Link, usePage } from '@inertiajs/react';
+import { BookOpen, ClipboardCheck, ClipboardList, Folder, FolderOpen, LayoutGrid, Users } from 'lucide-react';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
@@ -13,16 +13,61 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
-import type { NavItem } from '@/types';
+import type { NavItem, SharedData, UserRole } from '@/types';
 import AppLogo from './app-logo';
 
-const mainNavItems: NavItem[] = [
-    {
-        title: 'Dashboard',
-        href: dashboard(),
-        icon: LayoutGrid,
-    },
-];
+function getNavItems(role: UserRole): NavItem[] {
+    if (role === 'admin' || role === 'super_admin') {
+        return [
+            {
+                title: 'Dashboard',
+                href: '/admin/dashboard',
+                icon: LayoutGrid,
+            },
+            {
+                title: 'Manage Portfolios',
+                href: '/admin/portfolios',
+                icon: Folder,
+            },
+            {
+                title: 'Manage Users',
+                href: '/admin/users',
+                icon: Users,
+            },
+            {
+                title: 'Rubric Criteria',
+                href: '/admin/rubrics',
+                icon: ClipboardList,
+            },
+        ];
+    }
+
+    const items: NavItem[] = [
+        {
+            title: 'Dashboard',
+            href: role === 'applicant' ? '/applicant/dashboard' : role === 'evaluator' ? '/evaluator/dashboard' : dashboard(),
+            icon: LayoutGrid,
+        },
+    ];
+
+    if (role === 'applicant') {
+        items.push({
+            title: 'My Portfolios',
+            href: '/applicant/portfolios',
+            icon: FolderOpen,
+        });
+    }
+
+    if (role === 'evaluator') {
+        items.push({
+            title: 'Assigned Reviews',
+            href: '/evaluator/portfolios',
+            icon: ClipboardCheck,
+        });
+    }
+
+    return items;
+}
 
 const footerNavItems: NavItem[] = [
     {
@@ -38,6 +83,9 @@ const footerNavItems: NavItem[] = [
 ];
 
 export function AppSidebar() {
+    const { auth } = usePage<SharedData>().props;
+    const navItems = getNavItems(auth.user.role);
+
     return (
         <Sidebar collapsible="icon" variant="inset">
             <SidebarHeader>
@@ -53,7 +101,7 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent>
-                <NavMain items={mainNavItems} />
+                <NavMain items={navItems} />
             </SidebarContent>
 
             <SidebarFooter>

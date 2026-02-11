@@ -32,5 +32,9 @@ class DatabaseSeeder extends Seeder
             'name' => 'Applicant User',
             'email' => 'applicant@adfc.edu.ph',
         ]);
+
+        $this->call([
+            DocumentCategorySeeder::class,
+        ]);
     }
 }
