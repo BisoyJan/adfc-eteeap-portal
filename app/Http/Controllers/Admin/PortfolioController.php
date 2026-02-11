@@ -56,6 +56,8 @@ class PortfolioController extends Controller
             'documents.category',
             'assignments.evaluator',
             'assignments.assigner',
+            'evaluations.evaluator',
+            'evaluations.scores.criteria',
         ]);
 
         $evaluators = User::query()

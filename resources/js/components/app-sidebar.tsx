@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, ClipboardCheck, ClipboardList, Folder, FolderOpen, LayoutGrid, Users } from 'lucide-react';
+import { BarChart3, BookOpen, ClipboardCheck, ClipboardList, FileStack, Folder, FolderOpen, LayoutGrid, Users } from 'lucide-react';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
@@ -38,6 +38,16 @@ function getNavItems(role: UserRole): NavItem[] {
                 title: 'Rubric Criteria',
                 href: '/admin/rubrics',
                 icon: ClipboardList,
+            },
+            {
+                title: 'Document Categories',
+                href: '/admin/document-categories',
+                icon: FileStack,
+            },
+            {
+                title: 'Reports',
+                href: '/admin/reports',
+                icon: BarChart3,
             },
         ];
     }

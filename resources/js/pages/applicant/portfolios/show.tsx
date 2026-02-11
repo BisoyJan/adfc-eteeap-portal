@@ -1,5 +1,5 @@
 import { Head, Link, useForm, usePage, router } from '@inertiajs/react';
-import { Upload, Download, Eye, Trash2, FileText, AlertCircle, CheckCircle2, ArrowLeft } from 'lucide-react';
+import { Upload, Download, Eye, Trash2, FileText, AlertCircle, CheckCircle2, ArrowLeft, Star, MessageSquare, Clock } from 'lucide-react';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import FilePreviewDialog from '@/components/file-preview-dialog';
@@ -22,6 +22,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
@@ -51,6 +52,12 @@ interface Portfolio {
     submitted_at: string | null;
     created_at: string;
     documents: Document[];
+    assignments: Array<{
+        id: number;
+        status: string;
+        evaluator: { id: number; name: string };
+        completed_at: string | null;
+    }>;
 }
 
 interface Category {
@@ -62,6 +69,30 @@ interface Category {
     sort_order: number;
 }
 
+interface EvaluationScore {
+    id: number;
+    score: number;
+    comments: string | null;
+    criteria: {
+        id: number;
+        name: string;
+        description: string | null;
+        max_score: number;
+    };
+}
+
+interface EvaluationResult {
+    id: number;
+    status: string;
+    overall_comments: string | null;
+    recommendation: string | null;
+    total_score: string;
+    max_possible_score: string;
+    submitted_at: string | null;
+    evaluator: { id: number; name: string };
+    scores: EvaluationScore[];
+}
+
 interface Props {
     portfolio: Portfolio;
     categories: Category[];
@@ -71,6 +102,7 @@ interface Props {
         completed: number;
         percentage: number;
     };
+    evaluations: EvaluationResult[];
 }
 
 const statusBadgeVariant: Record<string, 'destructive' | 'default' | 'secondary' | 'outline'> = {
@@ -102,6 +134,34 @@ function formatFileSize(bytes: number): string {
 
 function canEdit(status: string): boolean {
     return status === 'draft' || status === 'revision_requested';
+}
+
+const timelineSteps = [
+    { key: 'draft', label: 'Draft' },
+    { key: 'submitted', label: 'Submitted' },
+    { key: 'under_review', label: 'Under Review' },
+    { key: 'evaluated', label: 'Evaluated' },
+    { key: 'approved', label: 'Approved' },
+];
+
+function getTimelineIndex(status: string): number {
+    if (status === 'revision_requested') return 2;
+    if (status === 'rejected') return 3;
+    const idx = timelineSteps.findIndex((s) => s.key === status);
+    return idx >= 0 ? idx : 0;
+}
+
+function getRecommendationBadge(recommendation: string | null): { label: string; className: string } {
+    switch (recommendation) {
+        case 'approve':
+            return { label: 'Recommended for Approval', className: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' };
+        case 'revise':
+            return { label: 'Recommended for Revision', className: 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200' };
+        case 'reject':
+            return { label: 'Recommended for Rejection', className: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' };
+        default:
+            return { label: 'No Recommendation', className: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200' };
+    }
 }
 
 function CategoryUploadForm({ portfolioId, categoryId }: { portfolioId: number; categoryId: number }) {
@@ -152,7 +212,7 @@ function CategoryUploadForm({ portfolioId, categoryId }: { portfolioId: number; 
     );
 }
 
-export default function Show({ portfolio, categories, uploadedCategoryIds, progress }: Props) {
+export default function Show({ portfolio, categories, uploadedCategoryIds, progress, evaluations }: Props) {
     const { flash } = usePage<{ flash: { success?: string; error?: string } }>().props;
     const editable = canEdit(portfolio.status);
     const [previewDoc, setPreviewDoc] = useState<Document | null>(null);
@@ -268,6 +328,163 @@ export default function Show({ portfolio, categories, uploadedCategoryIds, progr
                             </div>
                         </CardContent>
                     </Card>
+                )}
+
+                {/* Progress Timeline */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                            <Clock className="h-5 w-5" />
+                            Portfolio Progress
+                        </CardTitle>
+                        <CardDescription>Track the status of your portfolio through the review process</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {portfolio.status === 'rejected' ? (
+                            <div className="flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-950">
+                                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-500 text-white">✕</div>
+                                <div>
+                                    <p className="font-medium text-red-800 dark:text-red-200">Portfolio Rejected</p>
+                                    <p className="text-sm text-red-600 dark:text-red-400">Your portfolio has been rejected. Please contact administration for further details.</p>
+                                </div>
+                            </div>
+                        ) : portfolio.status === 'revision_requested' ? (
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950">
+                                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-500 text-white">!</div>
+                                    <div>
+                                        <p className="font-medium text-amber-800 dark:text-amber-200">Revision Requested</p>
+                                        <p className="text-sm text-amber-600 dark:text-amber-400">Please review the feedback and update your portfolio.</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    {timelineSteps.slice(0, 3).map((step, idx) => {
+                                        const current = getTimelineIndex(portfolio.status);
+                                        const isCompleted = idx < current;
+                                        const isCurrent = idx === current;
+                                        return (
+                                            <div key={step.key} className="flex flex-1 flex-col items-center">
+                                                <div className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold ${isCompleted ? 'bg-green-500 text-white' : isCurrent ? 'bg-amber-500 text-white' : 'bg-muted text-muted-foreground'}`}>
+                                                    {isCompleted ? '✓' : idx + 1}
+                                                </div>
+                                                <span className="mt-1.5 text-center text-xs font-medium">{step.label}</span>
+                                                {idx < 2 && <div className={`mt-1 h-0.5 w-full ${isCompleted ? 'bg-green-500' : 'bg-muted'}`} />}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="flex items-center justify-between">
+                                {timelineSteps.map((step, idx) => {
+                                    const current = getTimelineIndex(portfolio.status);
+                                    const isCompleted = idx < current;
+                                    const isCurrent = idx === current;
+                                    return (
+                                        <div key={step.key} className="flex flex-1 flex-col items-center">
+                                            <div className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold ${isCompleted ? 'bg-green-500 text-white' : isCurrent ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+                                                {isCompleted ? '✓' : idx + 1}
+                                            </div>
+                                            <span className={`mt-1.5 text-center text-xs font-medium ${isCurrent ? 'text-primary' : ''}`}>{step.label}</span>
+                                            {idx < timelineSteps.length - 1 && (
+                                                <div className={`mt-1 h-0.5 w-full ${isCompleted ? 'bg-green-500' : 'bg-muted'}`} />
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+
+                {/* Evaluation Results */}
+                {evaluations && evaluations.length > 0 && (
+                    <div className="space-y-4">
+                        <h2 className="text-lg font-semibold">Evaluation Results</h2>
+                        {evaluations.map((evaluation) => {
+                            const total = parseFloat(evaluation.total_score);
+                            const max = parseFloat(evaluation.max_possible_score);
+                            const percentage = max > 0 ? Math.round((total / max) * 100) : 0;
+                            const recBadge = getRecommendationBadge(evaluation.recommendation);
+
+                            return (
+                                <Card key={evaluation.id}>
+                                    <CardHeader>
+                                        <div className="flex items-center justify-between">
+                                            <CardTitle className="flex items-center gap-2 text-base">
+                                                <Star className="h-4 w-4" />
+                                                Evaluation by {evaluation.evaluator.name}
+                                            </CardTitle>
+                                            <Badge className={recBadge.className}>{recBadge.label}</Badge>
+                                        </div>
+                                        {evaluation.submitted_at && (
+                                            <CardDescription>
+                                                Submitted {new Date(evaluation.submitted_at).toLocaleDateString('en-US', {
+                                                    year: 'numeric',
+                                                    month: 'short',
+                                                    day: 'numeric',
+                                                })}
+                                            </CardDescription>
+                                        )}
+                                    </CardHeader>
+                                    <CardContent className="space-y-4">
+                                        {/* Overall Score */}
+                                        <div className="rounded-lg border p-4">
+                                            <div className="flex items-center justify-between text-sm">
+                                                <span className="font-medium">Overall Score</span>
+                                                <span className="text-lg font-bold">{total}/{max} ({percentage}%)</span>
+                                            </div>
+                                            <div className="mt-2 h-3 w-full overflow-hidden rounded-full bg-secondary">
+                                                <div
+                                                    className={`h-full rounded-full transition-all duration-300 ${percentage >= 75 ? 'bg-green-500' : percentage >= 50 ? 'bg-amber-500' : 'bg-red-500'}`}
+                                                    style={{ width: `${percentage}%` }}
+                                                />
+                                            </div>
+                                        </div>
+
+                                        {/* Per-Criteria Scores */}
+                                        <div className="space-y-3">
+                                            <h4 className="text-sm font-medium">Criteria Breakdown</h4>
+                                            {evaluation.scores.map((score) => {
+                                                const criteriaPercentage = score.criteria.max_score > 0
+                                                    ? Math.round((score.score / score.criteria.max_score) * 100)
+                                                    : 0;
+
+                                                return (
+                                                    <div key={score.id} className="space-y-1.5 rounded-md border px-3 py-2">
+                                                        <div className="flex items-center justify-between">
+                                                            <span className="text-sm font-medium">{score.criteria.name}</span>
+                                                            <span className="text-sm font-bold">{score.score}/{score.criteria.max_score}</span>
+                                                        </div>
+                                                        <div className="h-1.5 w-full overflow-hidden rounded-full bg-secondary">
+                                                            <div
+                                                                className={`h-full rounded-full ${criteriaPercentage >= 75 ? 'bg-green-500' : criteriaPercentage >= 50 ? 'bg-amber-500' : 'bg-red-500'}`}
+                                                                style={{ width: `${criteriaPercentage}%` }}
+                                                            />
+                                                        </div>
+                                                        {score.comments && (
+                                                            <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
+                                                                <MessageSquare className="mt-0.5 h-3 w-3 shrink-0" />
+                                                                {score.comments}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+
+                                        {/* Overall Comments */}
+                                        {evaluation.overall_comments && (
+                                            <div className="rounded-lg border bg-muted/50 p-4">
+                                                <h4 className="mb-1.5 text-sm font-medium">Evaluator Comments</h4>
+                                                <p className="text-sm text-muted-foreground">{evaluation.overall_comments}</p>
+                                            </div>
+                                        )}
+                                    </CardContent>
+                                </Card>
+                            );
+                        })}
+                    </div>
                 )}
 
                 {/* Document categories */}

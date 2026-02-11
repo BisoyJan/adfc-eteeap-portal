@@ -70,3 +70,10 @@
 | 6 | 6.5 | Breadcrumbs throughout | Completed | All pages already had breadcrumbs from creation |
 | 6 | 6.6 | Full test suite pass | Completed | 140 tests, 435 assertions |
 | 6 | 6.7 | Final pint formatting | Completed | All clean |
+| 7 | 7.1 | Evaluation results for applicants | Completed | Applicants can view rubric scores, evaluator feedback, and recommendations on their portfolio show page |
+| 7 | 7.2 | Portfolio progress timeline | Completed | Visual timeline component showing portfolio journey (Draft → Submitted → Under Review → Evaluated → Approved) with special handling for revision/rejection |
+| 7 | 7.3 | Admin evaluation results view | Completed | Admin portfolio show page now displays full evaluation scores, per-criteria breakdown, and evaluator comments |
+| 7 | 7.4 | Admin document category management | Completed | Full CRUD for managing document categories (add, edit, delete), with sidebar nav item |
+| 7 | 7.5 | Admin reports & analytics page | Completed | Program-wide analytics: portfolio status distribution, competency performance by criteria, evaluator performance table, recommendation breakdown, monthly submission trends |
+| 7 | 7.6 | Phase 7 tests | Completed | 25 new tests, 165 total passing, 544 assertions |
+| 7 | 7.7 | Pint & verify Phase 7 | Completed | All clean |

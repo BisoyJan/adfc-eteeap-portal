@@ -52,7 +52,7 @@ class PortfolioController extends Controller
             abort(403);
         }
 
-        $portfolio->load(['documents.category']);
+        $portfolio->load(['documents.category', 'assignments.evaluator']);
 
         $categories = DocumentCategory::orderBy('sort_order')->get();
 
@@ -66,6 +66,11 @@ class PortfolioController extends Controller
             ->whereIn('id', $uploadedCategoryIds)
             ->count();
 
+        $evaluations = $portfolio->evaluations()
+            ->where('status', \App\Enums\EvaluationStatus::Submitted)
+            ->with(['evaluator:id,name', 'scores.criteria'])
+            ->get();
+
         return Inertia::render('applicant/portfolios/show', [
             'portfolio' => $portfolio,
             'categories' => $categories,
@@ -77,6 +82,7 @@ class PortfolioController extends Controller
                     ? round(($completedRequiredCount / $requiredCount) * 100)
                     : 100,
             ],
+            'evaluations' => $evaluations,
         ]);
     }
 

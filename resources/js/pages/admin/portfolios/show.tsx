@@ -1,5 +1,5 @@
 import { Head, Link, useForm, usePage, router } from '@inertiajs/react';
-import { ArrowLeft, AlertCircle, CheckCircle2, Download, Eye, FileText, Trash2, AlertTriangle, UserPlus, Calendar } from 'lucide-react';
+import { ArrowLeft, AlertCircle, CheckCircle2, Download, Eye, FileText, Trash2, AlertTriangle, UserPlus, Calendar, Star, MessageSquare } from 'lucide-react';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import FilePreviewDialog from '@/components/file-preview-dialog';
@@ -60,6 +60,30 @@ interface Assignment {
     };
 }
 
+interface EvaluationScore {
+    id: number;
+    score: number;
+    comments: string | null;
+    criteria: {
+        id: number;
+        name: string;
+        description: string | null;
+        max_score: number;
+    };
+}
+
+interface EvaluationResult {
+    id: number;
+    status: string;
+    overall_comments: string | null;
+    recommendation: string | null;
+    total_score: string;
+    max_possible_score: string;
+    submitted_at: string | null;
+    evaluator: { id: number; name: string };
+    scores: EvaluationScore[];
+}
+
 interface Portfolio {
     id: number;
     title: string;
@@ -75,6 +99,7 @@ interface Portfolio {
     };
     documents: Document[];
     assignments: Assignment[];
+    evaluations: EvaluationResult[];
 }
 
 interface Evaluator {
@@ -150,6 +175,19 @@ function formatFileSize(bytes: number): string {
         return `${(bytes / 1024).toFixed(1)} KB`;
     }
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function getRecommendationBadge(recommendation: string | null): { label: string; className: string } {
+    switch (recommendation) {
+        case 'approve':
+            return { label: 'Approve', className: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' };
+        case 'revise':
+            return { label: 'Revise', className: 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200' };
+        case 'reject':
+            return { label: 'Reject', className: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' };
+        default:
+            return { label: 'None', className: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200' };
+    }
 }
 
 export default function Show({ portfolio, evaluators, categories, uploadedCategoryIds, progress }: Props) {
@@ -402,6 +440,79 @@ export default function Show({ portfolio, evaluators, categories, uploadedCatego
                                 })}
                             </CardContent>
                         </Card>
+
+                        {/* Section 3b: Evaluation Results */}
+                        {portfolio.evaluations && portfolio.evaluations.length > 0 && (
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="flex items-center gap-2">
+                                        <Star className="h-5 w-5" />
+                                        Evaluation Results
+                                    </CardTitle>
+                                    <CardDescription>
+                                        Scores and feedback from assigned evaluators
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-6">
+                                    {portfolio.evaluations.map((evaluation) => {
+                                        const total = parseFloat(evaluation.total_score);
+                                        const max = parseFloat(evaluation.max_possible_score);
+                                        const percentage = max > 0 ? Math.round((total / max) * 100) : 0;
+                                        const recBadge = getRecommendationBadge(evaluation.recommendation);
+
+                                        return (
+                                            <div key={evaluation.id} className="rounded-lg border p-4 space-y-4">
+                                                <div className="flex items-center justify-between">
+                                                    <div>
+                                                        <p className="font-medium">{evaluation.evaluator.name}</p>
+                                                        {evaluation.submitted_at && (
+                                                            <p className="text-xs text-muted-foreground">
+                                                                Submitted {formatDate(evaluation.submitted_at)}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <Badge className={recBadge.className}>{recBadge.label}</Badge>
+                                                        <span className="text-sm font-bold">{total}/{max} ({percentage}%)</span>
+                                                    </div>
+                                                </div>
+
+                                                <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
+                                                    <div
+                                                        className={`h-full rounded-full transition-all duration-300 ${percentage >= 75 ? 'bg-green-500' : percentage >= 50 ? 'bg-amber-500' : 'bg-red-500'}`}
+                                                        style={{ width: `${percentage}%` }}
+                                                    />
+                                                </div>
+
+                                                <div className="grid gap-2 sm:grid-cols-2">
+                                                    {evaluation.scores.map((score) => (
+                                                        <div key={score.id} className="rounded-md bg-muted/50 px-3 py-2">
+                                                            <div className="flex items-center justify-between text-sm">
+                                                                <span>{score.criteria.name}</span>
+                                                                <span className="font-medium">{score.score}/{score.criteria.max_score}</span>
+                                                            </div>
+                                                            {score.comments && (
+                                                                <p className="mt-1 flex items-start gap-1 text-xs text-muted-foreground">
+                                                                    <MessageSquare className="mt-0.5 h-3 w-3 shrink-0" />
+                                                                    {score.comments}
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                    ))}
+                                                </div>
+
+                                                {evaluation.overall_comments && (
+                                                    <div className="rounded-md bg-muted/50 p-3">
+                                                        <p className="text-sm font-medium">Comments</p>
+                                                        <p className="mt-1 text-sm text-muted-foreground">{evaluation.overall_comments}</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </CardContent>
+                            </Card>
+                        )}
                     </div>
 
                     {/* Right column (1 col): Assignments + Status */}
