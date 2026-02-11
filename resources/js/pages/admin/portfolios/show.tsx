@@ -1,5 +1,18 @@
 import { Head, Link, useForm, usePage, router } from '@inertiajs/react';
-import { ArrowLeft, AlertCircle, CheckCircle2, Download, Eye, FileText, Trash2, AlertTriangle, UserPlus, Calendar, Star, MessageSquare } from 'lucide-react';
+import {
+    ArrowLeft,
+    AlertCircle,
+    CheckCircle2,
+    Download,
+    Eye,
+    FileText,
+    Trash2,
+    AlertTriangle,
+    UserPlus,
+    Calendar,
+    Star,
+    MessageSquare,
+} from 'lucide-react';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import FilePreviewDialog from '@/components/file-preview-dialog';
@@ -18,10 +31,22 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
@@ -129,7 +154,10 @@ interface Props {
     };
 }
 
-const statusBadgeVariant: Record<string, 'destructive' | 'default' | 'secondary' | 'outline'> = {
+const statusBadgeVariant: Record<
+    string,
+    'destructive' | 'default' | 'secondary' | 'outline'
+> = {
     draft: 'secondary',
     submitted: 'default',
     under_review: 'outline',
@@ -141,8 +169,10 @@ const statusBadgeVariant: Record<string, 'destructive' | 'default' | 'secondary'
 
 const statusBadgeClassName: Record<string, string> = {
     under_review: 'border-yellow-500 text-yellow-700 dark:text-yellow-400',
-    evaluated: 'bg-blue-100 text-blue-800 hover:bg-blue-100/80 dark:bg-blue-900 dark:text-blue-200',
-    approved: 'bg-green-100 text-green-800 hover:bg-green-100/80 dark:bg-green-900 dark:text-green-200',
+    evaluated:
+        'bg-blue-100 text-blue-800 hover:bg-blue-100/80 dark:bg-blue-900 dark:text-blue-200',
+    approved:
+        'bg-green-100 text-green-800 hover:bg-green-100/80 dark:bg-green-900 dark:text-green-200',
 };
 
 const updatableStatuses = [
@@ -177,24 +207,51 @@ function formatFileSize(bytes: number): string {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function getRecommendationBadge(recommendation: string | null): { label: string; className: string } {
+function getRecommendationBadge(recommendation: string | null): {
+    label: string;
+    className: string;
+} {
     switch (recommendation) {
         case 'approve':
-            return { label: 'Approve', className: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' };
+            return {
+                label: 'Approve',
+                className:
+                    'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+            };
         case 'revise':
-            return { label: 'Revise', className: 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200' };
+            return {
+                label: 'Revise',
+                className:
+                    'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200',
+            };
         case 'reject':
-            return { label: 'Reject', className: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' };
+            return {
+                label: 'Reject',
+                className:
+                    'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
+            };
         default:
-            return { label: 'None', className: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200' };
+            return {
+                label: 'None',
+                className:
+                    'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200',
+            };
     }
 }
 
-export default function Show({ portfolio, evaluators, categories, uploadedCategoryIds, progress }: Props) {
-    const { flash } = usePage<{ flash: { success?: string; error?: string } }>().props;
+export default function Show({
+    portfolio,
+    evaluators,
+    categories,
+    uploadedCategoryIds,
+    progress,
+}: Props) {
+    const { flash } = usePage<{ flash: { success?: string; error?: string } }>()
+        .props;
     const isDraft = portfolio.status === 'draft';
     const [previewDoc, setPreviewDoc] = useState<Document | null>(null);
-    const [assignmentToRemove, setAssignmentToRemove] = useState<Assignment | null>(null);
+    const [assignmentToRemove, setAssignmentToRemove] =
+        useState<Assignment | null>(null);
     const [removeDialogOpen, setRemoveDialogOpen] = useState(false);
 
     const breadcrumbs: BreadcrumbItem[] = [
@@ -217,6 +274,7 @@ export default function Show({ portfolio, evaluators, categories, uploadedCatego
     function handleAssign(e: FormEvent) {
         e.preventDefault();
         assignForm.post(`/admin/portfolios/${portfolio.id}/assign`, {
+            preserveScroll: true,
             onSuccess: () => assignForm.reset(),
         });
     }
@@ -231,21 +289,29 @@ export default function Show({ portfolio, evaluators, categories, uploadedCatego
             return;
         }
 
-        router.delete(`/admin/portfolios/${portfolio.id}/assignments/${assignmentToRemove.id}`, {
-            onFinish: () => {
-                setRemoveDialogOpen(false);
-                setAssignmentToRemove(null);
+        router.delete(
+            `/admin/portfolios/${portfolio.id}/assignments/${assignmentToRemove.id}`,
+            {
+                preserveScroll: true,
+                onFinish: () => {
+                    setRemoveDialogOpen(false);
+                    setAssignmentToRemove(null);
+                },
             },
-        });
+        );
     }
 
     function handleStatusUpdate(e: FormEvent) {
         e.preventDefault();
-        statusForm.put(`/admin/portfolios/${portfolio.id}/status`);
+        statusForm.put(`/admin/portfolios/${portfolio.id}/status`, {
+            preserveScroll: true,
+        });
     }
 
     function getDocumentsForCategory(categoryId: number): Document[] {
-        return portfolio.documents.filter((doc) => doc.document_category_id === categoryId);
+        return portfolio.documents.filter(
+            (doc) => doc.document_category_id === categoryId,
+        );
     }
 
     return (
@@ -262,7 +328,10 @@ export default function Show({ portfolio, evaluators, categories, uploadedCatego
                             </Link>
                         </Button>
                         <div>
-                            <Heading title={portfolio.title} description={`Submitted by ${portfolio.user.name}`} />
+                            <Heading
+                                title={portfolio.title}
+                                description={`Submitted by ${portfolio.user.name}`}
+                            />
                         </div>
                     </div>
                     <div className="flex items-center gap-3">
@@ -272,8 +341,13 @@ export default function Show({ portfolio, evaluators, categories, uploadedCatego
                             </span>
                         )}
                         <Badge
-                            variant={statusBadgeVariant[portfolio.status] ?? 'outline'}
-                            className={statusBadgeClassName[portfolio.status] ?? ''}
+                            variant={
+                                statusBadgeVariant[portfolio.status] ??
+                                'outline'
+                            }
+                            className={
+                                statusBadgeClassName[portfolio.status] ?? ''
+                            }
                         >
                             {formatStatus(portfolio.status)}
                         </Badge>
@@ -306,28 +380,54 @@ export default function Show({ portfolio, evaluators, categories, uploadedCatego
                             <CardContent className="space-y-4">
                                 <div className="grid gap-4 sm:grid-cols-2">
                                     <div>
-                                        <p className="text-sm font-medium text-muted-foreground">Applicant</p>
-                                        <p className="text-sm">{portfolio.user.name}</p>
-                                        <p className="text-xs text-muted-foreground">{portfolio.user.email}</p>
+                                        <p className="text-sm font-medium text-muted-foreground">
+                                            Applicant
+                                        </p>
+                                        <p className="text-sm">
+                                            {portfolio.user.name}
+                                        </p>
+                                        <p className="text-xs text-muted-foreground">
+                                            {portfolio.user.email}
+                                        </p>
                                     </div>
                                     <div>
-                                        <p className="text-sm font-medium text-muted-foreground">Status</p>
+                                        <p className="text-sm font-medium text-muted-foreground">
+                                            Status
+                                        </p>
                                         <Badge
-                                            variant={statusBadgeVariant[portfolio.status] ?? 'outline'}
-                                            className={statusBadgeClassName[portfolio.status] ?? ''}
+                                            variant={
+                                                statusBadgeVariant[
+                                                portfolio.status
+                                                ] ?? 'outline'
+                                            }
+                                            className={
+                                                statusBadgeClassName[
+                                                portfolio.status
+                                                ] ?? ''
+                                            }
                                         >
                                             {formatStatus(portfolio.status)}
                                         </Badge>
                                     </div>
                                     <div>
-                                        <p className="text-sm font-medium text-muted-foreground">Submitted</p>
+                                        <p className="text-sm font-medium text-muted-foreground">
+                                            Submitted
+                                        </p>
                                         <p className="text-sm">
-                                            {portfolio.submitted_at ? formatDate(portfolio.submitted_at) : '—'}
+                                            {portfolio.submitted_at
+                                                ? formatDate(
+                                                    portfolio.submitted_at,
+                                                )
+                                                : '—'}
                                         </p>
                                     </div>
                                     <div>
-                                        <p className="text-sm font-medium text-muted-foreground">Created</p>
-                                        <p className="text-sm">{formatDate(portfolio.created_at)}</p>
+                                        <p className="text-sm font-medium text-muted-foreground">
+                                            Created
+                                        </p>
+                                        <p className="text-sm">
+                                            {formatDate(portfolio.created_at)}
+                                        </p>
                                     </div>
                                 </div>
 
@@ -337,14 +437,20 @@ export default function Show({ portfolio, evaluators, categories, uploadedCatego
                                 <div>
                                     <div className="flex items-center justify-between text-sm">
                                         <span className="font-medium">
-                                            Document Completion: {progress.completed}/{progress.required}
+                                            Document Completion:{' '}
+                                            {progress.completed}/
+                                            {progress.required}
                                         </span>
-                                        <span className="text-muted-foreground">{progress.percentage}%</span>
+                                        <span className="text-muted-foreground">
+                                            {progress.percentage}%
+                                        </span>
                                     </div>
                                     <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-secondary">
                                         <div
-                                            className="bg-primary h-full rounded-full transition-all duration-300"
-                                            style={{ width: `${progress.percentage}%` }}
+                                            className="h-full rounded-full bg-primary transition-all duration-300"
+                                            style={{
+                                                width: `${progress.percentage}%`,
+                                            }}
                                         />
                                     </div>
                                 </div>
@@ -353,8 +459,12 @@ export default function Show({ portfolio, evaluators, categories, uploadedCatego
                                     <>
                                         <Separator />
                                         <div>
-                                            <p className="text-sm font-medium text-muted-foreground">Admin Notes</p>
-                                            <p className="mt-1 text-sm">{portfolio.admin_notes}</p>
+                                            <p className="text-sm font-medium text-muted-foreground">
+                                                Admin Notes
+                                            </p>
+                                            <p className="mt-1 text-sm">
+                                                {portfolio.admin_notes}
+                                            </p>
                                         </div>
                                     </>
                                 )}
@@ -371,16 +481,30 @@ export default function Show({ portfolio, evaluators, categories, uploadedCatego
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 {categories.map((category) => {
-                                    const docs = getDocumentsForCategory(category.id);
-                                    const isUploaded = uploadedCategoryIds.includes(category.id);
-                                    const isMissingRequired = category.is_required && !isUploaded;
+                                    const docs = getDocumentsForCategory(
+                                        category.id,
+                                    );
+                                    const isUploaded =
+                                        uploadedCategoryIds.includes(
+                                            category.id,
+                                        );
+                                    const isMissingRequired =
+                                        category.is_required && !isUploaded;
 
                                     return (
-                                        <div key={category.id} className="rounded-lg border p-4">
+                                        <div
+                                            key={category.id}
+                                            className="rounded-lg border p-4"
+                                        >
                                             <div className="flex items-center gap-2">
-                                                <h4 className="text-sm font-semibold">{category.name}</h4>
+                                                <h4 className="text-sm font-semibold">
+                                                    {category.name}
+                                                </h4>
                                                 {category.is_required && (
-                                                    <Badge variant="destructive" className="text-[10px]">
+                                                    <Badge
+                                                        variant="destructive"
+                                                        className="text-[10px]"
+                                                    >
                                                         Required
                                                     </Badge>
                                                 )}
@@ -407,17 +531,39 @@ export default function Show({ portfolio, evaluators, categories, uploadedCatego
                                                             <div className="flex items-center gap-3">
                                                                 <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
                                                                 <div>
-                                                                    <p className="text-sm font-medium">{doc.file_name}</p>
+                                                                    <p className="text-sm font-medium">
+                                                                        {
+                                                                            doc.file_name
+                                                                        }
+                                                                    </p>
                                                                     <p className="text-xs text-muted-foreground">
-                                                                        {formatFileSize(doc.file_size)} · {doc.mime_type}
+                                                                        {formatFileSize(
+                                                                            doc.file_size,
+                                                                        )}{' '}
+                                                                        ·{' '}
+                                                                        {
+                                                                            doc.mime_type
+                                                                        }
                                                                     </p>
                                                                 </div>
                                                             </div>
                                                             <div className="flex items-center gap-1">
-                                                                <Button variant="ghost" size="sm" onClick={() => setPreviewDoc(doc)}>
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    onClick={() =>
+                                                                        setPreviewDoc(
+                                                                            doc,
+                                                                        )
+                                                                    }
+                                                                >
                                                                     <Eye className="h-4 w-4" />
                                                                 </Button>
-                                                                <Button variant="ghost" size="sm" asChild>
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    asChild
+                                                                >
                                                                     <a
                                                                         href={`/documents/${doc.id}/download`}
                                                                         title={`Download ${doc.file_name}`}
@@ -442,77 +588,153 @@ export default function Show({ portfolio, evaluators, categories, uploadedCatego
                         </Card>
 
                         {/* Section 3b: Evaluation Results */}
-                        {portfolio.evaluations && portfolio.evaluations.length > 0 && (
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="flex items-center gap-2">
-                                        <Star className="h-5 w-5" />
-                                        Evaluation Results
-                                    </CardTitle>
-                                    <CardDescription>
-                                        Scores and feedback from assigned evaluators
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent className="space-y-6">
-                                    {portfolio.evaluations.map((evaluation) => {
-                                        const total = parseFloat(evaluation.total_score);
-                                        const max = parseFloat(evaluation.max_possible_score);
-                                        const percentage = max > 0 ? Math.round((total / max) * 100) : 0;
-                                        const recBadge = getRecommendationBadge(evaluation.recommendation);
+                        {portfolio.evaluations &&
+                            portfolio.evaluations.length > 0 && (
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle className="flex items-center gap-2">
+                                            <Star className="h-5 w-5" />
+                                            Evaluation Results
+                                        </CardTitle>
+                                        <CardDescription>
+                                            Scores and feedback from assigned
+                                            evaluators
+                                        </CardDescription>
+                                    </CardHeader>
+                                    <CardContent className="space-y-6">
+                                        {portfolio.evaluations.map(
+                                            (evaluation) => {
+                                                const total = parseFloat(
+                                                    evaluation.total_score,
+                                                );
+                                                const max = parseFloat(
+                                                    evaluation.max_possible_score,
+                                                );
+                                                const percentage =
+                                                    max > 0
+                                                        ? Math.round(
+                                                            (total / max) *
+                                                            100,
+                                                        )
+                                                        : 0;
+                                                const recBadge =
+                                                    getRecommendationBadge(
+                                                        evaluation.recommendation,
+                                                    );
 
-                                        return (
-                                            <div key={evaluation.id} className="rounded-lg border p-4 space-y-4">
-                                                <div className="flex items-center justify-between">
-                                                    <div>
-                                                        <p className="font-medium">{evaluation.evaluator.name}</p>
-                                                        {evaluation.submitted_at && (
-                                                            <p className="text-xs text-muted-foreground">
-                                                                Submitted {formatDate(evaluation.submitted_at)}
-                                                            </p>
-                                                        )}
-                                                    </div>
-                                                    <div className="flex items-center gap-2">
-                                                        <Badge className={recBadge.className}>{recBadge.label}</Badge>
-                                                        <span className="text-sm font-bold">{total}/{max} ({percentage}%)</span>
-                                                    </div>
-                                                </div>
-
-                                                <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
+                                                return (
                                                     <div
-                                                        className={`h-full rounded-full transition-all duration-300 ${percentage >= 75 ? 'bg-green-500' : percentage >= 50 ? 'bg-amber-500' : 'bg-red-500'}`}
-                                                        style={{ width: `${percentage}%` }}
-                                                    />
-                                                </div>
-
-                                                <div className="grid gap-2 sm:grid-cols-2">
-                                                    {evaluation.scores.map((score) => (
-                                                        <div key={score.id} className="rounded-md bg-muted/50 px-3 py-2">
-                                                            <div className="flex items-center justify-between text-sm">
-                                                                <span>{score.criteria.name}</span>
-                                                                <span className="font-medium">{score.score}/{score.criteria.max_score}</span>
-                                                            </div>
-                                                            {score.comments && (
-                                                                <p className="mt-1 flex items-start gap-1 text-xs text-muted-foreground">
-                                                                    <MessageSquare className="mt-0.5 h-3 w-3 shrink-0" />
-                                                                    {score.comments}
+                                                        key={evaluation.id}
+                                                        className="space-y-4 rounded-lg border p-4"
+                                                    >
+                                                        <div className="flex items-center justify-between">
+                                                            <div>
+                                                                <p className="font-medium">
+                                                                    {
+                                                                        evaluation
+                                                                            .evaluator
+                                                                            .name
+                                                                    }
                                                                 </p>
+                                                                {evaluation.submitted_at && (
+                                                                    <p className="text-xs text-muted-foreground">
+                                                                        Submitted{' '}
+                                                                        {formatDate(
+                                                                            evaluation.submitted_at,
+                                                                        )}
+                                                                    </p>
+                                                                )}
+                                                            </div>
+                                                            <div className="flex items-center gap-2">
+                                                                <Badge
+                                                                    className={
+                                                                        recBadge.className
+                                                                    }
+                                                                >
+                                                                    {
+                                                                        recBadge.label
+                                                                    }
+                                                                </Badge>
+                                                                <span className="text-sm font-bold">
+                                                                    {total}/
+                                                                    {max} (
+                                                                    {percentage}
+                                                                    %)
+                                                                </span>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
+                                                            <div
+                                                                className={`h-full rounded-full transition-all duration-300 ${percentage >= 75 ? 'bg-green-500' : percentage >= 50 ? 'bg-amber-500' : 'bg-red-500'}`}
+                                                                style={{
+                                                                    width: `${percentage}%`,
+                                                                }}
+                                                            />
+                                                        </div>
+
+                                                        <div className="grid gap-2 sm:grid-cols-2">
+                                                            {evaluation.scores.map(
+                                                                (score) => (
+                                                                    <div
+                                                                        key={
+                                                                            score.id
+                                                                        }
+                                                                        className="rounded-md bg-muted/50 px-3 py-2"
+                                                                    >
+                                                                        <div className="flex items-center justify-between text-sm">
+                                                                            <span>
+                                                                                {
+                                                                                    score
+                                                                                        .criteria
+                                                                                        .name
+                                                                                }
+                                                                            </span>
+                                                                            <span className="font-medium">
+                                                                                {
+                                                                                    score.score
+                                                                                }
+
+                                                                                /
+                                                                                {
+                                                                                    score
+                                                                                        .criteria
+                                                                                        .max_score
+                                                                                }
+                                                                            </span>
+                                                                        </div>
+                                                                        {score.comments && (
+                                                                            <p className="mt-1 flex items-start gap-1 text-xs text-muted-foreground">
+                                                                                <MessageSquare className="mt-0.5 h-3 w-3 shrink-0" />
+                                                                                {
+                                                                                    score.comments
+                                                                                }
+                                                                            </p>
+                                                                        )}
+                                                                    </div>
+                                                                ),
                                                             )}
                                                         </div>
-                                                    ))}
-                                                </div>
 
-                                                {evaluation.overall_comments && (
-                                                    <div className="rounded-md bg-muted/50 p-3">
-                                                        <p className="text-sm font-medium">Comments</p>
-                                                        <p className="mt-1 text-sm text-muted-foreground">{evaluation.overall_comments}</p>
+                                                        {evaluation.overall_comments && (
+                                                            <div className="rounded-md bg-muted/50 p-3">
+                                                                <p className="text-sm font-medium">
+                                                                    Comments
+                                                                </p>
+                                                                <p className="mt-1 text-sm text-muted-foreground">
+                                                                    {
+                                                                        evaluation.overall_comments
+                                                                    }
+                                                                </p>
+                                                            </div>
+                                                        )}
                                                     </div>
-                                                )}
-                                            </div>
-                                        );
-                                    })}
-                                </CardContent>
-                            </Card>
-                        )}
+                                                );
+                                            },
+                                        )}
+                                    </CardContent>
+                                </Card>
+                            )}
                     </div>
 
                     {/* Right column (1 col): Assignments + Status */}
@@ -523,60 +745,114 @@ export default function Show({ portfolio, evaluators, categories, uploadedCatego
                                 <CardHeader>
                                     <CardTitle>Evaluator Assignments</CardTitle>
                                     <CardDescription>
-                                        Assign evaluators to review this portfolio
+                                        Assign evaluators to review this
+                                        portfolio
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
-                                    <form onSubmit={handleAssign} className="space-y-4">
+                                    <form
+                                        onSubmit={handleAssign}
+                                        className="space-y-4"
+                                    >
                                         <div className="space-y-1.5">
-                                            <Label htmlFor="evaluator_id">Evaluator</Label>
+                                            <Label htmlFor="evaluator_id">
+                                                Evaluator
+                                            </Label>
                                             <Select
-                                                value={assignForm.data.evaluator_id}
-                                                onValueChange={(value) => assignForm.setData('evaluator_id', value)}
+                                                value={
+                                                    assignForm.data.evaluator_id
+                                                }
+                                                onValueChange={(value) =>
+                                                    assignForm.setData(
+                                                        'evaluator_id',
+                                                        value,
+                                                    )
+                                                }
                                             >
                                                 <SelectTrigger id="evaluator_id">
                                                     <SelectValue placeholder="Select evaluator..." />
                                                 </SelectTrigger>
                                                 <SelectContent>
-                                                    {evaluators.map((evaluator) => (
-                                                        <SelectItem key={evaluator.id} value={String(evaluator.id)}>
-                                                            {evaluator.name}
-                                                        </SelectItem>
-                                                    ))}
+                                                    {evaluators.map(
+                                                        (evaluator) => (
+                                                            <SelectItem
+                                                                key={
+                                                                    evaluator.id
+                                                                }
+                                                                value={String(
+                                                                    evaluator.id,
+                                                                )}
+                                                            >
+                                                                {evaluator.name}
+                                                            </SelectItem>
+                                                        ),
+                                                    )}
                                                 </SelectContent>
                                             </Select>
-                                            <InputError message={assignForm.errors.evaluator_id} />
+                                            <InputError
+                                                message={
+                                                    assignForm.errors
+                                                        .evaluator_id
+                                                }
+                                            />
                                         </div>
 
                                         <div className="space-y-1.5">
-                                            <Label htmlFor="due_date">Due Date (optional)</Label>
+                                            <Label htmlFor="due_date">
+                                                Due Date (optional)
+                                            </Label>
                                             <Input
                                                 id="due_date"
                                                 type="date"
                                                 value={assignForm.data.due_date}
-                                                onChange={(e) => assignForm.setData('due_date', e.target.value)}
+                                                onChange={(e) =>
+                                                    assignForm.setData(
+                                                        'due_date',
+                                                        e.target.value,
+                                                    )
+                                                }
                                             />
-                                            <InputError message={assignForm.errors.due_date} />
+                                            <InputError
+                                                message={
+                                                    assignForm.errors.due_date
+                                                }
+                                            />
                                         </div>
 
                                         <div className="space-y-1.5">
-                                            <Label htmlFor="assign_notes">Notes (optional)</Label>
+                                            <Label htmlFor="assign_notes">
+                                                Notes (optional)
+                                            </Label>
                                             <Input
                                                 id="assign_notes"
                                                 value={assignForm.data.notes}
-                                                onChange={(e) => assignForm.setData('notes', e.target.value)}
+                                                onChange={(e) =>
+                                                    assignForm.setData(
+                                                        'notes',
+                                                        e.target.value,
+                                                    )
+                                                }
                                                 placeholder="Instructions for the evaluator..."
                                             />
-                                            <InputError message={assignForm.errors.notes} />
+                                            <InputError
+                                                message={
+                                                    assignForm.errors.notes
+                                                }
+                                            />
                                         </div>
 
                                         <Button
                                             type="submit"
                                             className="w-full"
-                                            disabled={assignForm.processing || !assignForm.data.evaluator_id}
+                                            disabled={
+                                                assignForm.processing ||
+                                                !assignForm.data.evaluator_id
+                                            }
                                         >
                                             <UserPlus className="mr-1.5 h-4 w-4" />
-                                            {assignForm.processing ? 'Assigning...' : 'Assign Evaluator'}
+                                            {assignForm.processing
+                                                ? 'Assigning...'
+                                                : 'Assign Evaluator'}
                                         </Button>
                                     </form>
 
@@ -585,55 +861,99 @@ export default function Show({ portfolio, evaluators, categories, uploadedCatego
                                         <>
                                             <Separator />
                                             <div className="space-y-3">
-                                                {portfolio.assignments.map((assignment) => (
-                                                    <div
-                                                        key={assignment.id}
-                                                        className="rounded-md border p-3"
-                                                    >
-                                                        <div className="flex items-start justify-between">
-                                                            <div className="space-y-1">
-                                                                <p className="text-sm font-medium">
-                                                                    {assignment.evaluator.name}
-                                                                </p>
-                                                                <p className="text-xs text-muted-foreground">
-                                                                    {assignment.evaluator.email}
-                                                                </p>
+                                                {portfolio.assignments.map(
+                                                    (assignment) => (
+                                                        <div
+                                                            key={assignment.id}
+                                                            className="rounded-md border p-3"
+                                                        >
+                                                            <div className="flex items-start justify-between">
+                                                                <div className="space-y-1">
+                                                                    <p className="text-sm font-medium">
+                                                                        {
+                                                                            assignment
+                                                                                .evaluator
+                                                                                .name
+                                                                        }
+                                                                    </p>
+                                                                    <p className="text-xs text-muted-foreground">
+                                                                        {
+                                                                            assignment
+                                                                                .evaluator
+                                                                                .email
+                                                                        }
+                                                                    </p>
+                                                                </div>
+                                                                <Badge
+                                                                    variant={
+                                                                        statusBadgeVariant[
+                                                                        assignment
+                                                                            .status
+                                                                        ] ??
+                                                                        'outline'
+                                                                    }
+                                                                    className={
+                                                                        statusBadgeClassName[
+                                                                        assignment
+                                                                            .status
+                                                                        ] ?? ''
+                                                                    }
+                                                                >
+                                                                    {formatStatus(
+                                                                        assignment.status,
+                                                                    )}
+                                                                </Badge>
                                                             </div>
-                                                            <Badge
-                                                                variant={statusBadgeVariant[assignment.status] ?? 'outline'}
-                                                                className={statusBadgeClassName[assignment.status] ?? ''}
-                                                            >
-                                                                {formatStatus(assignment.status)}
-                                                            </Badge>
-                                                        </div>
-                                                        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                                                            <span className="flex items-center gap-1">
-                                                                <Calendar className="h-3 w-3" />
-                                                                Assigned {formatDate(assignment.assigned_at)}
-                                                            </span>
-                                                            {assignment.due_date && (
-                                                                <span>Due {formatDate(assignment.due_date)}</span>
+                                                            <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                                                                <span className="flex items-center gap-1">
+                                                                    <Calendar className="h-3 w-3" />
+                                                                    Assigned{' '}
+                                                                    {formatDate(
+                                                                        assignment.assigned_at,
+                                                                    )}
+                                                                </span>
+                                                                {assignment.due_date && (
+                                                                    <span>
+                                                                        Due{' '}
+                                                                        {formatDate(
+                                                                            assignment.due_date,
+                                                                        )}
+                                                                    </span>
+                                                                )}
+                                                                <span>
+                                                                    By{' '}
+                                                                    {
+                                                                        assignment
+                                                                            .assigner
+                                                                            .name
+                                                                    }
+                                                                </span>
+                                                            </div>
+                                                            {assignment.notes && (
+                                                                <p className="mt-1 text-xs text-muted-foreground italic">
+                                                                    {
+                                                                        assignment.notes
+                                                                    }
+                                                                </p>
                                                             )}
-                                                            <span>By {assignment.assigner.name}</span>
+                                                            <div className="mt-2">
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    className="h-7 text-xs text-destructive hover:text-destructive"
+                                                                    onClick={() =>
+                                                                        handleRemoveAssignment(
+                                                                            assignment,
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    <Trash2 className="mr-1 h-3 w-3" />
+                                                                    Remove
+                                                                </Button>
+                                                            </div>
                                                         </div>
-                                                        {assignment.notes && (
-                                                            <p className="mt-1 text-xs text-muted-foreground italic">
-                                                                {assignment.notes}
-                                                            </p>
-                                                        )}
-                                                        <div className="mt-2">
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="sm"
-                                                                className="h-7 text-xs text-destructive hover:text-destructive"
-                                                                onClick={() => handleRemoveAssignment(assignment)}
-                                                            >
-                                                                <Trash2 className="mr-1 h-3 w-3" />
-                                                                Remove
-                                                            </Button>
-                                                        </div>
-                                                    </div>
-                                                ))}
+                                                    ),
+                                                )}
                                             </div>
                                         </>
                                     )}
@@ -651,37 +971,70 @@ export default function Show({ portfolio, evaluators, categories, uploadedCatego
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent>
-                                    <form onSubmit={handleStatusUpdate} className="space-y-4">
+                                    <form
+                                        onSubmit={handleStatusUpdate}
+                                        className="space-y-4"
+                                    >
                                         <div className="space-y-1.5">
-                                            <Label htmlFor="status">New Status</Label>
+                                            <Label htmlFor="status">
+                                                New Status
+                                            </Label>
                                             <Select
                                                 value={statusForm.data.status}
-                                                onValueChange={(value) => statusForm.setData('status', value)}
+                                                onValueChange={(value) =>
+                                                    statusForm.setData(
+                                                        'status',
+                                                        value,
+                                                    )
+                                                }
                                             >
                                                 <SelectTrigger id="status">
                                                     <SelectValue placeholder="Select status..." />
                                                 </SelectTrigger>
                                                 <SelectContent>
-                                                    {updatableStatuses.map((s) => (
-                                                        <SelectItem key={s.value} value={s.value}>
-                                                            {s.label}
-                                                        </SelectItem>
-                                                    ))}
+                                                    {updatableStatuses.map(
+                                                        (s) => (
+                                                            <SelectItem
+                                                                key={s.value}
+                                                                value={s.value}
+                                                            >
+                                                                {s.label}
+                                                            </SelectItem>
+                                                        ),
+                                                    )}
                                                 </SelectContent>
                                             </Select>
-                                            <InputError message={statusForm.errors.status} />
+                                            <InputError
+                                                message={
+                                                    statusForm.errors.status
+                                                }
+                                            />
                                         </div>
 
                                         <div className="space-y-1.5">
-                                            <Label htmlFor="admin_notes">Admin Notes</Label>
+                                            <Label htmlFor="admin_notes">
+                                                Admin Notes
+                                            </Label>
                                             <textarea
                                                 id="admin_notes"
-                                                className="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex min-h-20 w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                                                className="flex min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                                                 placeholder="Add notes for the applicant (visible on revision requests)..."
-                                                value={statusForm.data.admin_notes}
-                                                onChange={(e) => statusForm.setData('admin_notes', e.target.value)}
+                                                value={
+                                                    statusForm.data.admin_notes
+                                                }
+                                                onChange={(e) =>
+                                                    statusForm.setData(
+                                                        'admin_notes',
+                                                        e.target.value,
+                                                    )
+                                                }
                                             />
-                                            <InputError message={statusForm.errors.admin_notes} />
+                                            <InputError
+                                                message={
+                                                    statusForm.errors
+                                                        .admin_notes
+                                                }
+                                            />
                                         </div>
 
                                         <Button
@@ -689,7 +1042,9 @@ export default function Show({ portfolio, evaluators, categories, uploadedCatego
                                             className="w-full"
                                             disabled={statusForm.processing}
                                         >
-                                            {statusForm.processing ? 'Updating...' : 'Update Status'}
+                                            {statusForm.processing
+                                                ? 'Updating...'
+                                                : 'Update Status'}
                                         </Button>
                                     </form>
                                 </CardContent>
@@ -703,7 +1058,9 @@ export default function Show({ portfolio, evaluators, categories, uploadedCatego
                 open={previewDoc !== null}
                 onOpenChange={(open) => !open && setPreviewDoc(null)}
                 document={previewDoc}
-                downloadUrl={previewDoc ? `/documents/${previewDoc.id}/download` : ''}
+                downloadUrl={
+                    previewDoc ? `/documents/${previewDoc.id}/download` : ''
+                }
             />
             <AlertDialog
                 open={removeDialogOpen}
@@ -716,7 +1073,9 @@ export default function Show({ portfolio, evaluators, categories, uploadedCatego
             >
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Remove this assignment?</AlertDialogTitle>
+                        <AlertDialogTitle>
+                            Remove this assignment?
+                        </AlertDialogTitle>
                         <AlertDialogDescription>
                             {assignmentToRemove
                                 ? `The assignment for ${assignmentToRemove.evaluator.name} will be removed.`

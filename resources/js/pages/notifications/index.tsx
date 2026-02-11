@@ -62,11 +62,15 @@ function timeAgo(dateString: string): string {
 
 export default function Notifications({ notifications, unreadCount }: Props) {
     function markAllAsRead() {
-        router.post('/notifications/mark-all-read');
+        router.post('/notifications/mark-all-read', {}, {
+            preserveScroll: true,
+        });
     }
 
     function markAsRead(id: string) {
-        router.patch(`/notifications/${id}/read`);
+        router.patch(`/notifications/${id}/read`, {}, {
+            preserveScroll: true,
+        });
     }
 
     return (
@@ -75,9 +79,15 @@ export default function Notifications({ notifications, unreadCount }: Props) {
 
             <div className="mx-auto w-full max-w-4xl space-y-6 p-4 sm:p-6">
                 <div className="flex items-center justify-between">
-                    <h1 className="text-2xl font-bold tracking-tight">Notifications</h1>
+                    <h1 className="text-2xl font-bold tracking-tight">
+                        Notifications
+                    </h1>
                     {unreadCount > 0 && (
-                        <Button variant="outline" size="sm" onClick={markAllAsRead}>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={markAllAsRead}
+                        >
                             <Check className="mr-2 h-4 w-4" />
                             Mark All as Read
                         </Button>
@@ -86,8 +96,10 @@ export default function Notifications({ notifications, unreadCount }: Props) {
 
                 {notifications.data.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-20 text-center">
-                        <Bell className="text-muted-foreground mb-4 h-12 w-12" />
-                        <p className="text-muted-foreground text-lg">No notifications yet</p>
+                        <Bell className="mb-4 h-12 w-12 text-muted-foreground" />
+                        <p className="text-lg text-muted-foreground">
+                            No notifications yet
+                        </p>
                     </div>
                 ) : (
                     <div className="space-y-3">
@@ -103,26 +115,31 @@ export default function Notifications({ notifications, unreadCount }: Props) {
                                 <CardContent className="flex items-start gap-4 p-4">
                                     <div className="mt-2 shrink-0">
                                         <span
-                                            className={`block h-2.5 w-2.5 rounded-full ${
-                                                notification.read_at === null
+                                            className={`block h-2.5 w-2.5 rounded-full ${notification.read_at === null
                                                     ? 'bg-blue-500'
                                                     : 'bg-transparent'
-                                            }`}
+                                                }`}
                                         />
                                     </div>
 
                                     <div className="min-w-0 flex-1">
-                                        <p className="font-semibold">{notification.data.title}</p>
-                                        <p className="text-muted-foreground mt-1 text-sm">
+                                        <p className="font-semibold">
+                                            {notification.data.title}
+                                        </p>
+                                        <p className="mt-1 text-sm text-muted-foreground">
                                             {notification.data.message}
                                         </p>
-                                        <p className="text-muted-foreground mt-1 text-xs">
+                                        <p className="mt-1 text-xs text-muted-foreground">
                                             {timeAgo(notification.created_at)}
                                         </p>
                                     </div>
 
                                     <div className="flex shrink-0 items-center gap-2">
-                                        <Button variant="ghost" size="sm" asChild>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            asChild
+                                        >
                                             <Link href={notification.data.url}>
                                                 <ExternalLink className="mr-1 h-4 w-4" />
                                                 View
@@ -132,7 +149,9 @@ export default function Notifications({ notifications, unreadCount }: Props) {
                                             <Button
                                                 variant="outline"
                                                 size="sm"
-                                                onClick={() => markAsRead(notification.id)}
+                                                onClick={() =>
+                                                    markAsRead(notification.id)
+                                                }
                                             >
                                                 <Check className="mr-1 h-4 w-4" />
                                                 Mark Read
@@ -152,17 +171,20 @@ export default function Notifications({ notifications, unreadCount }: Props) {
                                 {link.url ? (
                                     <Link
                                         href={link.url}
-                                        className={`inline-flex h-9 min-w-9 items-center justify-center rounded-md px-3 text-sm ${
-                                            link.active
+                                        className={`inline-flex h-9 min-w-9 items-center justify-center rounded-md px-3 text-sm ${link.active
                                                 ? 'bg-primary text-primary-foreground'
                                                 : 'hover:bg-muted'
-                                        }`}
-                                        dangerouslySetInnerHTML={{ __html: link.label }}
+                                            }`}
+                                        dangerouslySetInnerHTML={{
+                                            __html: link.label,
+                                        }}
                                     />
                                 ) : (
                                     <span
-                                        className="text-muted-foreground inline-flex h-9 min-w-9 items-center justify-center rounded-md px-3 text-sm opacity-50"
-                                        dangerouslySetInnerHTML={{ __html: link.label }}
+                                        className="inline-flex h-9 min-w-9 items-center justify-center rounded-md px-3 text-sm text-muted-foreground opacity-50"
+                                        dangerouslySetInnerHTML={{
+                                            __html: link.label,
+                                        }}
                                     />
                                 )}
                             </span>

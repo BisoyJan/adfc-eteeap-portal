@@ -1,7 +1,20 @@
 import { Head, Link, useForm, usePage, router } from '@inertiajs/react';
-import { Upload, Download, Eye, Trash2, FileText, AlertCircle, CheckCircle2, ArrowLeft, Star, MessageSquare, Clock } from 'lucide-react';
+import {
+    Upload,
+    Download,
+    Eye,
+    Trash2,
+    FileText,
+    AlertCircle,
+    CheckCircle2,
+    ArrowLeft,
+    Star,
+    MessageSquare,
+    Clock,
+} from 'lucide-react';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
+import { toast } from 'sonner';
 import FilePreviewDialog from '@/components/file-preview-dialog';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
@@ -19,14 +32,18 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
-import { toast } from 'sonner';
 
 interface Document {
     id: number;
@@ -105,7 +122,10 @@ interface Props {
     evaluations: EvaluationResult[];
 }
 
-const statusBadgeVariant: Record<string, 'destructive' | 'default' | 'secondary' | 'outline'> = {
+const statusBadgeVariant: Record<
+    string,
+    'destructive' | 'default' | 'secondary' | 'outline'
+> = {
     draft: 'secondary',
     submitted: 'default',
     under_review: 'outline',
@@ -151,20 +171,45 @@ function getTimelineIndex(status: string): number {
     return idx >= 0 ? idx : 0;
 }
 
-function getRecommendationBadge(recommendation: string | null): { label: string; className: string } {
+function getRecommendationBadge(recommendation: string | null): {
+    label: string;
+    className: string;
+} {
     switch (recommendation) {
         case 'approve':
-            return { label: 'Recommended for Approval', className: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' };
+            return {
+                label: 'Recommended for Approval',
+                className:
+                    'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+            };
         case 'revise':
-            return { label: 'Recommended for Revision', className: 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200' };
+            return {
+                label: 'Recommended for Revision',
+                className:
+                    'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200',
+            };
         case 'reject':
-            return { label: 'Recommended for Rejection', className: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' };
+            return {
+                label: 'Recommended for Rejection',
+                className:
+                    'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
+            };
         default:
-            return { label: 'No Recommendation', className: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200' };
+            return {
+                label: 'No Recommendation',
+                className:
+                    'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200',
+            };
     }
 }
 
-function CategoryUploadForm({ portfolioId, categoryId }: { portfolioId: number; categoryId: number }) {
+function CategoryUploadForm({
+    portfolioId,
+    categoryId,
+}: {
+    portfolioId: number;
+    categoryId: number;
+}) {
     const form = useForm({
         document_category_id: categoryId,
         file: null as File | null,
@@ -175,6 +220,7 @@ function CategoryUploadForm({ portfolioId, categoryId }: { portfolioId: number; 
         e.preventDefault();
         form.post(`/applicant/portfolios/${portfolioId}/documents`, {
             forceFormData: true,
+            preserveScroll: true,
             onSuccess: () => form.reset(),
         });
     }
@@ -187,7 +233,9 @@ function CategoryUploadForm({ portfolioId, categoryId }: { portfolioId: number; 
                     id={`file-${categoryId}`}
                     type="file"
                     accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                    onChange={(e) => form.setData('file', e.target.files?.[0] ?? null)}
+                    onChange={(e) =>
+                        form.setData('file', e.target.files?.[0] ?? null)
+                    }
                 />
                 <InputError message={form.errors.file} />
             </div>
@@ -196,7 +244,7 @@ function CategoryUploadForm({ portfolioId, categoryId }: { portfolioId: number; 
                 <Label htmlFor={`notes-${categoryId}`}>Notes (optional)</Label>
                 <textarea
                     id={`notes-${categoryId}`}
-                    className="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex min-h-15 w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                    className="flex min-h-15 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                     placeholder="Add any relevant notes about this document..."
                     value={form.data.notes}
                     onChange={(e) => form.setData('notes', e.target.value)}
@@ -204,7 +252,11 @@ function CategoryUploadForm({ portfolioId, categoryId }: { portfolioId: number; 
                 <InputError message={form.errors.notes} />
             </div>
 
-            <Button type="submit" size="sm" disabled={form.processing || !form.data.file}>
+            <Button
+                type="submit"
+                size="sm"
+                disabled={form.processing || !form.data.file}
+            >
                 <Upload className="mr-1.5 h-4 w-4" />
                 {form.processing ? 'Uploading...' : 'Upload'}
             </Button>
@@ -212,32 +264,50 @@ function CategoryUploadForm({ portfolioId, categoryId }: { portfolioId: number; 
     );
 }
 
-export default function Show({ portfolio, categories, uploadedCategoryIds, progress, evaluations }: Props) {
-    const { flash } = usePage<{ flash: { success?: string; error?: string } }>().props;
+export default function Show({
+    portfolio,
+    categories,
+    uploadedCategoryIds,
+    progress,
+    evaluations,
+}: Props) {
+    const { flash } = usePage<{ flash: { success?: string; error?: string } }>()
+        .props;
     const editable = canEdit(portfolio.status);
     const [previewDoc, setPreviewDoc] = useState<Document | null>(null);
-    const [documentToDelete, setDocumentToDelete] = useState<Document | null>(null);
+    const [documentToDelete, setDocumentToDelete] = useState<Document | null>(
+        null,
+    );
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [submitDialogOpen, setSubmitDialogOpen] = useState(false);
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Dashboard', href: '/dashboard' },
         { title: 'My Portfolios', href: '/applicant/portfolios' },
-        { title: portfolio.title, href: `/applicant/portfolios/${portfolio.id}` },
+        {
+            title: portfolio.title,
+            href: `/applicant/portfolios/${portfolio.id}`,
+        },
     ];
 
     function handleSubmitPortfolio() {
-        router.post(`/applicant/portfolios/${portfolio.id}/submit`, {
-            onSuccess: () => {
-                toast.success('Portfolio submitted for review.');
+        router.post(
+            `/applicant/portfolios/${portfolio.id}/submit`,
+            {},
+            {
+                onSuccess: () => {
+                    toast.success('Portfolio submitted for review.');
+                },
+                onError: () => {
+                    toast.error(
+                        'Unable to submit portfolio. Please try again.',
+                    );
+                },
+                onFinish: () => {
+                    setSubmitDialogOpen(false);
+                },
             },
-            onError: () => {
-                toast.error('Unable to submit portfolio. Please try again.');
-            },
-            onFinish: () => {
-                setSubmitDialogOpen(false);
-            },
-        });
+        );
     }
 
     function handleDeleteDocument(doc: Document) {
@@ -250,22 +320,28 @@ export default function Show({ portfolio, categories, uploadedCategoryIds, progr
             return;
         }
 
-        router.delete(`/applicant/portfolios/${portfolio.id}/documents/${documentToDelete.id}`, {
-            onSuccess: () => {
-                toast.success('Document removed.');
+        router.delete(
+            `/applicant/portfolios/${portfolio.id}/documents/${documentToDelete.id}`,
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    toast.success('Document removed.');
+                },
+                onError: () => {
+                    toast.error('Unable to delete document. Please try again.');
+                },
+                onFinish: () => {
+                    setDeleteDialogOpen(false);
+                    setDocumentToDelete(null);
+                },
             },
-            onError: () => {
-                toast.error('Unable to delete document. Please try again.');
-            },
-            onFinish: () => {
-                setDeleteDialogOpen(false);
-                setDocumentToDelete(null);
-            },
-        });
+        );
     }
 
     function getDocumentsForCategory(categoryId: number): Document[] {
-        return portfolio.documents.filter((doc) => doc.document_category_id === categoryId);
+        return portfolio.documents.filter(
+            (doc) => doc.document_category_id === categoryId,
+        );
     }
 
     return (
@@ -276,11 +352,20 @@ export default function Show({ portfolio, categories, uploadedCategoryIds, progr
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <Heading title={portfolio.title} description={`Created ${new Date(portfolio.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}`} />
+                        <Heading
+                            title={portfolio.title}
+                            description={`Created ${new Date(portfolio.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}`}
+                        />
                     </div>
                     <Badge
-                        variant={statusBadgeVariant[portfolio.status] ?? 'outline'}
-                        className={portfolio.status === 'approved' ? 'border-green-300 bg-green-50 text-green-700 dark:border-green-700 dark:bg-green-950 dark:text-green-300' : ''}
+                        variant={
+                            statusBadgeVariant[portfolio.status] ?? 'outline'
+                        }
+                        className={
+                            portfolio.status === 'approved'
+                                ? 'border-green-300 bg-green-50 text-green-700 dark:border-green-700 dark:bg-green-950 dark:text-green-300'
+                                : ''
+                        }
                     >
                         {formatStatus(portfolio.status)}
                     </Badge>
@@ -305,7 +390,10 @@ export default function Show({ portfolio, categories, uploadedCategoryIds, progr
                     <Alert>
                         <AlertCircle className="h-4 w-4" />
                         <AlertDescription>
-                            <span className="font-medium">Revision Feedback:</span> {portfolio.admin_notes}
+                            <span className="font-medium">
+                                Revision Feedback:
+                            </span>{' '}
+                            {portfolio.admin_notes}
                         </AlertDescription>
                     </Alert>
                 )}
@@ -316,13 +404,16 @@ export default function Show({ portfolio, categories, uploadedCategoryIds, progr
                         <CardContent className="pt-6">
                             <div className="flex items-center justify-between text-sm">
                                 <span className="font-medium">
-                                    Required Documents: {progress.completed}/{progress.required}
+                                    Required Documents: {progress.completed}/
+                                    {progress.required}
                                 </span>
-                                <span className="text-muted-foreground">{progress.percentage}%</span>
+                                <span className="text-muted-foreground">
+                                    {progress.percentage}%
+                                </span>
                             </div>
                             <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-secondary">
                                 <div
-                                    className="bg-primary h-full rounded-full transition-all duration-300"
+                                    className="h-full rounded-full bg-primary transition-all duration-300"
                                     style={{ width: `${progress.percentage}%` }}
                                 />
                             </div>
@@ -337,57 +428,105 @@ export default function Show({ portfolio, categories, uploadedCategoryIds, progr
                             <Clock className="h-5 w-5" />
                             Portfolio Progress
                         </CardTitle>
-                        <CardDescription>Track the status of your portfolio through the review process</CardDescription>
+                        <CardDescription>
+                            Track the status of your portfolio through the
+                            review process
+                        </CardDescription>
                     </CardHeader>
                     <CardContent>
                         {portfolio.status === 'rejected' ? (
                             <div className="flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-950">
-                                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-500 text-white">✕</div>
+                                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-500 text-white">
+                                    ✕
+                                </div>
                                 <div>
-                                    <p className="font-medium text-red-800 dark:text-red-200">Portfolio Rejected</p>
-                                    <p className="text-sm text-red-600 dark:text-red-400">Your portfolio has been rejected. Please contact administration for further details.</p>
+                                    <p className="font-medium text-red-800 dark:text-red-200">
+                                        Portfolio Rejected
+                                    </p>
+                                    <p className="text-sm text-red-600 dark:text-red-400">
+                                        Your portfolio has been rejected. Please
+                                        contact administration for further
+                                        details.
+                                    </p>
                                 </div>
                             </div>
                         ) : portfolio.status === 'revision_requested' ? (
                             <div className="space-y-4">
                                 <div className="flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950">
-                                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-500 text-white">!</div>
+                                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-500 text-white">
+                                        !
+                                    </div>
                                     <div>
-                                        <p className="font-medium text-amber-800 dark:text-amber-200">Revision Requested</p>
-                                        <p className="text-sm text-amber-600 dark:text-amber-400">Please review the feedback and update your portfolio.</p>
+                                        <p className="font-medium text-amber-800 dark:text-amber-200">
+                                            Revision Requested
+                                        </p>
+                                        <p className="text-sm text-amber-600 dark:text-amber-400">
+                                            Please review the feedback and
+                                            update your portfolio.
+                                        </p>
                                     </div>
                                 </div>
                                 <div className="flex items-center justify-between">
-                                    {timelineSteps.slice(0, 3).map((step, idx) => {
-                                        const current = getTimelineIndex(portfolio.status);
-                                        const isCompleted = idx < current;
-                                        const isCurrent = idx === current;
-                                        return (
-                                            <div key={step.key} className="flex flex-1 flex-col items-center">
-                                                <div className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold ${isCompleted ? 'bg-green-500 text-white' : isCurrent ? 'bg-amber-500 text-white' : 'bg-muted text-muted-foreground'}`}>
-                                                    {isCompleted ? '✓' : idx + 1}
+                                    {timelineSteps
+                                        .slice(0, 3)
+                                        .map((step, idx) => {
+                                            const current = getTimelineIndex(
+                                                portfolio.status,
+                                            );
+                                            const isCompleted = idx < current;
+                                            const isCurrent = idx === current;
+                                            return (
+                                                <div
+                                                    key={step.key}
+                                                    className="flex flex-1 flex-col items-center"
+                                                >
+                                                    <div
+                                                        className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold ${isCompleted ? 'bg-green-500 text-white' : isCurrent ? 'bg-amber-500 text-white' : 'bg-muted text-muted-foreground'}`}
+                                                    >
+                                                        {isCompleted
+                                                            ? '✓'
+                                                            : idx + 1}
+                                                    </div>
+                                                    <span className="mt-1.5 text-center text-xs font-medium">
+                                                        {step.label}
+                                                    </span>
+                                                    {idx < 2 && (
+                                                        <div
+                                                            className={`mt-1 h-0.5 w-full ${isCompleted ? 'bg-green-500' : 'bg-muted'}`}
+                                                        />
+                                                    )}
                                                 </div>
-                                                <span className="mt-1.5 text-center text-xs font-medium">{step.label}</span>
-                                                {idx < 2 && <div className={`mt-1 h-0.5 w-full ${isCompleted ? 'bg-green-500' : 'bg-muted'}`} />}
-                                            </div>
-                                        );
-                                    })}
+                                            );
+                                        })}
                                 </div>
                             </div>
                         ) : (
                             <div className="flex items-center justify-between">
                                 {timelineSteps.map((step, idx) => {
-                                    const current = getTimelineIndex(portfolio.status);
+                                    const current = getTimelineIndex(
+                                        portfolio.status,
+                                    );
                                     const isCompleted = idx < current;
                                     const isCurrent = idx === current;
                                     return (
-                                        <div key={step.key} className="flex flex-1 flex-col items-center">
-                                            <div className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold ${isCompleted ? 'bg-green-500 text-white' : isCurrent ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+                                        <div
+                                            key={step.key}
+                                            className="flex flex-1 flex-col items-center"
+                                        >
+                                            <div
+                                                className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold ${isCompleted ? 'bg-green-500 text-white' : isCurrent ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
+                                            >
                                                 {isCompleted ? '✓' : idx + 1}
                                             </div>
-                                            <span className={`mt-1.5 text-center text-xs font-medium ${isCurrent ? 'text-primary' : ''}`}>{step.label}</span>
+                                            <span
+                                                className={`mt-1.5 text-center text-xs font-medium ${isCurrent ? 'text-primary' : ''}`}
+                                            >
+                                                {step.label}
+                                            </span>
                                             {idx < timelineSteps.length - 1 && (
-                                                <div className={`mt-1 h-0.5 w-full ${isCompleted ? 'bg-green-500' : 'bg-muted'}`} />
+                                                <div
+                                                    className={`mt-1 h-0.5 w-full ${isCompleted ? 'bg-green-500' : 'bg-muted'}`}
+                                                />
                                             )}
                                         </div>
                                     );
@@ -400,12 +539,19 @@ export default function Show({ portfolio, categories, uploadedCategoryIds, progr
                 {/* Evaluation Results */}
                 {evaluations && evaluations.length > 0 && (
                     <div className="space-y-4">
-                        <h2 className="text-lg font-semibold">Evaluation Results</h2>
+                        <h2 className="text-lg font-semibold">
+                            Evaluation Results
+                        </h2>
                         {evaluations.map((evaluation) => {
                             const total = parseFloat(evaluation.total_score);
-                            const max = parseFloat(evaluation.max_possible_score);
-                            const percentage = max > 0 ? Math.round((total / max) * 100) : 0;
-                            const recBadge = getRecommendationBadge(evaluation.recommendation);
+                            const max = parseFloat(
+                                evaluation.max_possible_score,
+                            );
+                            const percentage =
+                                max > 0 ? Math.round((total / max) * 100) : 0;
+                            const recBadge = getRecommendationBadge(
+                                evaluation.recommendation,
+                            );
 
                             return (
                                 <Card key={evaluation.id}>
@@ -413,13 +559,21 @@ export default function Show({ portfolio, categories, uploadedCategoryIds, progr
                                         <div className="flex items-center justify-between">
                                             <CardTitle className="flex items-center gap-2 text-base">
                                                 <Star className="h-4 w-4" />
-                                                Evaluation by {evaluation.evaluator.name}
+                                                Evaluation by{' '}
+                                                {evaluation.evaluator.name}
                                             </CardTitle>
-                                            <Badge className={recBadge.className}>{recBadge.label}</Badge>
+                                            <Badge
+                                                className={recBadge.className}
+                                            >
+                                                {recBadge.label}
+                                            </Badge>
                                         </div>
                                         {evaluation.submitted_at && (
                                             <CardDescription>
-                                                Submitted {new Date(evaluation.submitted_at).toLocaleDateString('en-US', {
+                                                Submitted{' '}
+                                                {new Date(
+                                                    evaluation.submitted_at,
+                                                ).toLocaleDateString('en-US', {
                                                     year: 'numeric',
                                                     month: 'short',
                                                     day: 'numeric',
@@ -431,35 +585,68 @@ export default function Show({ portfolio, categories, uploadedCategoryIds, progr
                                         {/* Overall Score */}
                                         <div className="rounded-lg border p-4">
                                             <div className="flex items-center justify-between text-sm">
-                                                <span className="font-medium">Overall Score</span>
-                                                <span className="text-lg font-bold">{total}/{max} ({percentage}%)</span>
+                                                <span className="font-medium">
+                                                    Overall Score
+                                                </span>
+                                                <span className="text-lg font-bold">
+                                                    {total}/{max} ({percentage}
+                                                    %)
+                                                </span>
                                             </div>
                                             <div className="mt-2 h-3 w-full overflow-hidden rounded-full bg-secondary">
                                                 <div
                                                     className={`h-full rounded-full transition-all duration-300 ${percentage >= 75 ? 'bg-green-500' : percentage >= 50 ? 'bg-amber-500' : 'bg-red-500'}`}
-                                                    style={{ width: `${percentage}%` }}
+                                                    style={{
+                                                        width: `${percentage}%`,
+                                                    }}
                                                 />
                                             </div>
                                         </div>
 
                                         {/* Per-Criteria Scores */}
                                         <div className="space-y-3">
-                                            <h4 className="text-sm font-medium">Criteria Breakdown</h4>
+                                            <h4 className="text-sm font-medium">
+                                                Criteria Breakdown
+                                            </h4>
                                             {evaluation.scores.map((score) => {
-                                                const criteriaPercentage = score.criteria.max_score > 0
-                                                    ? Math.round((score.score / score.criteria.max_score) * 100)
-                                                    : 0;
+                                                const criteriaPercentage =
+                                                    score.criteria.max_score > 0
+                                                        ? Math.round(
+                                                            (score.score /
+                                                                score.criteria
+                                                                    .max_score) *
+                                                            100,
+                                                        )
+                                                        : 0;
 
                                                 return (
-                                                    <div key={score.id} className="space-y-1.5 rounded-md border px-3 py-2">
+                                                    <div
+                                                        key={score.id}
+                                                        className="space-y-1.5 rounded-md border px-3 py-2"
+                                                    >
                                                         <div className="flex items-center justify-between">
-                                                            <span className="text-sm font-medium">{score.criteria.name}</span>
-                                                            <span className="text-sm font-bold">{score.score}/{score.criteria.max_score}</span>
+                                                            <span className="text-sm font-medium">
+                                                                {
+                                                                    score
+                                                                        .criteria
+                                                                        .name
+                                                                }
+                                                            </span>
+                                                            <span className="text-sm font-bold">
+                                                                {score.score}/
+                                                                {
+                                                                    score
+                                                                        .criteria
+                                                                        .max_score
+                                                                }
+                                                            </span>
                                                         </div>
                                                         <div className="h-1.5 w-full overflow-hidden rounded-full bg-secondary">
                                                             <div
                                                                 className={`h-full rounded-full ${criteriaPercentage >= 75 ? 'bg-green-500' : criteriaPercentage >= 50 ? 'bg-amber-500' : 'bg-red-500'}`}
-                                                                style={{ width: `${criteriaPercentage}%` }}
+                                                                style={{
+                                                                    width: `${criteriaPercentage}%`,
+                                                                }}
                                                             />
                                                         </div>
                                                         {score.comments && (
@@ -476,8 +663,14 @@ export default function Show({ portfolio, categories, uploadedCategoryIds, progr
                                         {/* Overall Comments */}
                                         {evaluation.overall_comments && (
                                             <div className="rounded-lg border bg-muted/50 p-4">
-                                                <h4 className="mb-1.5 text-sm font-medium">Evaluator Comments</h4>
-                                                <p className="text-sm text-muted-foreground">{evaluation.overall_comments}</p>
+                                                <h4 className="mb-1.5 text-sm font-medium">
+                                                    Evaluator Comments
+                                                </h4>
+                                                <p className="text-sm text-muted-foreground">
+                                                    {
+                                                        evaluation.overall_comments
+                                                    }
+                                                </p>
                                             </div>
                                         )}
                                     </CardContent>
@@ -496,18 +689,27 @@ export default function Show({ portfolio, categories, uploadedCategoryIds, progr
                             <Card key={category.id}>
                                 <CardHeader>
                                     <div className="flex items-center gap-2">
-                                        <CardTitle className="text-base">{category.name}</CardTitle>
+                                        <CardTitle className="text-base">
+                                            {category.name}
+                                        </CardTitle>
                                         {category.is_required && (
-                                            <Badge variant="destructive" className="text-[10px]">
+                                            <Badge
+                                                variant="destructive"
+                                                className="text-[10px]"
+                                            >
                                                 Required
                                             </Badge>
                                         )}
-                                        {uploadedCategoryIds.includes(category.id) && (
-                                            <CheckCircle2 className="h-4 w-4 text-green-600" />
-                                        )}
+                                        {uploadedCategoryIds.includes(
+                                            category.id,
+                                        ) && (
+                                                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                                            )}
                                     </div>
                                     {category.description && (
-                                        <CardDescription>{category.description}</CardDescription>
+                                        <CardDescription>
+                                            {category.description}
+                                        </CardDescription>
                                     )}
                                 </CardHeader>
 
@@ -523,17 +725,35 @@ export default function Show({ portfolio, categories, uploadedCategoryIds, progr
                                                     <div className="flex items-center gap-3">
                                                         <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
                                                         <div>
-                                                            <p className="text-sm font-medium">{doc.file_name}</p>
+                                                            <p className="text-sm font-medium">
+                                                                {doc.file_name}
+                                                            </p>
                                                             <p className="text-xs text-muted-foreground">
-                                                                {formatFileSize(doc.file_size)} · {doc.mime_type}
+                                                                {formatFileSize(
+                                                                    doc.file_size,
+                                                                )}{' '}
+                                                                ·{' '}
+                                                                {doc.mime_type}
                                                             </p>
                                                         </div>
                                                     </div>
                                                     <div className="flex items-center gap-1">
-                                                        <Button variant="ghost" size="sm" onClick={() => setPreviewDoc(doc)}>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={() =>
+                                                                setPreviewDoc(
+                                                                    doc,
+                                                                )
+                                                            }
+                                                        >
                                                             <Eye className="h-4 w-4" />
                                                         </Button>
-                                                        <Button variant="ghost" size="sm" asChild>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            asChild
+                                                        >
                                                             <a
                                                                 href={`/documents/${doc.id}/download`}
                                                                 title={`Download ${doc.file_name}`}
@@ -547,7 +767,11 @@ export default function Show({ portfolio, categories, uploadedCategoryIds, progr
                                                                 variant="ghost"
                                                                 size="sm"
                                                                 className="text-destructive hover:text-destructive"
-                                                                onClick={() => handleDeleteDocument(doc)}
+                                                                onClick={() =>
+                                                                    handleDeleteDocument(
+                                                                        doc,
+                                                                    )
+                                                                }
                                                             >
                                                                 <Trash2 className="h-4 w-4" />
                                                             </Button>
@@ -557,7 +781,9 @@ export default function Show({ portfolio, categories, uploadedCategoryIds, progr
                                             ))}
                                         </div>
                                     ) : (
-                                        <p className="text-sm text-muted-foreground">No documents uploaded yet.</p>
+                                        <p className="text-sm text-muted-foreground">
+                                            No documents uploaded yet.
+                                        </p>
                                     )}
 
                                     {/* Upload form */}
@@ -585,9 +811,12 @@ export default function Show({ portfolio, categories, uploadedCategoryIds, progr
                         </Link>
                     </Button>
 
-                    {editable && (
-                        progress.percentage >= 100 ? (
-                            <AlertDialog open={submitDialogOpen} onOpenChange={setSubmitDialogOpen}>
+                    {editable &&
+                        (progress.percentage >= 100 ? (
+                            <AlertDialog
+                                open={submitDialogOpen}
+                                onOpenChange={setSubmitDialogOpen}
+                            >
                                 <AlertDialogTrigger asChild>
                                     <Button>
                                         <CheckCircle2 className="mr-1.5 h-4 w-4" />
@@ -596,26 +825,35 @@ export default function Show({ portfolio, categories, uploadedCategoryIds, progr
                                 </AlertDialogTrigger>
                                 <AlertDialogContent>
                                     <AlertDialogHeader>
-                                        <AlertDialogTitle>Submit this portfolio?</AlertDialogTitle>
+                                        <AlertDialogTitle>
+                                            Submit this portfolio?
+                                        </AlertDialogTitle>
                                         <AlertDialogDescription>
-                                            You will not be able to make changes until it is reviewed.
+                                            You will not be able to make changes
+                                            until it is reviewed.
                                         </AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>
-                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                        <AlertDialogAction onClick={handleSubmitPortfolio}>
+                                        <AlertDialogCancel>
+                                            Cancel
+                                        </AlertDialogCancel>
+                                        <AlertDialogAction
+                                            onClick={handleSubmitPortfolio}
+                                        >
                                             Submit Portfolio
                                         </AlertDialogAction>
                                     </AlertDialogFooter>
                                 </AlertDialogContent>
                             </AlertDialog>
                         ) : (
-                            <Button disabled title="Upload all required documents before submitting">
+                            <Button
+                                disabled
+                                title="Upload all required documents before submitting"
+                            >
                                 <CheckCircle2 className="mr-1.5 h-4 w-4" />
                                 Submit Portfolio
                             </Button>
-                        )
-                    )}
+                        ))}
                 </div>
             </div>
 
@@ -623,7 +861,9 @@ export default function Show({ portfolio, categories, uploadedCategoryIds, progr
                 open={previewDoc !== null}
                 onOpenChange={(open) => !open && setPreviewDoc(null)}
                 document={previewDoc}
-                downloadUrl={previewDoc ? `/documents/${previewDoc.id}/download` : ''}
+                downloadUrl={
+                    previewDoc ? `/documents/${previewDoc.id}/download` : ''
+                }
             />
             <AlertDialog
                 open={deleteDialogOpen}
@@ -636,7 +876,9 @@ export default function Show({ portfolio, categories, uploadedCategoryIds, progr
             >
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Delete this document?</AlertDialogTitle>
+                        <AlertDialogTitle>
+                            Delete this document?
+                        </AlertDialogTitle>
                         <AlertDialogDescription>
                             {documentToDelete
                                 ? `"${documentToDelete.file_name}" will be permanently removed.`

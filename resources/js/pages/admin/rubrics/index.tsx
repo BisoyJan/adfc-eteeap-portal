@@ -42,14 +42,18 @@ function truncate(text: string | null, length: number = 60): string {
 }
 
 export default function Index({ criteria }: Props) {
-    const { flash } = usePage<{ flash: { success?: string; error?: string } }>().props;
-    const [criteriaToDelete, setCriteriaToDelete] = useState<RubricCriteria | null>(null);
+    const { flash } = usePage<{ flash: { success?: string; error?: string } }>()
+        .props;
+    const [criteriaToDelete, setCriteriaToDelete] =
+        useState<RubricCriteria | null>(null);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
     const totalMaxScore = criteria.reduce((sum, c) => sum + c.max_score, 0);
 
     function handleToggleActive(item: RubricCriteria) {
-        router.post(`/admin/rubrics/${item.id}/toggle-active`);
+        router.post(`/admin/rubrics/${item.id}/toggle-active`, {}, {
+            preserveScroll: true,
+        });
     }
 
     function handleDelete(item: RubricCriteria) {
@@ -63,6 +67,7 @@ export default function Index({ criteria }: Props) {
         }
 
         router.delete(`/admin/rubrics/${criteriaToDelete.id}`, {
+            preserveScroll: true,
             onFinish: () => {
                 setDeleteDialogOpen(false);
                 setCriteriaToDelete(null);
@@ -76,7 +81,10 @@ export default function Index({ criteria }: Props) {
 
             <div className="space-y-6 p-6">
                 <div className="flex items-center justify-between">
-                    <Heading title="Rubric Criteria" description="Manage evaluation rubric criteria for portfolio assessments" />
+                    <Heading
+                        title="Rubric Criteria"
+                        description="Manage evaluation rubric criteria for portfolio assessments"
+                    />
                     <Button asChild>
                         <Link href="/admin/rubrics/create">
                             <Plus className="mr-2 h-4 w-4" />
@@ -101,43 +109,92 @@ export default function Index({ criteria }: Props) {
                     <table className="w-full text-sm">
                         <thead className="border-b bg-muted/50">
                             <tr>
-                                <th className="px-4 py-3 text-left font-medium">Sort Order</th>
-                                <th className="px-4 py-3 text-left font-medium">Name</th>
-                                <th className="px-4 py-3 text-left font-medium">Description</th>
-                                <th className="px-4 py-3 text-left font-medium">Max Score</th>
-                                <th className="px-4 py-3 text-left font-medium">Status</th>
-                                <th className="px-4 py-3 text-right font-medium">Actions</th>
+                                <th className="px-4 py-3 text-left font-medium">
+                                    Sort Order
+                                </th>
+                                <th className="px-4 py-3 text-left font-medium">
+                                    Name
+                                </th>
+                                <th className="px-4 py-3 text-left font-medium">
+                                    Description
+                                </th>
+                                <th className="px-4 py-3 text-left font-medium">
+                                    Max Score
+                                </th>
+                                <th className="px-4 py-3 text-left font-medium">
+                                    Status
+                                </th>
+                                <th className="px-4 py-3 text-right font-medium">
+                                    Actions
+                                </th>
                             </tr>
                         </thead>
                         <tbody className="divide-y">
                             {criteria.map((item) => (
                                 <tr key={item.id} className="hover:bg-muted/50">
-                                    <td className="px-4 py-3 text-muted-foreground">{item.sort_order}</td>
-                                    <td className="px-4 py-3 font-medium">{item.name}</td>
-                                    <td className="px-4 py-3 text-muted-foreground">{truncate(item.description)}</td>
-                                    <td className="px-4 py-3">{item.max_score}</td>
+                                    <td className="px-4 py-3 text-muted-foreground">
+                                        {item.sort_order}
+                                    </td>
+                                    <td className="px-4 py-3 font-medium">
+                                        {item.name}
+                                    </td>
+                                    <td className="px-4 py-3 text-muted-foreground">
+                                        {truncate(item.description)}
+                                    </td>
                                     <td className="px-4 py-3">
-                                        <Badge variant={item.is_active ? 'default' : 'secondary'}>
-                                            {item.is_active ? 'Active' : 'Inactive'}
+                                        {item.max_score}
+                                    </td>
+                                    <td className="px-4 py-3">
+                                        <Badge
+                                            variant={
+                                                item.is_active
+                                                    ? 'default'
+                                                    : 'secondary'
+                                            }
+                                        >
+                                            {item.is_active
+                                                ? 'Active'
+                                                : 'Inactive'}
                                         </Badge>
                                     </td>
                                     <td className="px-4 py-3 text-right">
                                         <div className="flex items-center justify-end gap-2">
-                                            <Button variant="ghost" size="sm" asChild>
-                                                <Link href={`/admin/rubrics/${item.id}/edit`}>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                asChild
+                                            >
+                                                <Link
+                                                    href={`/admin/rubrics/${item.id}/edit`}
+                                                >
                                                     <Pencil className="mr-1 h-4 w-4" />
                                                     Edit
                                                 </Link>
                                             </Button>
-                                            <Button variant="ghost" size="sm" onClick={() => handleToggleActive(item)}>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() =>
+                                                    handleToggleActive(item)
+                                                }
+                                            >
                                                 {item.is_active ? (
                                                     <ToggleRight className="mr-1 h-4 w-4" />
                                                 ) : (
                                                     <ToggleLeft className="mr-1 h-4 w-4" />
                                                 )}
-                                                {item.is_active ? 'Deactivate' : 'Activate'}
+                                                {item.is_active
+                                                    ? 'Deactivate'
+                                                    : 'Activate'}
                                             </Button>
-                                            <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => handleDelete(item)}>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="text-destructive hover:text-destructive"
+                                                onClick={() =>
+                                                    handleDelete(item)
+                                                }
+                                            >
                                                 <Trash2 className="mr-1 h-4 w-4" />
                                                 Delete
                                             </Button>
@@ -147,8 +204,12 @@ export default function Index({ criteria }: Props) {
                             ))}
                             {criteria.length === 0 && (
                                 <tr>
-                                    <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
-                                        No rubric criteria found. Create one to get started.
+                                    <td
+                                        colSpan={6}
+                                        className="px-4 py-8 text-center text-muted-foreground"
+                                    >
+                                        No rubric criteria found. Create one to
+                                        get started.
                                     </td>
                                 </tr>
                             )}
@@ -156,8 +217,15 @@ export default function Index({ criteria }: Props) {
                         {criteria.length > 0 && (
                             <tfoot className="border-t bg-muted/50">
                                 <tr>
-                                    <td colSpan={3} className="px-4 py-3 text-right font-medium">Total Max Score</td>
-                                    <td className="px-4 py-3 font-medium">{totalMaxScore}</td>
+                                    <td
+                                        colSpan={3}
+                                        className="px-4 py-3 text-right font-medium"
+                                    >
+                                        Total Max Score
+                                    </td>
+                                    <td className="px-4 py-3 font-medium">
+                                        {totalMaxScore}
+                                    </td>
                                     <td colSpan={2} />
                                 </tr>
                             </tfoot>
@@ -177,7 +245,9 @@ export default function Index({ criteria }: Props) {
             >
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Delete this criteria?</AlertDialogTitle>
+                        <AlertDialogTitle>
+                            Delete this criteria?
+                        </AlertDialogTitle>
                         <AlertDialogDescription>
                             {criteriaToDelete
                                 ? `"${criteriaToDelete.name}" will be permanently removed.`

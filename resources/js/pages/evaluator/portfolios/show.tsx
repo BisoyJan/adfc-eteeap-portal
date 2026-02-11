@@ -1,5 +1,14 @@
 import { Head, Link, useForm } from '@inertiajs/react';
-import { ArrowLeft, Download, Eye, FileText, AlertTriangle, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
+import {
+    ArrowLeft,
+    Download,
+    Eye,
+    FileText,
+    AlertTriangle,
+    CheckCircle2,
+    Clock,
+    AlertCircle,
+} from 'lucide-react';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import FilePreviewDialog from '@/components/file-preview-dialog';
@@ -17,10 +26,22 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
@@ -147,7 +168,10 @@ function isPastDue(dateString: string): boolean {
     return new Date(dateString) < new Date();
 }
 
-const portfolioStatusBadgeVariant: Record<string, 'destructive' | 'default' | 'secondary' | 'outline'> = {
+const portfolioStatusBadgeVariant: Record<
+    string,
+    'destructive' | 'default' | 'secondary' | 'outline'
+> = {
     draft: 'secondary',
     submitted: 'default',
     under_review: 'outline',
@@ -159,51 +183,81 @@ const portfolioStatusBadgeVariant: Record<string, 'destructive' | 'default' | 's
 
 const portfolioStatusBadgeClassName: Record<string, string> = {
     under_review: 'border-yellow-500 text-yellow-700 dark:text-yellow-400',
-    evaluated: 'bg-blue-100 text-blue-800 hover:bg-blue-100/80 dark:bg-blue-900 dark:text-blue-200',
-    approved: 'bg-green-100 text-green-800 hover:bg-green-100/80 dark:bg-green-900 dark:text-green-200',
+    evaluated:
+        'bg-blue-100 text-blue-800 hover:bg-blue-100/80 dark:bg-blue-900 dark:text-blue-200',
+    approved:
+        'bg-green-100 text-green-800 hover:bg-green-100/80 dark:bg-green-900 dark:text-green-200',
 };
 
-function getAssignmentBadgeProps(status: string): { variant: 'default' | 'secondary' | 'outline'; className?: string } {
+function getAssignmentBadgeProps(status: string): {
+    variant: 'default' | 'secondary' | 'outline';
+    className?: string;
+} {
     switch (status) {
         case 'pending':
             return { variant: 'secondary' };
         case 'in_progress':
-            return { variant: 'outline', className: 'border-amber-500 text-amber-700 dark:text-amber-400' };
+            return {
+                variant: 'outline',
+                className:
+                    'border-amber-500 text-amber-700 dark:text-amber-400',
+            };
         case 'completed':
-            return { variant: 'default', className: 'bg-green-100 text-green-800 hover:bg-green-100/80 dark:bg-green-900 dark:text-green-200' };
+            return {
+                variant: 'default',
+                className:
+                    'bg-green-100 text-green-800 hover:bg-green-100/80 dark:bg-green-900 dark:text-green-200',
+            };
         default:
             return { variant: 'outline' };
     }
 }
 
-const recommendationBadgeVariant: Record<string, 'default' | 'destructive' | 'secondary' | 'outline'> = {
+const recommendationBadgeVariant: Record<
+    string,
+    'default' | 'destructive' | 'secondary' | 'outline'
+> = {
     approve: 'default',
     request_revision: 'secondary',
     reject: 'destructive',
 };
 
 const recommendationBadgeClassName: Record<string, string> = {
-    approve: 'bg-green-100 text-green-800 hover:bg-green-100/80 dark:bg-green-900 dark:text-green-200',
+    approve:
+        'bg-green-100 text-green-800 hover:bg-green-100/80 dark:bg-green-900 dark:text-green-200',
 };
 
-export default function Show({ assignment, categories, uploadedCategoryIds, progress, criteria, evaluation }: Props) {
+export default function Show({
+    assignment,
+    categories,
+    uploadedCategoryIds,
+    progress,
+    criteria,
+    evaluation,
+}: Props) {
     const portfolio = assignment.portfolio;
     const isSubmitted = evaluation?.status === 'submitted';
     const isCompleted = assignment.status === 'completed';
     const [previewDoc, setPreviewDoc] = useState<Document | null>(null);
     const [submitDialogOpen, setSubmitDialogOpen] = useState(false);
-    const pastDue = assignment.due_date && isPastDue(assignment.due_date) && !isCompleted;
+    const pastDue =
+        assignment.due_date && isPastDue(assignment.due_date) && !isCompleted;
     const assignmentBadge = getAssignmentBadgeProps(assignment.status);
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Dashboard', href: '/dashboard' },
         { title: 'Assigned Reviews', href: '/evaluator/portfolios' },
-        { title: portfolio.title, href: `/evaluator/portfolios/${assignment.id}` },
+        {
+            title: portfolio.title,
+            href: `/evaluator/portfolios/${assignment.id}`,
+        },
     ];
 
     const form = useForm({
         scores: criteria.map((c) => {
-            const existingScore = evaluation?.scores.find((s) => s.rubric_criteria_id === c.id);
+            const existingScore = evaluation?.scores.find(
+                (s) => s.rubric_criteria_id === c.id,
+            );
             return {
                 criteria_id: c.id,
                 score: existingScore?.score ?? 0,
@@ -216,7 +270,9 @@ export default function Show({ assignment, categories, uploadedCategoryIds, prog
 
     function handleSaveDraft(e: FormEvent) {
         e.preventDefault();
-        form.post(`/evaluator/portfolios/${assignment.id}/save`);
+        form.post(`/evaluator/portfolios/${assignment.id}/save`, {
+            preserveScroll: true,
+        });
     }
 
     function handleSubmitEvaluation(e: FormEvent) {
@@ -226,18 +282,25 @@ export default function Show({ assignment, categories, uploadedCategoryIds, prog
 
     function handleConfirmSubmitEvaluation() {
         form.post(`/evaluator/portfolios/${assignment.id}/submit`, {
+            preserveScroll: true,
             onFinish: () => setSubmitDialogOpen(false),
         });
     }
 
-    function updateScore(index: number, field: 'score' | 'comments', value: number | string) {
+    function updateScore(
+        index: number,
+        field: 'score' | 'comments',
+        value: number | string,
+    ) {
         const updated = [...form.data.scores];
         updated[index] = { ...updated[index], [field]: value };
         form.setData('scores', updated);
     }
 
     function getDocumentsForCategory(categoryId: number): Document[] {
-        return portfolio.documents.filter((doc) => doc.document_category_id === categoryId);
+        return portfolio.documents.filter(
+            (doc) => doc.document_category_id === categoryId,
+        );
     }
 
     function computeTotalScore(): number {
@@ -262,17 +325,30 @@ export default function Show({ assignment, categories, uploadedCategoryIds, prog
                             </Link>
                         </Button>
                         <div>
-                            <Heading title={portfolio.title} description={`Applicant: ${portfolio.user.name} (${portfolio.user.email})`} />
+                            <Heading
+                                title={portfolio.title}
+                                description={`Applicant: ${portfolio.user.name} (${portfolio.user.email})`}
+                            />
                         </div>
                     </div>
                     <div className="flex items-center gap-3">
                         <Badge
-                            variant={portfolioStatusBadgeVariant[portfolio.status] ?? 'outline'}
-                            className={portfolioStatusBadgeClassName[portfolio.status] ?? ''}
+                            variant={
+                                portfolioStatusBadgeVariant[portfolio.status] ??
+                                'outline'
+                            }
+                            className={
+                                portfolioStatusBadgeClassName[
+                                portfolio.status
+                                ] ?? ''
+                            }
                         >
                             {formatStatus(portfolio.status)}
                         </Badge>
-                        <Badge variant={assignmentBadge.variant} className={assignmentBadge.className}>
+                        <Badge
+                            variant={assignmentBadge.variant}
+                            className={assignmentBadge.className}
+                        >
                             {formatStatus(assignment.status)}
                         </Badge>
                     </div>
@@ -280,8 +356,14 @@ export default function Show({ assignment, categories, uploadedCategoryIds, prog
 
                 {/* Due date warning */}
                 {assignment.due_date && (
-                    <div className={`flex items-center gap-2 text-sm ${pastDue ? 'font-medium text-destructive' : 'text-muted-foreground'}`}>
-                        {pastDue ? <AlertTriangle className="h-4 w-4" /> : <Clock className="h-4 w-4" />}
+                    <div
+                        className={`flex items-center gap-2 text-sm ${pastDue ? 'font-medium text-destructive' : 'text-muted-foreground'}`}
+                    >
+                        {pastDue ? (
+                            <AlertTriangle className="h-4 w-4" />
+                        ) : (
+                            <Clock className="h-4 w-4" />
+                        )}
                         <span>Due: {formatDate(assignment.due_date)}</span>
                         {pastDue && <span>(Past due)</span>}
                     </div>
@@ -293,8 +375,12 @@ export default function Show({ assignment, categories, uploadedCategoryIds, prog
                         <CardContent className="flex items-start gap-3 pt-6">
                             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
                             <div>
-                                <p className="text-sm font-medium text-amber-800 dark:text-amber-200">Admin Notes</p>
-                                <p className="text-sm text-amber-700 dark:text-amber-300">{portfolio.admin_notes}</p>
+                                <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
+                                    Admin Notes
+                                </p>
+                                <p className="text-sm text-amber-700 dark:text-amber-300">
+                                    {portfolio.admin_notes}
+                                </p>
                             </div>
                         </CardContent>
                     </Card>
@@ -309,14 +395,19 @@ export default function Show({ assignment, categories, uploadedCategoryIds, prog
                             <CardContent className="pt-6">
                                 <div className="flex items-center justify-between text-sm">
                                     <span className="font-medium">
-                                        Required Documents: {progress.completed}/{progress.required}
+                                        Required Documents: {progress.completed}
+                                        /{progress.required}
                                     </span>
-                                    <span className="text-muted-foreground">{progress.percentage}%</span>
+                                    <span className="text-muted-foreground">
+                                        {progress.percentage}%
+                                    </span>
                                 </div>
                                 <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-secondary">
                                     <div
-                                        className="bg-primary h-full rounded-full transition-all duration-300"
-                                        style={{ width: `${progress.percentage}%` }}
+                                        className="h-full rounded-full bg-primary transition-all duration-300"
+                                        style={{
+                                            width: `${progress.percentage}%`,
+                                        }}
                                     />
                                 </div>
                             </CardContent>
@@ -325,25 +416,38 @@ export default function Show({ assignment, categories, uploadedCategoryIds, prog
                         {/* Section 3: Documents by Category */}
                         <div className="space-y-4">
                             {categories.map((category) => {
-                                const docs = getDocumentsForCategory(category.id);
-                                const isMissing = category.is_required && !uploadedCategoryIds.includes(category.id);
+                                const docs = getDocumentsForCategory(
+                                    category.id,
+                                );
+                                const isMissing =
+                                    category.is_required &&
+                                    !uploadedCategoryIds.includes(category.id);
 
                                 return (
                                     <Card key={category.id}>
                                         <CardHeader>
                                             <div className="flex items-center gap-2">
-                                                <CardTitle className="text-base">{category.name}</CardTitle>
+                                                <CardTitle className="text-base">
+                                                    {category.name}
+                                                </CardTitle>
                                                 {category.is_required && (
-                                                    <Badge variant="destructive" className="text-[10px]">
+                                                    <Badge
+                                                        variant="destructive"
+                                                        className="text-[10px]"
+                                                    >
                                                         Required
                                                     </Badge>
                                                 )}
-                                                {uploadedCategoryIds.includes(category.id) && (
-                                                    <CheckCircle2 className="h-4 w-4 text-green-600" />
-                                                )}
+                                                {uploadedCategoryIds.includes(
+                                                    category.id,
+                                                ) && (
+                                                        <CheckCircle2 className="h-4 w-4 text-green-600" />
+                                                    )}
                                             </div>
                                             {category.description && (
-                                                <CardDescription>{category.description}</CardDescription>
+                                                <CardDescription>
+                                                    {category.description}
+                                                </CardDescription>
                                             )}
                                         </CardHeader>
 
@@ -357,17 +461,39 @@ export default function Show({ assignment, categories, uploadedCategoryIds, prog
                                                         <div className="flex items-center gap-3">
                                                             <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
                                                             <div>
-                                                                <p className="text-sm font-medium">{doc.file_name}</p>
+                                                                <p className="text-sm font-medium">
+                                                                    {
+                                                                        doc.file_name
+                                                                    }
+                                                                </p>
                                                                 <p className="text-xs text-muted-foreground">
-                                                                    {formatFileSize(doc.file_size)} · {doc.mime_type}
+                                                                    {formatFileSize(
+                                                                        doc.file_size,
+                                                                    )}{' '}
+                                                                    ·{' '}
+                                                                    {
+                                                                        doc.mime_type
+                                                                    }
                                                                 </p>
                                                             </div>
                                                         </div>
                                                         <div className="flex items-center gap-1">
-                                                            <Button variant="ghost" size="sm" onClick={() => setPreviewDoc(doc)}>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                onClick={() =>
+                                                                    setPreviewDoc(
+                                                                        doc,
+                                                                    )
+                                                                }
+                                                            >
                                                                 <Eye className="h-4 w-4" />
                                                             </Button>
-                                                            <Button variant="ghost" size="sm" asChild>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                asChild
+                                                            >
                                                                 <a
                                                                     href={`/documents/${doc.id}/download`}
                                                                     title={`Download ${doc.file_name}`}
@@ -382,10 +508,15 @@ export default function Show({ assignment, categories, uploadedCategoryIds, prog
                                             ) : isMissing ? (
                                                 <div className="flex items-center gap-2 rounded-md border border-dashed border-amber-300 bg-amber-50 px-3 py-3 text-sm text-amber-700 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-300">
                                                     <AlertTriangle className="h-4 w-4 shrink-0" />
-                                                    <span>Required document not uploaded by applicant.</span>
+                                                    <span>
+                                                        Required document not
+                                                        uploaded by applicant.
+                                                    </span>
                                                 </div>
                                             ) : (
-                                                <p className="text-sm text-muted-foreground">No documents uploaded.</p>
+                                                <p className="text-sm text-muted-foreground">
+                                                    No documents uploaded.
+                                                </p>
                                             )}
                                         </CardContent>
                                     </Card>
@@ -402,22 +533,38 @@ export default function Show({ assignment, categories, uploadedCategoryIds, prog
                                 <CardHeader>
                                     <CardTitle>Evaluation Summary</CardTitle>
                                     <CardDescription>
-                                        Submitted {evaluation.submitted_at ? formatDate(evaluation.submitted_at) : '—'}
+                                        Submitted{' '}
+                                        {evaluation.submitted_at
+                                            ? formatDate(
+                                                evaluation.submitted_at,
+                                            )
+                                            : '—'}
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
                                     {criteria.map((c) => {
-                                        const score = evaluation.scores.find((s) => s.rubric_criteria_id === c.id);
+                                        const score = evaluation.scores.find(
+                                            (s) =>
+                                                s.rubric_criteria_id === c.id,
+                                        );
                                         return (
-                                            <div key={c.id} className="space-y-1">
+                                            <div
+                                                key={c.id}
+                                                className="space-y-1"
+                                            >
                                                 <div className="flex items-center justify-between text-sm">
-                                                    <span className="font-medium">{c.name}</span>
+                                                    <span className="font-medium">
+                                                        {c.name}
+                                                    </span>
                                                     <span className="font-mono text-sm">
-                                                        {score?.score ?? 0} / {c.max_score}
+                                                        {score?.score ?? 0} /{' '}
+                                                        {c.max_score}
                                                     </span>
                                                 </div>
                                                 {score?.comments && (
-                                                    <p className="text-xs text-muted-foreground">{score.comments}</p>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        {score.comments}
+                                                    </p>
                                                 )}
                                                 <Separator />
                                             </div>
@@ -426,14 +573,31 @@ export default function Show({ assignment, categories, uploadedCategoryIds, prog
 
                                     {/* Total score */}
                                     <div className="flex items-center justify-between rounded-md bg-muted px-3 py-2">
-                                        <span className="text-sm font-semibold">Total Score</span>
+                                        <span className="text-sm font-semibold">
+                                            Total Score
+                                        </span>
                                         <span className="font-mono text-sm font-semibold">
-                                            {evaluation.total_score ?? 0} / {evaluation.max_possible_score ?? 0}
-                                            {evaluation.total_score && evaluation.max_possible_score && Number(evaluation.max_possible_score) > 0 && (
-                                                <span className="ml-2 text-muted-foreground">
-                                                    ({Math.round((Number(evaluation.total_score) / Number(evaluation.max_possible_score)) * 100)}%)
-                                                </span>
-                                            )}
+                                            {evaluation.total_score ?? 0} /{' '}
+                                            {evaluation.max_possible_score ?? 0}
+                                            {evaluation.total_score &&
+                                                evaluation.max_possible_score &&
+                                                Number(
+                                                    evaluation.max_possible_score,
+                                                ) > 0 && (
+                                                    <span className="ml-2 text-muted-foreground">
+                                                        (
+                                                        {Math.round(
+                                                            (Number(
+                                                                evaluation.total_score,
+                                                            ) /
+                                                                Number(
+                                                                    evaluation.max_possible_score,
+                                                                )) *
+                                                            100,
+                                                        )}
+                                                        %)
+                                                    </span>
+                                                )}
                                         </span>
                                     </div>
 
@@ -441,22 +605,42 @@ export default function Show({ assignment, categories, uploadedCategoryIds, prog
 
                                     {/* Overall comments */}
                                     <div className="space-y-1">
-                                        <p className="text-sm font-medium">Overall Comments</p>
-                                        <p className="text-sm text-muted-foreground">{evaluation.overall_comments || '—'}</p>
+                                        <p className="text-sm font-medium">
+                                            Overall Comments
+                                        </p>
+                                        <p className="text-sm text-muted-foreground">
+                                            {evaluation.overall_comments || '—'}
+                                        </p>
                                     </div>
 
                                     {/* Recommendation */}
                                     <div className="space-y-1">
-                                        <p className="text-sm font-medium">Recommendation</p>
+                                        <p className="text-sm font-medium">
+                                            Recommendation
+                                        </p>
                                         {evaluation.recommendation ? (
                                             <Badge
-                                                variant={recommendationBadgeVariant[evaluation.recommendation] ?? 'outline'}
-                                                className={recommendationBadgeClassName[evaluation.recommendation] ?? ''}
+                                                variant={
+                                                    recommendationBadgeVariant[
+                                                    evaluation
+                                                        .recommendation
+                                                    ] ?? 'outline'
+                                                }
+                                                className={
+                                                    recommendationBadgeClassName[
+                                                    evaluation
+                                                        .recommendation
+                                                    ] ?? ''
+                                                }
                                             >
-                                                {formatStatus(evaluation.recommendation)}
+                                                {formatStatus(
+                                                    evaluation.recommendation,
+                                                )}
                                             </Badge>
                                         ) : (
-                                            <span className="text-sm text-muted-foreground">—</span>
+                                            <span className="text-sm text-muted-foreground">
+                                                —
+                                            </span>
                                         )}
                                     </div>
                                 </CardContent>
@@ -466,17 +650,30 @@ export default function Show({ assignment, categories, uploadedCategoryIds, prog
                             <Card>
                                 <CardHeader>
                                     <CardTitle>Evaluation Scoring</CardTitle>
-                                    <CardDescription>Score the portfolio using the rubric criteria below.</CardDescription>
+                                    <CardDescription>
+                                        Score the portfolio using the rubric
+                                        criteria below.
+                                    </CardDescription>
                                 </CardHeader>
                                 <CardContent>
-                                    <form className="space-y-6" onSubmit={handleSubmitEvaluation}>
+                                    <form
+                                        className="space-y-6"
+                                        onSubmit={handleSubmitEvaluation}
+                                    >
                                         {/* Rubric criteria scores */}
                                         {criteria.map((c, index) => (
-                                            <div key={c.id} className="space-y-3">
+                                            <div
+                                                key={c.id}
+                                                className="space-y-3"
+                                            >
                                                 <div>
-                                                    <Label className="text-sm font-medium">{c.name}</Label>
+                                                    <Label className="text-sm font-medium">
+                                                        {c.name}
+                                                    </Label>
                                                     {c.description && (
-                                                        <p className="text-xs text-muted-foreground">{c.description}</p>
+                                                        <p className="text-xs text-muted-foreground">
+                                                            {c.description}
+                                                        </p>
                                                     )}
                                                 </div>
 
@@ -485,23 +682,62 @@ export default function Show({ assignment, categories, uploadedCategoryIds, prog
                                                         type="number"
                                                         min={0}
                                                         max={c.max_score}
-                                                        value={form.data.scores[index].score}
-                                                        onChange={(e) => updateScore(index, 'score', Number(e.target.value))}
+                                                        value={
+                                                            form.data.scores[
+                                                                index
+                                                            ].score
+                                                        }
+                                                        onChange={(e) =>
+                                                            updateScore(
+                                                                index,
+                                                                'score',
+                                                                Number(
+                                                                    e.target
+                                                                        .value,
+                                                                ),
+                                                            )
+                                                        }
                                                         className="w-20"
                                                     />
-                                                    <span className="text-sm text-muted-foreground">/ {c.max_score}</span>
+                                                    <span className="text-sm text-muted-foreground">
+                                                        / {c.max_score}
+                                                    </span>
                                                 </div>
-                                                <InputError message={form.errors[`scores.${index}.score` as keyof typeof form.errors]} />
+                                                <InputError
+                                                    message={
+                                                        form.errors[
+                                                        `scores.${index}.score` as keyof typeof form.errors
+                                                        ]
+                                                    }
+                                                />
 
                                                 <textarea
-                                                    className="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex min-h-15 w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                                                    className="flex min-h-15 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                                                     placeholder="Comments for this criteria (optional)..."
-                                                    value={form.data.scores[index].comments}
-                                                    onChange={(e) => updateScore(index, 'comments', e.target.value)}
+                                                    value={
+                                                        form.data.scores[index]
+                                                            .comments
+                                                    }
+                                                    onChange={(e) =>
+                                                        updateScore(
+                                                            index,
+                                                            'comments',
+                                                            e.target.value,
+                                                        )
+                                                    }
                                                 />
-                                                <InputError message={form.errors[`scores.${index}.comments` as keyof typeof form.errors]} />
+                                                <InputError
+                                                    message={
+                                                        form.errors[
+                                                        `scores.${index}.comments` as keyof typeof form.errors
+                                                        ]
+                                                    }
+                                                />
 
-                                                {index < criteria.length - 1 && <Separator />}
+                                                {index <
+                                                    criteria.length - 1 && (
+                                                        <Separator />
+                                                    )}
                                             </div>
                                         ))}
 
@@ -509,42 +745,75 @@ export default function Show({ assignment, categories, uploadedCategoryIds, prog
 
                                         {/* Running total */}
                                         <div className="flex items-center justify-between rounded-md bg-muted px-3 py-2">
-                                            <span className="text-sm font-medium">Current Total</span>
+                                            <span className="text-sm font-medium">
+                                                Current Total
+                                            </span>
                                             <span className="font-mono text-sm font-semibold">
-                                                {computeTotalScore()} / {computeMaxPossible()}
+                                                {computeTotalScore()} /{' '}
+                                                {computeMaxPossible()}
                                             </span>
                                         </div>
 
                                         {/* Overall comments */}
                                         <div className="space-y-1.5">
-                                            <Label htmlFor="overall_comments">Overall Comments</Label>
+                                            <Label htmlFor="overall_comments">
+                                                Overall Comments
+                                            </Label>
                                             <textarea
                                                 id="overall_comments"
-                                                className="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex min-h-24 w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                                                className="flex min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                                                 placeholder="Provide overall comments about this portfolio..."
-                                                value={form.data.overall_comments}
-                                                onChange={(e) => form.setData('overall_comments', e.target.value)}
+                                                value={
+                                                    form.data.overall_comments
+                                                }
+                                                onChange={(e) =>
+                                                    form.setData(
+                                                        'overall_comments',
+                                                        e.target.value,
+                                                    )
+                                                }
                                             />
-                                            <InputError message={form.errors.overall_comments} />
+                                            <InputError
+                                                message={
+                                                    form.errors.overall_comments
+                                                }
+                                            />
                                         </div>
 
                                         {/* Recommendation */}
                                         <div className="space-y-1.5">
-                                            <Label htmlFor="recommendation">Recommendation</Label>
+                                            <Label htmlFor="recommendation">
+                                                Recommendation
+                                            </Label>
                                             <Select
                                                 value={form.data.recommendation}
-                                                onValueChange={(value) => form.setData('recommendation', value)}
+                                                onValueChange={(value) =>
+                                                    form.setData(
+                                                        'recommendation',
+                                                        value,
+                                                    )
+                                                }
                                             >
                                                 <SelectTrigger id="recommendation">
                                                     <SelectValue placeholder="Select recommendation" />
                                                 </SelectTrigger>
                                                 <SelectContent>
-                                                    <SelectItem value="approve">Approve</SelectItem>
-                                                    <SelectItem value="request_revision">Request Revision</SelectItem>
-                                                    <SelectItem value="reject">Reject</SelectItem>
+                                                    <SelectItem value="approve">
+                                                        Approve
+                                                    </SelectItem>
+                                                    <SelectItem value="request_revision">
+                                                        Request Revision
+                                                    </SelectItem>
+                                                    <SelectItem value="reject">
+                                                        Reject
+                                                    </SelectItem>
                                                 </SelectContent>
                                             </Select>
-                                            <InputError message={form.errors.recommendation} />
+                                            <InputError
+                                                message={
+                                                    form.errors.recommendation
+                                                }
+                                            />
                                         </div>
 
                                         {/* Action buttons */}
@@ -555,10 +824,17 @@ export default function Show({ assignment, categories, uploadedCategoryIds, prog
                                                 disabled={form.processing}
                                                 onClick={handleSaveDraft}
                                             >
-                                                {form.processing ? 'Saving...' : 'Save Draft'}
+                                                {form.processing
+                                                    ? 'Saving...'
+                                                    : 'Save Draft'}
                                             </Button>
-                                            <Button type="submit" disabled={form.processing}>
-                                                {form.processing ? 'Submitting...' : 'Submit Evaluation'}
+                                            <Button
+                                                type="submit"
+                                                disabled={form.processing}
+                                            >
+                                                {form.processing
+                                                    ? 'Submitting...'
+                                                    : 'Submit Evaluation'}
                                             </Button>
                                         </div>
                                     </form>
@@ -568,14 +844,23 @@ export default function Show({ assignment, categories, uploadedCategoryIds, prog
                                     >
                                         <AlertDialogContent>
                                             <AlertDialogHeader>
-                                                <AlertDialogTitle>Submit this evaluation?</AlertDialogTitle>
+                                                <AlertDialogTitle>
+                                                    Submit this evaluation?
+                                                </AlertDialogTitle>
                                                 <AlertDialogDescription>
-                                                    This action cannot be undone once submitted.
+                                                    This action cannot be undone
+                                                    once submitted.
                                                 </AlertDialogDescription>
                                             </AlertDialogHeader>
                                             <AlertDialogFooter>
-                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                <AlertDialogAction onClick={handleConfirmSubmitEvaluation}>
+                                                <AlertDialogCancel>
+                                                    Cancel
+                                                </AlertDialogCancel>
+                                                <AlertDialogAction
+                                                    onClick={
+                                                        handleConfirmSubmitEvaluation
+                                                    }
+                                                >
                                                     Submit Evaluation
                                                 </AlertDialogAction>
                                             </AlertDialogFooter>
@@ -592,7 +877,9 @@ export default function Show({ assignment, categories, uploadedCategoryIds, prog
                 open={previewDoc !== null}
                 onOpenChange={(open) => !open && setPreviewDoc(null)}
                 document={previewDoc}
-                downloadUrl={previewDoc ? `/documents/${previewDoc.id}/download` : ''}
+                downloadUrl={
+                    previewDoc ? `/documents/${previewDoc.id}/download` : ''
+                }
             />
         </AppLayout>
     );

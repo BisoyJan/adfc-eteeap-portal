@@ -30,7 +30,10 @@ export default function Create() {
             <Head title="Create Portfolio" />
 
             <div className="space-y-6 p-6">
-                <Heading title="Create Portfolio" description="Start building your ETEEAP portfolio" />
+                <Heading
+                    title="Create Portfolio"
+                    description="Start building your ETEEAP portfolio"
+                />
 
                 <Card className="mx-auto max-w-2xl">
                     <CardHeader>
@@ -43,22 +46,30 @@ export default function Create() {
                                 <Input
                                     id="title"
                                     value={form.data.title}
-                                    onChange={(e) => form.setData('title', e.target.value)}
+                                    onChange={(e) =>
+                                        form.setData('title', e.target.value)
+                                    }
                                     placeholder="e.g., BSIT Portfolio - 2026"
                                     required
                                 />
                                 <p className="text-sm text-muted-foreground">
-                                    Give your portfolio a descriptive title (e.g., &ldquo;BSIT Portfolio - 2026&rdquo;)
+                                    Give your portfolio a descriptive title
+                                    (e.g., &ldquo;BSIT Portfolio - 2026&rdquo;)
                                 </p>
                                 <InputError message={form.errors.title} />
                             </div>
 
                             <div className="flex items-center gap-4">
-                                <Button type="submit" disabled={form.processing}>
+                                <Button
+                                    type="submit"
+                                    disabled={form.processing}
+                                >
                                     Create Portfolio
                                 </Button>
                                 <Button variant="outline" asChild>
-                                    <Link href="/applicant/portfolios">Cancel</Link>
+                                    <Link href="/applicant/portfolios">
+                                        Cancel
+                                    </Link>
                                 </Button>
                             </div>
                         </form>

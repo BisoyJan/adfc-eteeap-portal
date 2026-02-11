@@ -1,9 +1,23 @@
 import { Head, Link } from '@inertiajs/react';
-import { AlertCircle, ArrowRight, CheckCircle2, ClipboardList, Clock, FileText, Users } from 'lucide-react';
+import {
+    AlertCircle,
+    ArrowRight,
+    CheckCircle2,
+    ClipboardList,
+    Clock,
+    FileText,
+    Users,
+} from 'lucide-react';
 import Heading from '@/components/heading';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
@@ -47,9 +61,14 @@ interface Props {
     };
 }
 
-const breadcrumbs: BreadcrumbItem[] = [{ title: 'Dashboard', href: '/admin/dashboard' }];
+const breadcrumbs: BreadcrumbItem[] = [
+    { title: 'Dashboard', href: '/admin/dashboard' },
+];
 
-const statusBadgeVariant: Record<string, 'destructive' | 'default' | 'secondary' | 'outline'> = {
+const statusBadgeVariant: Record<
+    string,
+    'destructive' | 'default' | 'secondary' | 'outline'
+> = {
     draft: 'secondary',
     submitted: 'default',
     under_review: 'outline',
@@ -61,8 +80,10 @@ const statusBadgeVariant: Record<string, 'destructive' | 'default' | 'secondary'
 
 const statusBadgeClassName: Record<string, string> = {
     under_review: 'border-yellow-500 text-yellow-700 dark:text-yellow-400',
-    evaluated: 'bg-blue-100 text-blue-800 hover:bg-blue-100/80 dark:bg-blue-900 dark:text-blue-200',
-    approved: 'bg-green-100 text-green-800 hover:bg-green-100/80 dark:bg-green-900 dark:text-green-200',
+    evaluated:
+        'bg-blue-100 text-blue-800 hover:bg-blue-100/80 dark:bg-blue-900 dark:text-blue-200',
+    approved:
+        'bg-green-100 text-green-800 hover:bg-green-100/80 dark:bg-green-900 dark:text-green-200',
 };
 
 function formatDate(dateString: string): string {
@@ -95,13 +116,21 @@ function timeAgo(dateString: string): string {
     return formatDate(dateString);
 }
 
-export default function Dashboard({ portfoliosByStatus, recentSubmissions, evaluatorWorkload, stats }: Props) {
+export default function Dashboard({
+    portfoliosByStatus,
+    recentSubmissions,
+    evaluatorWorkload,
+    stats,
+}: Props) {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Admin Dashboard" />
 
             <div className="space-y-6 p-6">
-                <Heading title="Admin Dashboard" description="Overview of the ETEEAP evaluation system" />
+                <Heading
+                    title="Admin Dashboard"
+                    description="Overview of the ETEEAP evaluation system"
+                />
 
                 {/* Stats Row */}
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -111,7 +140,9 @@ export default function Dashboard({ portfoliosByStatus, recentSubmissions, evalu
                             <FileText className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">{stats.total_portfolios}</div>
+                            <div className="text-2xl font-bold">
+                                {stats.total_portfolios}
+                            </div>
                         </CardContent>
                     </Card>
 
@@ -121,7 +152,9 @@ export default function Dashboard({ portfoliosByStatus, recentSubmissions, evalu
                             <Users className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">{stats.total_applicants}</div>
+                            <div className="text-2xl font-bold">
+                                {stats.total_applicants}
+                            </div>
                         </CardContent>
                     </Card>
 
@@ -131,17 +164,23 @@ export default function Dashboard({ portfoliosByStatus, recentSubmissions, evalu
                             <ClipboardList className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">{stats.total_evaluators}</div>
+                            <div className="text-2xl font-bold">
+                                {stats.total_evaluators}
+                            </div>
                         </CardContent>
                     </Card>
 
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between pb-2">
                             <CardDescription>Needs Assignment</CardDescription>
-                            <AlertCircle className={`h-4 w-4 ${stats.pending_assignments > 0 ? 'text-orange-500' : 'text-muted-foreground'}`} />
+                            <AlertCircle
+                                className={`h-4 w-4 ${stats.pending_assignments > 0 ? 'text-orange-500' : 'text-muted-foreground'}`}
+                            />
                         </CardHeader>
                         <CardContent>
-                            <div className={`text-2xl font-bold ${stats.pending_assignments > 0 ? 'text-orange-600 dark:text-orange-400' : ''}`}>
+                            <div
+                                className={`text-2xl font-bold ${stats.pending_assignments > 0 ? 'text-orange-600 dark:text-orange-400' : ''}`}
+                            >
                                 {stats.pending_assignments}
                             </div>
                         </CardContent>
@@ -152,27 +191,39 @@ export default function Dashboard({ portfoliosByStatus, recentSubmissions, evalu
                 <Card>
                     <CardHeader>
                         <CardTitle>Portfolios by Status</CardTitle>
-                        <CardDescription>Breakdown of all portfolios across different stages</CardDescription>
+                        <CardDescription>
+                            Breakdown of all portfolios across different stages
+                        </CardDescription>
                     </CardHeader>
                     <CardContent>
                         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                            {Object.entries(portfoliosByStatus).map(([key, info]) => (
-                                <Link
-                                    key={key}
-                                    href={`/admin/portfolios?status=${key}`}
-                                    className="flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50"
-                                >
-                                    <div className="flex items-center gap-2">
-                                        <Badge
-                                            variant={statusBadgeVariant[key] ?? 'secondary'}
-                                            className={statusBadgeClassName[key] ?? ''}
-                                        >
-                                            {info.label}
-                                        </Badge>
-                                    </div>
-                                    <span className="text-lg font-semibold">{info.count}</span>
-                                </Link>
-                            ))}
+                            {Object.entries(portfoliosByStatus).map(
+                                ([key, info]) => (
+                                    <Link
+                                        key={key}
+                                        href={`/admin/portfolios?status=${key}`}
+                                        className="flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50"
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            <Badge
+                                                variant={
+                                                    statusBadgeVariant[key] ??
+                                                    'secondary'
+                                                }
+                                                className={
+                                                    statusBadgeClassName[key] ??
+                                                    ''
+                                                }
+                                            >
+                                                {info.label}
+                                            </Badge>
+                                        </div>
+                                        <span className="text-lg font-semibold">
+                                            {info.count}
+                                        </span>
+                                    </Link>
+                                ),
+                            )}
                         </div>
                     </CardContent>
                 </Card>
@@ -185,7 +236,10 @@ export default function Dashboard({ portfoliosByStatus, recentSubmissions, evalu
                             <div className="flex items-center justify-between">
                                 <div>
                                     <CardTitle>Recent Submissions</CardTitle>
-                                    <CardDescription>Latest portfolio submissions requiring attention</CardDescription>
+                                    <CardDescription>
+                                        Latest portfolio submissions requiring
+                                        attention
+                                    </CardDescription>
                                 </div>
                                 <Button variant="ghost" size="sm" asChild>
                                     <Link href="/admin/portfolios">
@@ -199,7 +253,9 @@ export default function Dashboard({ portfoliosByStatus, recentSubmissions, evalu
                             {recentSubmissions.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center py-8 text-center">
                                     <CheckCircle2 className="mb-2 h-8 w-8 text-muted-foreground" />
-                                    <p className="text-sm text-muted-foreground">No recent submissions</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        No recent submissions
+                                    </p>
                                 </div>
                             ) : (
                                 <div className="space-y-3">
@@ -211,19 +267,36 @@ export default function Dashboard({ portfoliosByStatus, recentSubmissions, evalu
                                         >
                                             <div className="flex items-start justify-between gap-2">
                                                 <div className="min-w-0 flex-1">
-                                                    <p className="truncate font-medium">{submission.title}</p>
-                                                    <p className="text-sm text-muted-foreground">{submission.user.name}</p>
+                                                    <p className="truncate font-medium">
+                                                        {submission.title}
+                                                    </p>
+                                                    <p className="text-sm text-muted-foreground">
+                                                        {submission.user.name}
+                                                    </p>
                                                 </div>
                                                 <Badge
-                                                    variant={statusBadgeVariant[submission.status] ?? 'secondary'}
-                                                    className={statusBadgeClassName[submission.status] ?? ''}
+                                                    variant={
+                                                        statusBadgeVariant[
+                                                        submission.status
+                                                        ] ?? 'secondary'
+                                                    }
+                                                    className={
+                                                        statusBadgeClassName[
+                                                        submission.status
+                                                        ] ?? ''
+                                                    }
                                                 >
-                                                    {formatStatus(submission.status)}
+                                                    {formatStatus(
+                                                        submission.status,
+                                                    )}
                                                 </Badge>
                                             </div>
                                             <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
                                                 <Clock className="h-3 w-3" />
-                                                {timeAgo(submission.submitted_at ?? submission.created_at)}
+                                                {timeAgo(
+                                                    submission.submitted_at ??
+                                                    submission.created_at,
+                                                )}
                                             </div>
                                         </Link>
                                     ))}
@@ -236,13 +309,17 @@ export default function Dashboard({ portfoliosByStatus, recentSubmissions, evalu
                     <Card>
                         <CardHeader>
                             <CardTitle>Evaluator Workload</CardTitle>
-                            <CardDescription>Current assignment distribution</CardDescription>
+                            <CardDescription>
+                                Current assignment distribution
+                            </CardDescription>
                         </CardHeader>
                         <CardContent>
                             {evaluatorWorkload.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center py-8 text-center">
                                     <Users className="mb-2 h-8 w-8 text-muted-foreground" />
-                                    <p className="text-sm text-muted-foreground">No evaluators registered yet</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        No evaluators registered yet
+                                    </p>
                                 </div>
                             ) : (
                                 <div className="space-y-1">
@@ -260,14 +337,31 @@ export default function Dashboard({ portfoliosByStatus, recentSubmissions, evalu
                                             className="flex items-center justify-between rounded-lg px-3 py-2 transition-colors hover:bg-muted/50"
                                         >
                                             <div className="min-w-0 flex-1">
-                                                <p className="truncate text-sm font-medium">{evaluator.name}</p>
-                                                <p className="truncate text-xs text-muted-foreground">{evaluator.email}</p>
+                                                <p className="truncate text-sm font-medium">
+                                                    {evaluator.name}
+                                                </p>
+                                                <p className="truncate text-xs text-muted-foreground">
+                                                    {evaluator.email}
+                                                </p>
                                             </div>
                                             <div className="flex gap-8">
-                                                <Badge variant={evaluator.active_assignments_count > 0 ? 'default' : 'secondary'}>
-                                                    {evaluator.active_assignments_count}
+                                                <Badge
+                                                    variant={
+                                                        evaluator.active_assignments_count >
+                                                            0
+                                                            ? 'default'
+                                                            : 'secondary'
+                                                    }
+                                                >
+                                                    {
+                                                        evaluator.active_assignments_count
+                                                    }
                                                 </Badge>
-                                                <Badge variant="outline">{evaluator.completed_assignments_count}</Badge>
+                                                <Badge variant="outline">
+                                                    {
+                                                        evaluator.completed_assignments_count
+                                                    }
+                                                </Badge>
                                             </div>
                                         </div>
                                     ))}

@@ -44,7 +44,9 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 function timeAgo(dateString: string): string {
-    const seconds = Math.floor((Date.now() - new Date(dateString).getTime()) / 1000);
+    const seconds = Math.floor(
+        (Date.now() - new Date(dateString).getTime()) / 1000,
+    );
     if (seconds < 60) return 'just now';
     const minutes = Math.floor(seconds / 60);
     if (minutes < 60) return `${minutes}m ago`;
@@ -57,11 +59,23 @@ function timeAgo(dateString: string): string {
 function getStatusBadge(status: string) {
     switch (status) {
         case 'pending':
-            return <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100">Pending</Badge>;
+            return (
+                <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100">
+                    Pending
+                </Badge>
+            );
         case 'in_progress':
-            return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">In Progress</Badge>;
+            return (
+                <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">
+                    In Progress
+                </Badge>
+            );
         case 'completed':
-            return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Completed</Badge>;
+            return (
+                <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
+                    Completed
+                </Badge>
+            );
         default:
             return <Badge variant="secondary">{status}</Badge>;
     }
@@ -71,7 +85,11 @@ function isOverdue(dueDate: string): boolean {
     return new Date(dueDate) < new Date();
 }
 
-export default function Dashboard({ stats, recentNotifications, pendingAssignments }: Props) {
+export default function Dashboard({
+    stats,
+    recentNotifications,
+    pendingAssignments,
+}: Props) {
     const { auth } = usePage<SharedData>().props;
 
     return (
@@ -80,15 +98,19 @@ export default function Dashboard({ stats, recentNotifications, pendingAssignmen
 
             <div className="space-y-6 p-6">
                 <div>
-                    <h1 className="text-2xl font-bold tracking-tight">Welcome back, {auth.user.name}</h1>
+                    <h1 className="text-2xl font-bold tracking-tight">
+                        Welcome back, {auth.user.name}
+                    </h1>
                 </div>
 
                 {/* Stats Cards */}
                 <div className="grid gap-4 md:grid-cols-3">
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <CardTitle className="text-sm font-medium">Total Assignments</CardTitle>
-                            <ClipboardList className="text-muted-foreground h-5 w-5" />
+                            <CardTitle className="text-sm font-medium">
+                                Total Assignments
+                            </CardTitle>
+                            <ClipboardList className="h-5 w-5 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
                             <p className="text-3xl font-bold">{stats.total}</p>
@@ -97,21 +119,29 @@ export default function Dashboard({ stats, recentNotifications, pendingAssignmen
 
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <CardTitle className="text-sm font-medium">Pending Reviews</CardTitle>
+                            <CardTitle className="text-sm font-medium">
+                                Pending Reviews
+                            </CardTitle>
                             <Clock className="h-5 w-5 text-amber-500" />
                         </CardHeader>
                         <CardContent>
-                            <p className="text-3xl font-bold text-amber-600">{stats.pending + stats.in_progress}</p>
+                            <p className="text-3xl font-bold text-amber-600">
+                                {stats.pending + stats.in_progress}
+                            </p>
                         </CardContent>
                     </Card>
 
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <CardTitle className="text-sm font-medium">Completed</CardTitle>
+                            <CardTitle className="text-sm font-medium">
+                                Completed
+                            </CardTitle>
                             <CheckCircle className="h-5 w-5 text-green-500" />
                         </CardHeader>
                         <CardContent>
-                            <p className="text-3xl font-bold text-green-600">{stats.completed}</p>
+                            <p className="text-3xl font-bold text-green-600">
+                                {stats.completed}
+                            </p>
                         </CardContent>
                     </Card>
                 </div>
@@ -125,39 +155,71 @@ export default function Dashboard({ stats, recentNotifications, pendingAssignmen
                         </CardHeader>
                         <CardContent>
                             {pendingAssignments.length === 0 ? (
-                                <p className="text-muted-foreground text-sm">All caught up! No pending reviews.</p>
+                                <p className="text-sm text-muted-foreground">
+                                    All caught up! No pending reviews.
+                                </p>
                             ) : (
                                 <div className="space-y-4">
-                                    {pendingAssignments.slice(0, 5).map((assignment) => (
-                                        <div key={assignment.id} className="flex items-start justify-between gap-3">
-                                            <div className="min-w-0 flex-1 space-y-1">
-                                                <p className="truncate text-sm font-medium">{assignment.portfolio.title}</p>
-                                                <p className="text-muted-foreground text-xs">
-                                                    Applicant: {assignment.portfolio.user.name}
-                                                </p>
-                                                <div className="flex items-center gap-2">
-                                                    {getStatusBadge(assignment.status)}
-                                                    {assignment.due_date && (
-                                                        <span
-                                                            className={`text-xs ${isOverdue(assignment.due_date) ? 'font-semibold text-red-600' : 'text-muted-foreground'}`}
-                                                        >
-                                                            {isOverdue(assignment.due_date) ? 'Overdue: ' : 'Due: '}
-                                                            {new Date(assignment.due_date).toLocaleDateString()}
-                                                        </span>
-                                                    )}
+                                    {pendingAssignments
+                                        .slice(0, 5)
+                                        .map((assignment) => (
+                                            <div
+                                                key={assignment.id}
+                                                className="flex items-start justify-between gap-3"
+                                            >
+                                                <div className="min-w-0 flex-1 space-y-1">
+                                                    <p className="truncate text-sm font-medium">
+                                                        {
+                                                            assignment.portfolio
+                                                                .title
+                                                        }
+                                                    </p>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        Applicant:{' '}
+                                                        {
+                                                            assignment.portfolio
+                                                                .user.name
+                                                        }
+                                                    </p>
+                                                    <div className="flex items-center gap-2">
+                                                        {getStatusBadge(
+                                                            assignment.status,
+                                                        )}
+                                                        {assignment.due_date && (
+                                                            <span
+                                                                className={`text-xs ${isOverdue(assignment.due_date) ? 'font-semibold text-red-600' : 'text-muted-foreground'}`}
+                                                            >
+                                                                {isOverdue(
+                                                                    assignment.due_date,
+                                                                )
+                                                                    ? 'Overdue: '
+                                                                    : 'Due: '}
+                                                                {new Date(
+                                                                    assignment.due_date,
+                                                                ).toLocaleDateString()}
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                 </div>
+                                                <Button
+                                                    asChild
+                                                    size="sm"
+                                                    variant="outline"
+                                                >
+                                                    <Link
+                                                        href={`/evaluator/portfolios/${assignment.id}`}
+                                                    >
+                                                        Review
+                                                    </Link>
+                                                </Button>
                                             </div>
-                                            <Button asChild size="sm" variant="outline">
-                                                <Link href={`/evaluator/portfolios/${assignment.id}`}>Review</Link>
-                                            </Button>
-                                        </div>
-                                    ))}
+                                        ))}
                                 </div>
                             )}
                             <div className="mt-4 border-t pt-4">
                                 <Link
                                     href="/evaluator/portfolios"
-                                    className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm"
+                                    className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
                                 >
                                     View All Reviews
                                     <ArrowRight className="h-4 w-4" />
@@ -173,31 +235,53 @@ export default function Dashboard({ stats, recentNotifications, pendingAssignmen
                         </CardHeader>
                         <CardContent>
                             {recentNotifications.length === 0 ? (
-                                <p className="text-muted-foreground text-sm">No notifications yet.</p>
+                                <p className="text-sm text-muted-foreground">
+                                    No notifications yet.
+                                </p>
                             ) : (
                                 <div className="space-y-4">
-                                    {recentNotifications.slice(0, 5).map((notification) => (
-                                        <div key={notification.id} className="flex items-start gap-3">
-                                            <div className="mt-1.5 flex-shrink-0">
-                                                {notification.read_at === null ? (
-                                                    <span className="block h-2 w-2 rounded-full bg-blue-500" />
-                                                ) : (
-                                                    <span className="bg-muted block h-2 w-2 rounded-full" />
-                                                )}
+                                    {recentNotifications
+                                        .slice(0, 5)
+                                        .map((notification) => (
+                                            <div
+                                                key={notification.id}
+                                                className="flex items-start gap-3"
+                                            >
+                                                <div className="mt-1.5 flex-shrink-0">
+                                                    {notification.read_at ===
+                                                        null ? (
+                                                        <span className="block h-2 w-2 rounded-full bg-blue-500" />
+                                                    ) : (
+                                                        <span className="block h-2 w-2 rounded-full bg-muted" />
+                                                    )}
+                                                </div>
+                                                <div className="min-w-0 flex-1">
+                                                    <p className="truncate text-sm font-medium">
+                                                        {
+                                                            notification.data
+                                                                .title
+                                                        }
+                                                    </p>
+                                                    <p className="truncate text-xs text-muted-foreground">
+                                                        {
+                                                            notification.data
+                                                                .message
+                                                        }
+                                                    </p>
+                                                    <p className="mt-0.5 text-xs text-muted-foreground">
+                                                        {timeAgo(
+                                                            notification.created_at,
+                                                        )}
+                                                    </p>
+                                                </div>
                                             </div>
-                                            <div className="min-w-0 flex-1">
-                                                <p className="truncate text-sm font-medium">{notification.data.title}</p>
-                                                <p className="text-muted-foreground truncate text-xs">{notification.data.message}</p>
-                                                <p className="text-muted-foreground mt-0.5 text-xs">{timeAgo(notification.created_at)}</p>
-                                            </div>
-                                        </div>
-                                    ))}
+                                        ))}
                                 </div>
                             )}
                             <div className="mt-4 border-t pt-4">
                                 <Link
                                     href="/evaluator/notifications"
-                                    className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm"
+                                    className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
                                 >
                                     View All Notifications
                                     <ArrowRight className="h-4 w-4" />

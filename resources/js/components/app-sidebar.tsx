@@ -1,5 +1,15 @@
 import { Link, usePage } from '@inertiajs/react';
-import { BarChart3, BookOpen, ClipboardCheck, ClipboardList, FileStack, Folder, FolderOpen, LayoutGrid, Users } from 'lucide-react';
+import {
+    BarChart3,
+    BookOpen,
+    ClipboardCheck,
+    ClipboardList,
+    FileStack,
+    Folder,
+    FolderOpen,
+    LayoutGrid,
+    Users,
+} from 'lucide-react';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
@@ -55,7 +65,12 @@ function getNavItems(role: UserRole): NavItem[] {
     const items: NavItem[] = [
         {
             title: 'Dashboard',
-            href: role === 'applicant' ? '/applicant/dashboard' : role === 'evaluator' ? '/evaluator/dashboard' : dashboard(),
+            href:
+                role === 'applicant'
+                    ? '/applicant/dashboard'
+                    : role === 'evaluator'
+                      ? '/evaluator/dashboard'
+                      : dashboard(),
             icon: LayoutGrid,
         },
     ];

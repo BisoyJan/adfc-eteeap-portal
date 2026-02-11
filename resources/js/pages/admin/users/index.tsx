@@ -46,7 +46,10 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Users', href: '/admin/users' },
 ];
 
-const roleBadgeVariant: Record<string, 'destructive' | 'default' | 'secondary' | 'outline'> = {
+const roleBadgeVariant: Record<
+    string,
+    'destructive' | 'default' | 'secondary' | 'outline'
+> = {
     super_admin: 'destructive',
     admin: 'default',
     evaluator: 'secondary',
@@ -84,6 +87,7 @@ export default function Index({ users }: Props) {
         }
 
         router.delete(`/admin/users/${userToDelete.id}`, {
+            preserveScroll: true,
             onFinish: () => {
                 setDeleteDialogOpen(false);
                 setUserToDelete(null);
@@ -97,7 +101,10 @@ export default function Index({ users }: Props) {
 
             <div className="space-y-6 p-6">
                 <div className="flex items-center justify-between">
-                    <Heading title="Users" description="Manage system users and their roles" />
+                    <Heading
+                        title="Users"
+                        description="Manage system users and their roles"
+                    />
                     <Button asChild>
                         <Link href="/admin/users/create">
                             <Plus className="mr-2 h-4 w-4" />
@@ -116,33 +123,67 @@ export default function Index({ users }: Props) {
                     <table className="w-full text-sm">
                         <thead className="border-b bg-muted/50">
                             <tr>
-                                <th className="px-4 py-3 text-left font-medium">Name</th>
-                                <th className="px-4 py-3 text-left font-medium">Email</th>
-                                <th className="px-4 py-3 text-left font-medium">Role</th>
-                                <th className="px-4 py-3 text-left font-medium">Created At</th>
-                                <th className="px-4 py-3 text-right font-medium">Actions</th>
+                                <th className="px-4 py-3 text-left font-medium">
+                                    Name
+                                </th>
+                                <th className="px-4 py-3 text-left font-medium">
+                                    Email
+                                </th>
+                                <th className="px-4 py-3 text-left font-medium">
+                                    Role
+                                </th>
+                                <th className="px-4 py-3 text-left font-medium">
+                                    Created At
+                                </th>
+                                <th className="px-4 py-3 text-right font-medium">
+                                    Actions
+                                </th>
                             </tr>
                         </thead>
                         <tbody className="divide-y">
                             {users.data.map((user) => (
                                 <tr key={user.id} className="hover:bg-muted/50">
-                                    <td className="px-4 py-3 font-medium">{user.name}</td>
-                                    <td className="px-4 py-3 text-muted-foreground">{user.email}</td>
+                                    <td className="px-4 py-3 font-medium">
+                                        {user.name}
+                                    </td>
+                                    <td className="px-4 py-3 text-muted-foreground">
+                                        {user.email}
+                                    </td>
                                     <td className="px-4 py-3">
-                                        <Badge variant={roleBadgeVariant[user.role] ?? 'outline'}>
+                                        <Badge
+                                            variant={
+                                                roleBadgeVariant[user.role] ??
+                                                'outline'
+                                            }
+                                        >
                                             {formatRole(user.role)}
                                         </Badge>
                                     </td>
-                                    <td className="px-4 py-3 text-muted-foreground">{formatDate(user.created_at)}</td>
+                                    <td className="px-4 py-3 text-muted-foreground">
+                                        {formatDate(user.created_at)}
+                                    </td>
                                     <td className="px-4 py-3 text-right">
                                         <div className="flex items-center justify-end gap-2">
-                                            <Button variant="ghost" size="sm" asChild>
-                                                <Link href={`/admin/users/${user.id}/edit`}>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                asChild
+                                            >
+                                                <Link
+                                                    href={`/admin/users/${user.id}/edit`}
+                                                >
                                                     <Pencil className="mr-1 h-4 w-4" />
                                                     Edit
                                                 </Link>
                                             </Button>
-                                            <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => handleDelete(user)}>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="text-destructive hover:text-destructive"
+                                                onClick={() =>
+                                                    handleDelete(user)
+                                                }
+                                            >
                                                 <Trash2 className="mr-1 h-4 w-4" />
                                                 Delete
                                             </Button>
@@ -152,7 +193,10 @@ export default function Index({ users }: Props) {
                             ))}
                             {users.data.length === 0 && (
                                 <tr>
-                                    <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
+                                    <td
+                                        colSpan={5}
+                                        className="px-4 py-8 text-center text-muted-foreground"
+                                    >
                                         No users found.
                                     </td>
                                 </tr>
@@ -169,7 +213,9 @@ export default function Index({ users }: Props) {
                         <div className="flex gap-2">
                             {users.links[0]?.url ? (
                                 <Button variant="outline" size="sm" asChild>
-                                    <Link href={users.links[0].url}>&larr; Previous</Link>
+                                    <Link href={users.links[0].url}>
+                                        &larr; Previous
+                                    </Link>
                                 </Button>
                             ) : (
                                 <Button variant="outline" size="sm" disabled>
@@ -178,7 +224,14 @@ export default function Index({ users }: Props) {
                             )}
                             {users.links[users.links.length - 1]?.url ? (
                                 <Button variant="outline" size="sm" asChild>
-                                    <Link href={users.links[users.links.length - 1].url!}>Next &rarr;</Link>
+                                    <Link
+                                        href={
+                                            users.links[users.links.length - 1]
+                                                .url!
+                                        }
+                                    >
+                                        Next &rarr;
+                                    </Link>
                                 </Button>
                             ) : (
                                 <Button variant="outline" size="sm" disabled>

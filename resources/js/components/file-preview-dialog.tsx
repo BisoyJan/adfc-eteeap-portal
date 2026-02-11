@@ -1,7 +1,12 @@
 import { Download, Eye, FileText } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 
 interface FilePreviewDialogProps {
     open: boolean;
@@ -21,7 +26,12 @@ function formatFileSize(bytes: number): string {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-export default function FilePreviewDialog({ open, onOpenChange, document, downloadUrl }: FilePreviewDialogProps) {
+export default function FilePreviewDialog({
+    open,
+    onOpenChange,
+    document,
+    downloadUrl,
+}: FilePreviewDialogProps) {
     if (!document) {
         return null;
     }
@@ -32,7 +42,9 @@ export default function FilePreviewDialog({ open, onOpenChange, document, downlo
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className={isImage || isPdf ? 'sm:max-w-3xl' : 'sm:max-w-md'}>
+            <DialogContent
+                className={isImage || isPdf ? 'sm:max-w-3xl' : 'sm:max-w-md'}
+            >
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                         <Eye className="h-4 w-4" />
@@ -56,9 +68,15 @@ export default function FilePreviewDialog({ open, onOpenChange, document, downlo
                     ) : (
                         <div className="flex flex-col items-center justify-center py-12 text-center">
                             <FileText className="h-16 w-16 text-muted-foreground" />
-                            <p className="mt-4 text-sm font-medium">{document.file_name}</p>
-                            <p className="text-sm text-muted-foreground">{formatFileSize(document.file_size)}</p>
-                            <p className="mt-2 text-xs text-muted-foreground">Preview not available for this file type</p>
+                            <p className="mt-4 text-sm font-medium">
+                                {document.file_name}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                                {formatFileSize(document.file_size)}
+                            </p>
+                            <p className="mt-2 text-xs text-muted-foreground">
+                                Preview not available for this file type
+                            </p>
                         </div>
                     )}
                 </div>

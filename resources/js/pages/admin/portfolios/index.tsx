@@ -5,7 +5,13 @@ import Heading from '@/components/heading';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 
@@ -57,7 +63,10 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Manage Portfolios', href: '/admin/portfolios' },
 ];
 
-const statusBadgeVariant: Record<string, 'destructive' | 'default' | 'secondary' | 'outline'> = {
+const statusBadgeVariant: Record<
+    string,
+    'destructive' | 'default' | 'secondary' | 'outline'
+> = {
     draft: 'secondary',
     submitted: 'default',
     under_review: 'outline',
@@ -69,8 +78,10 @@ const statusBadgeVariant: Record<string, 'destructive' | 'default' | 'secondary'
 
 const statusBadgeClassName: Record<string, string> = {
     under_review: 'border-yellow-500 text-yellow-700 dark:text-yellow-400',
-    evaluated: 'bg-blue-100 text-blue-800 hover:bg-blue-100/80 dark:bg-blue-900 dark:text-blue-200',
-    approved: 'bg-green-100 text-green-800 hover:bg-green-100/80 dark:bg-green-900 dark:text-green-200',
+    evaluated:
+        'bg-blue-100 text-blue-800 hover:bg-blue-100/80 dark:bg-blue-900 dark:text-blue-200',
+    approved:
+        'bg-green-100 text-green-800 hover:bg-green-100/80 dark:bg-green-900 dark:text-green-200',
 };
 
 function formatDate(dateString: string): string {
@@ -95,7 +106,11 @@ export default function Index({ portfolios, statuses, filters }: Props) {
 
     useEffect(() => {
         const timer = setTimeout(() => {
-            router.get('/admin/portfolios', { search, status }, { preserveState: true, replace: true });
+            router.get(
+                '/admin/portfolios',
+                { search, status },
+                { preserveState: true, replace: true },
+            );
         }, 300);
 
         return () => clearTimeout(timer);
@@ -104,7 +119,11 @@ export default function Index({ portfolios, statuses, filters }: Props) {
     function handleStatusChange(value: string) {
         const newStatus = value === 'all' ? '' : value;
         setStatus(newStatus);
-        router.get('/admin/portfolios', { search, status: newStatus }, { preserveState: true, replace: true });
+        router.get(
+            '/admin/portfolios',
+            { search, status: newStatus },
+            { preserveState: true, replace: true },
+        );
     }
 
     return (
@@ -112,7 +131,10 @@ export default function Index({ portfolios, statuses, filters }: Props) {
             <Head title="Manage Portfolios" />
 
             <div className="space-y-6 p-6">
-                <Heading title="Portfolios" description="Review and manage all applicant portfolios" />
+                <Heading
+                    title="Portfolios"
+                    description="Review and manage all applicant portfolios"
+                />
 
                 {flash?.success && (
                     <div className="rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-green-200">
@@ -122,7 +144,7 @@ export default function Index({ portfolios, statuses, filters }: Props) {
 
                 <div className="flex items-center gap-4">
                     <div className="relative max-w-sm flex-1">
-                        <Search className="text-muted-foreground absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
+                        <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                         <Input
                             placeholder="Search by applicant or title..."
                             value={search}
@@ -130,7 +152,10 @@ export default function Index({ portfolios, statuses, filters }: Props) {
                             className="pl-9"
                         />
                     </div>
-                    <Select value={status || 'all'} onValueChange={handleStatusChange}>
+                    <Select
+                        value={status || 'all'}
+                        onValueChange={handleStatusChange}
+                    >
                         <SelectTrigger className="w-[180px]">
                             <SelectValue placeholder="All Statuses" />
                         </SelectTrigger>
@@ -149,41 +174,78 @@ export default function Index({ portfolios, statuses, filters }: Props) {
                     <table className="w-full text-sm">
                         <thead className="border-b bg-muted/50">
                             <tr>
-                                <th className="px-4 py-3 text-left font-medium">Applicant</th>
-                                <th className="px-4 py-3 text-left font-medium">Portfolio Title</th>
-                                <th className="px-4 py-3 text-left font-medium">Status</th>
-                                <th className="px-4 py-3 text-left font-medium">Submitted</th>
-                                <th className="px-4 py-3 text-left font-medium">Evaluators</th>
-                                <th className="px-4 py-3 text-right font-medium">Actions</th>
+                                <th className="px-4 py-3 text-left font-medium">
+                                    Applicant
+                                </th>
+                                <th className="px-4 py-3 text-left font-medium">
+                                    Portfolio Title
+                                </th>
+                                <th className="px-4 py-3 text-left font-medium">
+                                    Status
+                                </th>
+                                <th className="px-4 py-3 text-left font-medium">
+                                    Submitted
+                                </th>
+                                <th className="px-4 py-3 text-left font-medium">
+                                    Evaluators
+                                </th>
+                                <th className="px-4 py-3 text-right font-medium">
+                                    Actions
+                                </th>
                             </tr>
                         </thead>
                         <tbody className="divide-y">
                             {portfolios.data.map((portfolio) => (
-                                <tr key={portfolio.id} className="hover:bg-muted/50">
+                                <tr
+                                    key={portfolio.id}
+                                    className="hover:bg-muted/50"
+                                >
                                     <td className="px-4 py-3">
                                         <div>
-                                            <div className="font-medium">{portfolio.user.name}</div>
-                                            <div className="text-muted-foreground text-xs">{portfolio.user.email}</div>
+                                            <div className="font-medium">
+                                                {portfolio.user.name}
+                                            </div>
+                                            <div className="text-xs text-muted-foreground">
+                                                {portfolio.user.email}
+                                            </div>
                                         </div>
                                     </td>
-                                    <td className="px-4 py-3 font-medium">{portfolio.title}</td>
+                                    <td className="px-4 py-3 font-medium">
+                                        {portfolio.title}
+                                    </td>
                                     <td className="px-4 py-3">
                                         <Badge
-                                            variant={statusBadgeVariant[portfolio.status] ?? 'outline'}
-                                            className={statusBadgeClassName[portfolio.status] ?? ''}
+                                            variant={
+                                                statusBadgeVariant[
+                                                portfolio.status
+                                                ] ?? 'outline'
+                                            }
+                                            className={
+                                                statusBadgeClassName[
+                                                portfolio.status
+                                                ] ?? ''
+                                            }
                                         >
                                             {formatStatus(portfolio.status)}
                                         </Badge>
                                     </td>
                                     <td className="px-4 py-3 text-muted-foreground">
-                                        {portfolio.submitted_at ? formatDate(portfolio.submitted_at) : '—'}
+                                        {portfolio.submitted_at
+                                            ? formatDate(portfolio.submitted_at)
+                                            : '—'}
                                     </td>
                                     <td className="px-4 py-3 text-muted-foreground">
                                         {portfolio.assignments.length}
                                     </td>
                                     <td className="px-4 py-3 text-right">
-                                        <Button variant="ghost" size="sm" asChild>
-                                            <Link href={`/admin/portfolios/${portfolio.id}`}>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            asChild
+                                        >
+                                            <Link
+                                                href={`/admin/portfolios/${portfolio.id}`}
+                                            >
                                                 <Eye className="mr-1 h-4 w-4" />
                                                 View
                                             </Link>
@@ -193,7 +255,10 @@ export default function Index({ portfolios, statuses, filters }: Props) {
                             ))}
                             {portfolios.data.length === 0 && (
                                 <tr>
-                                    <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
+                                    <td
+                                        colSpan={6}
+                                        className="px-4 py-8 text-center text-muted-foreground"
+                                    >
                                         No portfolios found.
                                     </td>
                                 </tr>
@@ -205,21 +270,33 @@ export default function Index({ portfolios, statuses, filters }: Props) {
                 {portfolios.last_page > 1 && (
                     <div className="flex items-center justify-between">
                         <p className="text-sm text-muted-foreground">
-                            Page {portfolios.current_page} of {portfolios.last_page}
+                            Page {portfolios.current_page} of{' '}
+                            {portfolios.last_page}
                         </p>
                         <div className="flex gap-2">
                             {portfolios.links[0]?.url ? (
                                 <Button variant="outline" size="sm" asChild>
-                                    <Link href={portfolios.links[0].url}>&larr; Previous</Link>
+                                    <Link href={portfolios.links[0].url}>
+                                        &larr; Previous
+                                    </Link>
                                 </Button>
                             ) : (
                                 <Button variant="outline" size="sm" disabled>
                                     &larr; Previous
                                 </Button>
                             )}
-                            {portfolios.links[portfolios.links.length - 1]?.url ? (
+                            {portfolios.links[portfolios.links.length - 1]
+                                ?.url ? (
                                 <Button variant="outline" size="sm" asChild>
-                                    <Link href={portfolios.links[portfolios.links.length - 1].url!}>Next &rarr;</Link>
+                                    <Link
+                                        href={
+                                            portfolios.links[
+                                                portfolios.links.length - 1
+                                            ].url!
+                                        }
+                                    >
+                                        Next &rarr;
+                                    </Link>
                                 </Button>
                             ) : (
                                 <Button variant="outline" size="sm" disabled>

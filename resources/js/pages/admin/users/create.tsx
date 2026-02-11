@@ -6,7 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 
@@ -39,7 +45,10 @@ export default function Create({ roles }: Props) {
             <Head title="Create User" />
 
             <div className="space-y-6 p-6">
-                <Heading title="Create User" description="Add a new user to the system" />
+                <Heading
+                    title="Create User"
+                    description="Add a new user to the system"
+                />
 
                 <Card className="mx-auto max-w-2xl">
                     <CardHeader>
@@ -52,7 +61,9 @@ export default function Create({ roles }: Props) {
                                 <Input
                                     id="name"
                                     value={form.data.name}
-                                    onChange={(e) => form.setData('name', e.target.value)}
+                                    onChange={(e) =>
+                                        form.setData('name', e.target.value)
+                                    }
                                     placeholder="Full name"
                                 />
                                 <InputError message={form.errors.name} />
@@ -64,7 +75,9 @@ export default function Create({ roles }: Props) {
                                     id="email"
                                     type="email"
                                     value={form.data.email}
-                                    onChange={(e) => form.setData('email', e.target.value)}
+                                    onChange={(e) =>
+                                        form.setData('email', e.target.value)
+                                    }
                                     placeholder="email@example.com"
                                 />
                                 <InputError message={form.errors.email} />
@@ -76,31 +89,50 @@ export default function Create({ roles }: Props) {
                                     id="password"
                                     type="password"
                                     value={form.data.password}
-                                    onChange={(e) => form.setData('password', e.target.value)}
+                                    onChange={(e) =>
+                                        form.setData('password', e.target.value)
+                                    }
                                 />
                                 <InputError message={form.errors.password} />
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="password_confirmation">Confirm Password</Label>
+                                <Label htmlFor="password_confirmation">
+                                    Confirm Password
+                                </Label>
                                 <Input
                                     id="password_confirmation"
                                     type="password"
                                     value={form.data.password_confirmation}
-                                    onChange={(e) => form.setData('password_confirmation', e.target.value)}
+                                    onChange={(e) =>
+                                        form.setData(
+                                            'password_confirmation',
+                                            e.target.value,
+                                        )
+                                    }
                                 />
-                                <InputError message={form.errors.password_confirmation} />
+                                <InputError
+                                    message={form.errors.password_confirmation}
+                                />
                             </div>
 
                             <div className="space-y-2">
                                 <Label htmlFor="role">Role</Label>
-                                <Select value={form.data.role} onValueChange={(value) => form.setData('role', value)}>
+                                <Select
+                                    value={form.data.role}
+                                    onValueChange={(value) =>
+                                        form.setData('role', value)
+                                    }
+                                >
                                     <SelectTrigger id="role">
                                         <SelectValue placeholder="Select a role" />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {roles.map((role) => (
-                                            <SelectItem key={role.value} value={role.value}>
+                                            <SelectItem
+                                                key={role.value}
+                                                value={role.value}
+                                            >
                                                 {role.label}
                                             </SelectItem>
                                         ))}
@@ -110,7 +142,10 @@ export default function Create({ roles }: Props) {
                             </div>
 
                             <div className="flex items-center gap-4">
-                                <Button type="submit" disabled={form.processing}>
+                                <Button
+                                    type="submit"
+                                    disabled={form.processing}
+                                >
                                     Create User
                                 </Button>
                                 <Button variant="outline" asChild>

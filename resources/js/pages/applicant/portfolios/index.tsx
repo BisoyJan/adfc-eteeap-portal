@@ -47,7 +47,10 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'My Portfolios', href: '/applicant/portfolios' },
 ];
 
-const statusBadgeVariant: Record<string, 'destructive' | 'default' | 'secondary' | 'outline'> = {
+const statusBadgeVariant: Record<
+    string,
+    'destructive' | 'default' | 'secondary' | 'outline'
+> = {
     draft: 'secondary',
     submitted: 'default',
     under_review: 'outline',
@@ -74,7 +77,8 @@ function formatStatus(status: string): string {
 
 export default function Index({ portfolios }: Props) {
     const { flash } = usePage<{ flash: { success?: string } }>().props;
-    const [portfolioToDelete, setPortfolioToDelete] = useState<Portfolio | null>(null);
+    const [portfolioToDelete, setPortfolioToDelete] =
+        useState<Portfolio | null>(null);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
     function handleDelete(portfolio: Portfolio) {
@@ -88,6 +92,7 @@ export default function Index({ portfolios }: Props) {
         }
 
         router.delete(`/applicant/portfolios/${portfolioToDelete.id}`, {
+            preserveScroll: true,
             onFinish: () => {
                 setDeleteDialogOpen(false);
                 setPortfolioToDelete(null);
@@ -101,7 +106,10 @@ export default function Index({ portfolios }: Props) {
 
             <div className="space-y-6 p-6">
                 <div className="flex items-center justify-between">
-                    <Heading title="My Portfolios" description="Manage your ETEEAP portfolio submissions" />
+                    <Heading
+                        title="My Portfolios"
+                        description="Manage your ETEEAP portfolio submissions"
+                    />
                     <Button asChild>
                         <Link href="/applicant/portfolios/create">
                             <Plus className="mr-2 h-4 w-4" />
@@ -121,9 +129,12 @@ export default function Index({ portfolios }: Props) {
                         <CardContent className="flex flex-col items-center gap-4">
                             <FileText className="h-12 w-12 text-muted-foreground" />
                             <div className="space-y-1">
-                                <h3 className="text-lg font-medium">No portfolios yet</h3>
+                                <h3 className="text-lg font-medium">
+                                    No portfolios yet
+                                </h3>
                                 <p className="text-sm text-muted-foreground">
-                                    Get started by creating your first ETEEAP portfolio submission.
+                                    Get started by creating your first ETEEAP
+                                    portfolio submission.
                                 </p>
                             </div>
                             <Button asChild>
@@ -140,9 +151,16 @@ export default function Index({ portfolios }: Props) {
                             <Card key={portfolio.id}>
                                 <CardHeader className="flex flex-row items-start justify-between space-y-0">
                                     <div className="space-y-1">
-                                        <CardTitle className="text-lg">{portfolio.title}</CardTitle>
+                                        <CardTitle className="text-lg">
+                                            {portfolio.title}
+                                        </CardTitle>
                                         <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                                            <span>Created {formatDate(portfolio.created_at)}</span>
+                                            <span>
+                                                Created{' '}
+                                                {formatDate(
+                                                    portfolio.created_at,
+                                                )}
+                                            </span>
                                             <span>·</span>
                                             <span>
                                                 {portfolio.submitted_at
@@ -152,16 +170,30 @@ export default function Index({ portfolios }: Props) {
                                         </div>
                                     </div>
                                     <Badge
-                                        variant={statusBadgeVariant[portfolio.status] ?? 'outline'}
-                                        className={portfolio.status === 'approved' ? 'border-green-300 bg-green-50 text-green-700 dark:border-green-700 dark:bg-green-950 dark:text-green-300' : ''}
+                                        variant={
+                                            statusBadgeVariant[
+                                            portfolio.status
+                                            ] ?? 'outline'
+                                        }
+                                        className={
+                                            portfolio.status === 'approved'
+                                                ? 'border-green-300 bg-green-50 text-green-700 dark:border-green-700 dark:bg-green-950 dark:text-green-300'
+                                                : ''
+                                        }
                                     >
                                         {formatStatus(portfolio.status)}
                                     </Badge>
                                 </CardHeader>
                                 <CardContent>
                                     <div className="flex items-center gap-2">
-                                        <Button variant="outline" size="sm" asChild>
-                                            <Link href={`/applicant/portfolios/${portfolio.id}`}>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            asChild
+                                        >
+                                            <Link
+                                                href={`/applicant/portfolios/${portfolio.id}`}
+                                            >
                                                 <Eye className="mr-1 h-4 w-4" />
                                                 View
                                             </Link>
@@ -171,7 +203,9 @@ export default function Index({ portfolios }: Props) {
                                                 variant="ghost"
                                                 size="sm"
                                                 className="text-destructive hover:text-destructive"
-                                                onClick={() => handleDelete(portfolio)}
+                                                onClick={() =>
+                                                    handleDelete(portfolio)
+                                                }
                                             >
                                                 <Trash2 className="mr-1 h-4 w-4" />
                                                 Delete
@@ -187,21 +221,33 @@ export default function Index({ portfolios }: Props) {
                 {portfolios.last_page > 1 && (
                     <div className="flex items-center justify-between">
                         <p className="text-sm text-muted-foreground">
-                            Page {portfolios.current_page} of {portfolios.last_page}
+                            Page {portfolios.current_page} of{' '}
+                            {portfolios.last_page}
                         </p>
                         <div className="flex gap-2">
                             {portfolios.links[0]?.url ? (
                                 <Button variant="outline" size="sm" asChild>
-                                    <Link href={portfolios.links[0].url}>&larr; Previous</Link>
+                                    <Link href={portfolios.links[0].url}>
+                                        &larr; Previous
+                                    </Link>
                                 </Button>
                             ) : (
                                 <Button variant="outline" size="sm" disabled>
                                     &larr; Previous
                                 </Button>
                             )}
-                            {portfolios.links[portfolios.links.length - 1]?.url ? (
+                            {portfolios.links[portfolios.links.length - 1]
+                                ?.url ? (
                                 <Button variant="outline" size="sm" asChild>
-                                    <Link href={portfolios.links[portfolios.links.length - 1].url!}>Next &rarr;</Link>
+                                    <Link
+                                        href={
+                                            portfolios.links[
+                                                portfolios.links.length - 1
+                                            ].url!
+                                        }
+                                    >
+                                        Next &rarr;
+                                    </Link>
                                 </Button>
                             ) : (
                                 <Button variant="outline" size="sm" disabled>
@@ -224,7 +270,9 @@ export default function Index({ portfolios }: Props) {
             >
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Delete this portfolio?</AlertDialogTitle>
+                        <AlertDialogTitle>
+                            Delete this portfolio?
+                        </AlertDialogTitle>
                         <AlertDialogDescription>
                             {portfolioToDelete
                                 ? `"${portfolioToDelete.title}" will be permanently removed.`
