@@ -189,7 +189,6 @@ class PortfolioController extends Controller
 
         $admins = User::whereIn('role', [UserRole::Admin, UserRole::SuperAdmin])->get();
         Notification::send($admins, new EvaluationCompletedNotification($evaluation));
-
         return redirect()->route('evaluator.portfolios.index')
             ->with('success', 'Evaluation submitted successfully.');
     }
