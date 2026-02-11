@@ -105,7 +105,7 @@ class ReportController extends Controller
             ->whereNotNull('submitted_at')
             ->where('submitted_at', '>=', now()->subMonths(6))
             ->select(
-                DB::raw("strftime('%Y-%m', submitted_at) as month"),
+                DB::raw("DATE_FORMAT(submitted_at, '%Y-%m') as month"),
                 DB::raw('count(*) as count'),
             )
             ->groupBy('month')

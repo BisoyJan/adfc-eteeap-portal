@@ -501,36 +501,47 @@ export default function Show({
                                 </div>
                             </div>
                         ) : (
-                            <div className="flex items-center justify-between">
-                                {timelineSteps.map((step, idx) => {
-                                    const current = getTimelineIndex(
-                                        portfolio.status,
-                                    );
-                                    const isCompleted = idx < current;
-                                    const isCurrent = idx === current;
-                                    return (
-                                        <div
-                                            key={step.key}
-                                            className="flex flex-1 flex-col items-center"
-                                        >
+                            <div className="relative">
+                                <div className="flex items-start justify-between">
+                                    {timelineSteps.map((step, idx) => {
+                                        const current = getTimelineIndex(
+                                            portfolio.status,
+                                        );
+                                        const isCompleted = idx < current || (idx === current && portfolio.status === 'approved');
+                                        const isCurrent = idx === current && portfolio.status !== 'approved';
+                                        return (
                                             <div
-                                                className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold ${isCompleted ? 'bg-green-500 text-white' : isCurrent ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
+                                                key={step.key}
+                                                className="relative z-10 flex flex-col items-center"
                                             >
-                                                {isCompleted ? '✓' : idx + 1}
-                                            </div>
-                                            <span
-                                                className={`mt-1.5 text-center text-xs font-medium ${isCurrent ? 'text-primary' : ''}`}
-                                            >
-                                                {step.label}
-                                            </span>
-                                            {idx < timelineSteps.length - 1 && (
                                                 <div
-                                                    className={`mt-1 h-0.5 w-full ${isCompleted ? 'bg-green-500' : 'bg-muted'}`}
-                                                />
-                                            )}
-                                        </div>
-                                    );
-                                })}
+                                                    className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold ${isCompleted ? 'bg-green-500 text-white' : isCurrent ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
+                                                >
+                                                    {isCompleted ? '✓' : idx + 1}
+                                                </div>
+                                                <span
+                                                    className={`mt-1.5 text-center text-xs font-medium ${isCurrent ? 'text-primary' : ''}`}
+                                                >
+                                                    {step.label}
+                                                </span>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                                <div className="absolute left-0 right-0 top-4 -z-0 flex items-center px-4">
+                                    {timelineSteps.slice(0, -1).map((_, idx) => {
+                                        const current = getTimelineIndex(
+                                            portfolio.status,
+                                        );
+                                        const isCompleted = idx < current || (portfolio.status === 'approved' && idx < timelineSteps.length - 1);
+                                        return (
+                                            <div
+                                                key={idx}
+                                                className={`h-0.5 flex-1 ${isCompleted ? 'bg-green-500' : 'bg-muted'}`}
+                                            />
+                                        );
+                                    })}
+                                </div>
                             </div>
                         )}
                     </CardContent>
