@@ -32,6 +32,17 @@ Route::middleware(['auth', 'verified', 'role:super_admin,admin'])->prefix('admin
     Route::post('portfolios/{portfolio}/assign', [\App\Http\Controllers\Admin\PortfolioController::class, 'assign'])->name('portfolios.assign');
     Route::put('portfolios/{portfolio}/status', [\App\Http\Controllers\Admin\PortfolioController::class, 'updateStatus'])->name('portfolios.status');
     Route::delete('portfolios/{portfolio}/assignments/{assignment}', [\App\Http\Controllers\Admin\PortfolioController::class, 'removeAssignment'])->name('portfolios.assignments.destroy');
+
+    Route::resource('rubrics', \App\Http\Controllers\Admin\RubricCriteriaController::class)->except(['show']);
+    Route::post('rubrics/{rubric}/toggle-active', [\App\Http\Controllers\Admin\RubricCriteriaController::class, 'toggleActive'])->name('rubrics.toggle-active');
+});
+
+Route::middleware(['auth', 'verified', 'role:evaluator'])->prefix('evaluator')->name('evaluator.')->group(function () {
+    Route::get('dashboard', \App\Http\Controllers\Evaluator\DashboardController::class)->name('dashboard');
+    Route::get('portfolios', [\App\Http\Controllers\Evaluator\PortfolioController::class, 'index'])->name('portfolios.index');
+    Route::get('portfolios/{assignment}', [\App\Http\Controllers\Evaluator\PortfolioController::class, 'show'])->name('portfolios.show');
+    Route::post('portfolios/{assignment}/save', [\App\Http\Controllers\Evaluator\PortfolioController::class, 'saveEvaluation'])->name('portfolios.save');
+    Route::post('portfolios/{assignment}/submit', [\App\Http\Controllers\Evaluator\PortfolioController::class, 'submitEvaluation'])->name('portfolios.submit');
 });
 
 require __DIR__.'/settings.php';
