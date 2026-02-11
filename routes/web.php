@@ -38,16 +38,13 @@ Route::middleware(['auth', 'verified', 'role:applicant'])->prefix('applicant')->
 });
 
 Route::middleware(['auth', 'verified', 'role:super_admin,admin'])->prefix('admin')->name('admin.')->group(function () {
-    Route::resource('users', \App\Http\Controllers\Admin\UserController::class)->except(['show']);
-
     Route::get('dashboard', \App\Http\Controllers\Admin\DashboardController::class)->name('dashboard');
-
+    Route::resource('users', \App\Http\Controllers\Admin\UserController::class)->except(['show']);
     Route::get('portfolios', [\App\Http\Controllers\Admin\PortfolioController::class, 'index'])->name('portfolios.index');
     Route::get('portfolios/{portfolio}', [\App\Http\Controllers\Admin\PortfolioController::class, 'show'])->name('portfolios.show');
     Route::post('portfolios/{portfolio}/assign', [\App\Http\Controllers\Admin\PortfolioController::class, 'assign'])->name('portfolios.assign');
     Route::put('portfolios/{portfolio}/status', [\App\Http\Controllers\Admin\PortfolioController::class, 'updateStatus'])->name('portfolios.status');
     Route::delete('portfolios/{portfolio}/assignments/{assignment}', [\App\Http\Controllers\Admin\PortfolioController::class, 'removeAssignment'])->name('portfolios.assignments.destroy');
-
     Route::resource('rubrics', \App\Http\Controllers\Admin\RubricCriteriaController::class)->except(['show']);
     Route::post('rubrics/{rubric}/toggle-active', [\App\Http\Controllers\Admin\RubricCriteriaController::class, 'toggleActive'])->name('rubrics.toggle-active');
 });
@@ -65,5 +62,9 @@ Route::middleware(['auth', 'verified'])->prefix('notifications')->name('notifica
     Route::patch('{id}/read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('read');
     Route::post('mark-all-read', [\App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('mark-all-read');
 });
+
+Route::get('documents/{document}/download', \App\Http\Controllers\DocumentDownloadController::class)
+    ->middleware(['auth', 'verified'])
+    ->name('documents.download');
 
 require __DIR__.'/settings.php';
