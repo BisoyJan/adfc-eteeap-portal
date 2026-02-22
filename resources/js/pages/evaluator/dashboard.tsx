@@ -247,7 +247,7 @@ export default function Dashboard({
                                                 key={notification.id}
                                                 className="flex items-start gap-3"
                                             >
-                                                <div className="mt-1.5 flex-shrink-0">
+                                                <div className="mt-1.5 shrink-0">
                                                     {notification.read_at ===
                                                         null ? (
                                                         <span className="block h-2 w-2 rounded-full bg-blue-500" />

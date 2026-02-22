@@ -1,4 +1,4 @@
-import { Head, Link, useForm, usePage, router } from '@inertiajs/react';
+import { Head, Link, useForm, router } from '@inertiajs/react';
 import {
     Upload,
     Download,
@@ -16,8 +16,10 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { toast } from 'sonner';
 import FilePreviewDialog from '@/components/file-preview-dialog';
+import FlashMessages from '@/components/flash-messages';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
+import ProgressBar from '@/components/progress-bar';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
     AlertDialog,
@@ -271,8 +273,6 @@ export default function Show({
     progress,
     evaluations,
 }: Props) {
-    const { flash } = usePage<{ flash: { success?: string; error?: string } }>()
-        .props;
     const editable = canEdit(portfolio.status);
     const [previewDoc, setPreviewDoc] = useState<Document | null>(null);
     const [documentToDelete, setDocumentToDelete] = useState<Document | null>(
@@ -371,19 +371,7 @@ export default function Show({
                     </Badge>
                 </div>
 
-                {/* Flash messages */}
-                {flash?.success && (
-                    <Alert className="border-green-200 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-green-200">
-                        <CheckCircle2 className="h-4 w-4" />
-                        <AlertDescription>{flash.success}</AlertDescription>
-                    </Alert>
-                )}
-                {flash?.error && (
-                    <Alert variant="destructive">
-                        <AlertCircle className="h-4 w-4" />
-                        <AlertDescription>{flash.error}</AlertDescription>
-                    </Alert>
-                )}
+                <FlashMessages />
 
                 {/* Admin notes / revision feedback */}
                 {portfolio.admin_notes && (
@@ -411,12 +399,7 @@ export default function Show({
                                     {progress.percentage}%
                                 </span>
                             </div>
-                            <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-secondary">
-                                <div
-                                    className="h-full rounded-full bg-primary transition-all duration-300"
-                                    style={{ width: `${progress.percentage}%` }}
-                                />
-                            </div>
+                            <ProgressBar percentage={progress.percentage} height="h-2" trackClassName="mt-2" />
                         </CardContent>
                     </Card>
                 )}
@@ -528,7 +511,7 @@ export default function Show({
                                         );
                                     })}
                                 </div>
-                                <div className="absolute left-0 right-0 top-4 -z-0 flex items-center px-4">
+                                <div className="absolute left-0 right-0 top-4 z-0 flex items-center px-4">
                                     {timelineSteps.slice(0, -1).map((_, idx) => {
                                         const current = getTimelineIndex(
                                             portfolio.status,
@@ -604,14 +587,12 @@ export default function Show({
                                                     %)
                                                 </span>
                                             </div>
-                                            <div className="mt-2 h-3 w-full overflow-hidden rounded-full bg-secondary">
-                                                <div
-                                                    className={`h-full rounded-full transition-all duration-300 ${percentage >= 75 ? 'bg-green-500' : percentage >= 50 ? 'bg-amber-500' : 'bg-red-500'}`}
-                                                    style={{
-                                                        width: `${percentage}%`,
-                                                    }}
-                                                />
-                                            </div>
+                                            <ProgressBar
+                                                percentage={percentage}
+                                                height="h-3"
+                                                trackClassName="mt-2"
+                                                fillClassName={percentage >= 75 ? 'bg-green-500' : percentage >= 50 ? 'bg-amber-500' : 'bg-red-500'}
+                                            />
                                         </div>
 
                                         {/* Per-Criteria Scores */}
@@ -652,14 +633,11 @@ export default function Show({
                                                                 }
                                                             </span>
                                                         </div>
-                                                        <div className="h-1.5 w-full overflow-hidden rounded-full bg-secondary">
-                                                            <div
-                                                                className={`h-full rounded-full ${criteriaPercentage >= 75 ? 'bg-green-500' : criteriaPercentage >= 50 ? 'bg-amber-500' : 'bg-red-500'}`}
-                                                                style={{
-                                                                    width: `${criteriaPercentage}%`,
-                                                                }}
-                                                            />
-                                                        </div>
+                                                        <ProgressBar
+                                                            percentage={criteriaPercentage}
+                                                            height="h-1.5"
+                                                            fillClassName={criteriaPercentage >= 75 ? 'bg-green-500' : criteriaPercentage >= 50 ? 'bg-amber-500' : 'bg-red-500'}
+                                                        />
                                                         {score.comments && (
                                                             <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
                                                                 <MessageSquare className="mt-0.5 h-3 w-3 shrink-0" />

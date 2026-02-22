@@ -1,7 +1,6 @@
-import { Head, Link, useForm, usePage, router } from '@inertiajs/react';
+import { Head, Link, useForm, router } from '@inertiajs/react';
 import {
     ArrowLeft,
-    AlertCircle,
     CheckCircle2,
     Download,
     Eye,
@@ -16,9 +15,10 @@ import {
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import FilePreviewDialog from '@/components/file-preview-dialog';
+import FlashMessages from '@/components/flash-messages';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import ProgressBar from '@/components/progress-bar';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -246,8 +246,6 @@ export default function Show({
     uploadedCategoryIds,
     progress,
 }: Props) {
-    const { flash } = usePage<{ flash: { success?: string; error?: string } }>()
-        .props;
     const isDraft = portfolio.status === 'draft';
     const [previewDoc, setPreviewDoc] = useState<Document | null>(null);
     const [assignmentToRemove, setAssignmentToRemove] =
@@ -354,19 +352,7 @@ export default function Show({
                     </div>
                 </div>
 
-                {/* Flash messages */}
-                {flash?.success && (
-                    <Alert className="border-green-200 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-green-200">
-                        <CheckCircle2 className="h-4 w-4" />
-                        <AlertDescription>{flash.success}</AlertDescription>
-                    </Alert>
-                )}
-                {flash?.error && (
-                    <Alert variant="destructive">
-                        <AlertCircle className="h-4 w-4" />
-                        <AlertDescription>{flash.error}</AlertDescription>
-                    </Alert>
-                )}
+                <FlashMessages />
 
                 {/* Two-column layout */}
                 <div className="grid gap-6 lg:grid-cols-3">
@@ -445,14 +431,7 @@ export default function Show({
                                             {progress.percentage}%
                                         </span>
                                     </div>
-                                    <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-secondary">
-                                        <div
-                                            className="h-full rounded-full bg-primary transition-all duration-300"
-                                            style={{
-                                                width: `${progress.percentage}%`,
-                                            }}
-                                        />
-                                    </div>
+                                    <ProgressBar percentage={progress.percentage} height="h-2" trackClassName="mt-2" />
                                 </div>
 
                                 {portfolio.admin_notes && (
@@ -664,14 +643,11 @@ export default function Show({
                                                             </div>
                                                         </div>
 
-                                                        <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
-                                                            <div
-                                                                className={`h-full rounded-full transition-all duration-300 ${percentage >= 75 ? 'bg-green-500' : percentage >= 50 ? 'bg-amber-500' : 'bg-red-500'}`}
-                                                                style={{
-                                                                    width: `${percentage}%`,
-                                                                }}
-                                                            />
-                                                        </div>
+                                                        <ProgressBar
+                                                            percentage={percentage}
+                                                            height="h-2"
+                                                            fillClassName={percentage >= 75 ? 'bg-green-500' : percentage >= 50 ? 'bg-amber-500' : 'bg-red-500'}
+                                                        />
 
                                                         <div className="grid gap-2 sm:grid-cols-2">
                                                             {evaluation.scores.map(

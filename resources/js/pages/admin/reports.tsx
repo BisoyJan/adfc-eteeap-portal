@@ -10,6 +10,7 @@ import {
     ClipboardList,
 } from 'lucide-react';
 import Heading from '@/components/heading';
+import ProgressBar from '@/components/progress-bar';
 import {
     Card,
     CardContent,
@@ -231,16 +232,13 @@ export default function Reports({
                                         {item.status}
                                     </span>
                                     <div className="flex-1">
-                                        <div className="h-6 w-full rounded-full bg-secondary">
-                                            <div
-                                                className={`flex h-full items-center justify-end rounded-full px-2 text-xs font-bold text-white ${getStatusColor(item.color).includes('green') ? 'bg-green-500' : getStatusColor(item.color).includes('blue') ? 'bg-blue-500' : getStatusColor(item.color).includes('amber') ? 'bg-amber-500' : getStatusColor(item.color).includes('red') ? 'bg-red-500' : getStatusColor(item.color).includes('indigo') ? 'bg-indigo-500' : 'bg-gray-400'}`}
-                                                style={{
-                                                    width: `${summary.total_portfolios > 0 ? Math.max((item.count / summary.total_portfolios) * 100, item.count > 0 ? 12 : 0) : 0}%`,
-                                                }}
-                                            >
-                                                {item.count > 0 && item.count}
-                                            </div>
-                                        </div>
+                                        <ProgressBar
+                                            percentage={summary.total_portfolios > 0 ? Math.max((item.count / summary.total_portfolios) * 100, item.count > 0 ? 12 : 0) : 0}
+                                            height="h-6"
+                                            fillClassName={`flex items-center justify-end px-2 text-xs font-bold text-white ${getStatusColor(item.color).includes('green') ? 'bg-green-500' : getStatusColor(item.color).includes('blue') ? 'bg-blue-500' : getStatusColor(item.color).includes('amber') ? 'bg-amber-500' : getStatusColor(item.color).includes('red') ? 'bg-red-500' : getStatusColor(item.color).includes('indigo') ? 'bg-indigo-500' : 'bg-gray-400'}`}
+                                        >
+                                            {item.count > 0 && item.count}
+                                        </ProgressBar>
                                     </div>
                                     <span className="w-8 text-right text-sm text-muted-foreground">
                                         {item.count}
@@ -271,7 +269,7 @@ export default function Reports({
                                     ).map(([key, count]) => {
                                         const percentage = Math.round(
                                             (count / totalRecommendations) *
-                                                100,
+                                            100,
                                         );
                                         return (
                                             <div
@@ -288,14 +286,11 @@ export default function Reports({
                                                         {count} ({percentage}%)
                                                     </span>
                                                 </div>
-                                                <div className="h-3 w-full overflow-hidden rounded-full bg-secondary">
-                                                    <div
-                                                        className={`h-full rounded-full ${getRecommendationColor(key)}`}
-                                                        style={{
-                                                            width: `${percentage}%`,
-                                                        }}
-                                                    />
-                                                </div>
+                                                <ProgressBar
+                                                    percentage={percentage}
+                                                    height="h-3"
+                                                    fillClassName={getRecommendationColor(key)}
+                                                />
                                             </div>
                                         );
                                     })}
@@ -339,20 +334,17 @@ export default function Reports({
                                                     </span>
                                                 </span>
                                             </div>
-                                            <div className="h-3 w-full overflow-hidden rounded-full bg-secondary">
-                                                <div
-                                                    className={`h-full rounded-full ${criteria.percentage >= 75 ? 'bg-green-500' : criteria.percentage >= 50 ? 'bg-amber-500' : 'bg-red-500'}`}
-                                                    style={{
-                                                        width: `${criteria.percentage}%`,
-                                                    }}
-                                                />
-                                            </div>
+                                            <ProgressBar
+                                                percentage={criteria.percentage}
+                                                height="h-3"
+                                                fillClassName={criteria.percentage >= 75 ? 'bg-green-500' : criteria.percentage >= 50 ? 'bg-amber-500' : 'bg-red-500'}
+                                            />
                                             <p className="text-xs text-muted-foreground">
                                                 Based on{' '}
                                                 {criteria.evaluations_count}{' '}
                                                 evaluation
                                                 {criteria.evaluations_count !==
-                                                1
+                                                    1
                                                     ? 's'
                                                     : ''}
                                             </p>
@@ -389,16 +381,13 @@ export default function Reports({
                                                 {formatMonth(month)}
                                             </span>
                                             <div className="flex-1">
-                                                <div className="h-6 w-full rounded-full bg-secondary">
-                                                    <div
-                                                        className="flex h-full items-center justify-end rounded-full bg-blue-500 px-2 text-xs font-bold text-white"
-                                                        style={{
-                                                            width: `${Math.max((count / maxMonthly) * 100, count > 0 ? 15 : 0)}%`,
-                                                        }}
-                                                    >
-                                                        {count > 0 && count}
-                                                    </div>
-                                                </div>
+                                                <ProgressBar
+                                                    percentage={Math.max((count / maxMonthly) * 100, count > 0 ? 15 : 0)}
+                                                    height="h-6"
+                                                    fillClassName="flex items-center justify-end bg-blue-500 px-2 text-xs font-bold text-white"
+                                                >
+                                                    {count > 0 && count}
+                                                </ProgressBar>
                                             </div>
                                         </div>
                                     ))}
@@ -479,8 +468,8 @@ export default function Reports({
                                                         <span className="inline-flex items-center gap-1">
                                                             {evaluator.pending_assignments >
                                                                 0 && (
-                                                                <XCircle className="h-3.5 w-3.5 text-amber-500" />
-                                                            )}
+                                                                    <XCircle className="h-3.5 w-3.5 text-amber-500" />
+                                                                )}
                                                             {
                                                                 evaluator.pending_assignments
                                                             }
@@ -491,7 +480,7 @@ export default function Reports({
                                                             className={`font-medium ${evaluator.average_score_percentage >= 75 ? 'text-green-600' : evaluator.average_score_percentage >= 50 ? 'text-amber-600' : evaluator.average_score_percentage > 0 ? 'text-red-600' : 'text-muted-foreground'}`}
                                                         >
                                                             {evaluator.average_score_percentage >
-                                                            0
+                                                                0
                                                                 ? `${evaluator.average_score_percentage}%`
                                                                 : '—'}
                                                         </span>

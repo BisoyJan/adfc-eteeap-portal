@@ -1,6 +1,7 @@
-import { Head, Link, usePage, router } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { Plus, Eye, Trash2, FileText } from 'lucide-react';
 import { useState } from 'react';
+import FlashMessages from '@/components/flash-messages';
 import Heading from '@/components/heading';
 import {
     AlertDialog,
@@ -76,7 +77,6 @@ function formatStatus(status: string): string {
 }
 
 export default function Index({ portfolios }: Props) {
-    const { flash } = usePage<{ flash: { success?: string } }>().props;
     const [portfolioToDelete, setPortfolioToDelete] =
         useState<Portfolio | null>(null);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -118,11 +118,7 @@ export default function Index({ portfolios }: Props) {
                     </Button>
                 </div>
 
-                {flash?.success && (
-                    <div className="rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-green-200">
-                        {flash.success}
-                    </div>
-                )}
+                <FlashMessages />
 
                 {portfolios.data.length === 0 ? (
                     <Card className="py-12 text-center">

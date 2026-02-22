@@ -1,6 +1,7 @@
-import { Head, Link, usePage, router } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { useState } from 'react';
+import FlashMessages from '@/components/flash-messages';
 import Heading from '@/components/heading';
 import {
     AlertDialog,
@@ -72,7 +73,6 @@ function formatRole(role: string): string {
 }
 
 export default function Index({ users }: Props) {
-    const { flash } = usePage<{ flash: { success?: string } }>().props;
     const [userToDelete, setUserToDelete] = useState<User | null>(null);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
@@ -113,11 +113,7 @@ export default function Index({ users }: Props) {
                     </Button>
                 </div>
 
-                {flash?.success && (
-                    <div className="rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-green-200">
-                        {flash.success}
-                    </div>
-                )}
+                <FlashMessages />
 
                 <div className="overflow-hidden rounded-lg border">
                     <table className="w-full text-sm">

@@ -1,6 +1,7 @@
-import { Head, Link, usePage, router } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { useState } from 'react';
+import FlashMessages from '@/components/flash-messages';
 import Heading from '@/components/heading';
 import {
     AlertDialog,
@@ -43,8 +44,6 @@ function truncate(text: string | null, length: number = 80): string {
 }
 
 export default function Index({ categories }: Props) {
-    const { flash } = usePage<{ flash: { success?: string; error?: string } }>()
-        .props;
     const [categoryToDelete, setCategoryToDelete] =
         useState<DocumentCategory | null>(null);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -83,16 +82,7 @@ export default function Index({ categories }: Props) {
                     </Button>
                 </div>
 
-                {flash?.success && (
-                    <div className="rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-green-200">
-                        {flash.success}
-                    </div>
-                )}
-                {flash?.error && (
-                    <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-800 dark:bg-red-950 dark:text-red-200">
-                        {flash.error}
-                    </div>
-                )}
+                <FlashMessages />
 
                 <div className="rounded-md border">
                     <table className="w-full text-sm">

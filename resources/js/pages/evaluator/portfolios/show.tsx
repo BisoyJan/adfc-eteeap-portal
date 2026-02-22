@@ -14,6 +14,7 @@ import type { FormEvent } from 'react';
 import FilePreviewDialog from '@/components/file-preview-dialog';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
+import ProgressBar from '@/components/progress-bar';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -402,14 +403,7 @@ export default function Show({
                                         {progress.percentage}%
                                     </span>
                                 </div>
-                                <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-secondary">
-                                    <div
-                                        className="h-full rounded-full bg-primary transition-all duration-300"
-                                        style={{
-                                            width: `${progress.percentage}%`,
-                                        }}
-                                    />
-                                </div>
+                                <ProgressBar percentage={progress.percentage} height="h-2" trackClassName="mt-2" />
                             </CardContent>
                         </Card>
 

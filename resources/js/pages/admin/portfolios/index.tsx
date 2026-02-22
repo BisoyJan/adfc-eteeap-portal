@@ -1,6 +1,7 @@
-import { Head, Link, usePage, router } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { Eye, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import FlashMessages from '@/components/flash-messages';
 import Heading from '@/components/heading';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -100,7 +101,6 @@ function formatStatus(status: string): string {
 }
 
 export default function Index({ portfolios, statuses, filters }: Props) {
-    const { flash } = usePage<{ flash: { success?: string } }>().props;
     const [search, setSearch] = useState(filters.search ?? '');
     const [status, setStatus] = useState(filters.status ?? '');
 
@@ -136,11 +136,7 @@ export default function Index({ portfolios, statuses, filters }: Props) {
                     description="Review and manage all applicant portfolios"
                 />
 
-                {flash?.success && (
-                    <div className="rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-green-200">
-                        {flash.success}
-                    </div>
-                )}
+                <FlashMessages />
 
                 <div className="flex items-center gap-4">
                     <div className="relative max-w-sm flex-1">
@@ -156,7 +152,7 @@ export default function Index({ portfolios, statuses, filters }: Props) {
                         value={status || 'all'}
                         onValueChange={handleStatusChange}
                     >
-                        <SelectTrigger className="w-[180px]">
+                        <SelectTrigger className="w-45">
                             <SelectValue placeholder="All Statuses" />
                         </SelectTrigger>
                         <SelectContent>

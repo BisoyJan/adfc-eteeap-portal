@@ -1,6 +1,7 @@
-import { Head, Link, usePage, router } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { Plus, Pencil, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
 import { useState } from 'react';
+import FlashMessages from '@/components/flash-messages';
 import Heading from '@/components/heading';
 import {
     AlertDialog,
@@ -42,8 +43,6 @@ function truncate(text: string | null, length: number = 60): string {
 }
 
 export default function Index({ criteria }: Props) {
-    const { flash } = usePage<{ flash: { success?: string; error?: string } }>()
-        .props;
     const [criteriaToDelete, setCriteriaToDelete] =
         useState<RubricCriteria | null>(null);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -93,17 +92,7 @@ export default function Index({ criteria }: Props) {
                     </Button>
                 </div>
 
-                {flash?.success && (
-                    <div className="rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-green-200">
-                        {flash.success}
-                    </div>
-                )}
-
-                {flash?.error && (
-                    <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-800 dark:bg-red-950 dark:text-red-200">
-                        {flash.error}
-                    </div>
-                )}
+                <FlashMessages />
 
                 <div className="overflow-hidden rounded-lg border">
                     <table className="w-full text-sm">
