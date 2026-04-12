@@ -55,14 +55,6 @@ class User extends Authenticatable
     }
 
     /**
-     * Check if the user is a Super Admin.
-     */
-    public function isSuperAdmin(): bool
-    {
-        return $this->role === UserRole::SuperAdmin;
-    }
-
-    /**
      * Check if the user is an Admin.
      */
     public function isAdmin(): bool
@@ -95,11 +87,11 @@ class User extends Authenticatable
     }
 
     /**
-     * Check if the user has administrative privileges (SuperAdmin or Admin).
+     * Check if the user has administrative privileges.
      */
     public function isAdministrative(): bool
     {
-        return $this->hasRole(UserRole::SuperAdmin, UserRole::Admin);
+        return $this->hasRole(UserRole::Admin);
     }
 
     public function portfolios(): HasMany

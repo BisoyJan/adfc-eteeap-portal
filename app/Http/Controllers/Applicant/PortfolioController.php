@@ -103,7 +103,7 @@ class PortfolioController extends Controller
         ]);
 
         $portfolio->load('user');
-        $admins = User::whereIn('role', [UserRole::Admin, UserRole::SuperAdmin])->get();
+        $admins = User::whereIn('role', [UserRole::Admin])->get();
         Notification::send($admins, new PortfolioSubmittedNotification($portfolio));
 
         return redirect()->route('applicant.portfolios.index')

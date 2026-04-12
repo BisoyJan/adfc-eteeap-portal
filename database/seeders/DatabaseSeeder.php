@@ -13,11 +13,6 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        User::factory()->superAdmin()->create([
-            'name' => 'Super Admin',
-            'email' => 'superadmin@adfc.edu.ph',
-        ]);
-
         User::factory()->admin()->create([
             'name' => 'Admin User',
             'email' => 'admin@adfc.edu.ph',
@@ -39,3 +34,5 @@ class DatabaseSeeder extends Seeder
         ]);
     }
 }
+
+// TODO add date filter on http://localhost:8000/admin/portfolios/2

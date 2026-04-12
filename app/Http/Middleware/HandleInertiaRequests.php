@@ -48,7 +48,6 @@ class HandleInertiaRequests extends Middleware
                     'evaluate_portfolios' => $user->can('evaluate-portfolios'),
                     'submit_portfolios' => $user->can('submit-portfolios'),
                     'manage_rubrics' => $user->can('manage-rubrics'),
-                    'manage_system' => $user->can('manage-system'),
                 ] : [],
                 'notificationCount' => $user ? $user->unreadNotifications()->count() : 0,
             ],

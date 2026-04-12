@@ -51,7 +51,6 @@ const roleBadgeVariant: Record<
     string,
     'destructive' | 'default' | 'secondary' | 'outline'
 > = {
-    super_admin: 'destructive',
     admin: 'default',
     evaluator: 'secondary',
     applicant: 'outline',

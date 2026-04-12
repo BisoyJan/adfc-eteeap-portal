@@ -1,4 +1,4 @@
-export type UserRole = 'super_admin' | 'admin' | 'evaluator' | 'applicant';
+export type UserRole = 'admin' | 'evaluator' | 'applicant';
 
 export type User = {
     id: number;
@@ -19,7 +19,6 @@ export type Permissions = {
     evaluate_portfolios: boolean;
     submit_portfolios: boolean;
     manage_rubrics: boolean;
-    manage_system: boolean;
 };
 
 export type Auth = {

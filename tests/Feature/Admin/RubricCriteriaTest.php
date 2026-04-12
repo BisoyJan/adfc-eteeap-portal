@@ -154,11 +154,11 @@ class RubricCriteriaTest extends TestCase
         ]);
     }
 
-    public function test_super_admin_can_manage_rubrics(): void
+    public function test_admin_can_manage_rubrics_fully(): void
     {
-        $superAdmin = User::factory()->superAdmin()->create();
+        $admin = User::factory()->admin()->create();
 
-        $this->actingAs($superAdmin)->get(route('admin.rubrics.index'))->assertStatus(200);
-        $this->actingAs($superAdmin)->get(route('admin.rubrics.create'))->assertStatus(200);
+        $this->actingAs($admin)->get(route('admin.rubrics.index'))->assertStatus(200);
+        $this->actingAs($admin)->get(route('admin.rubrics.create'))->assertStatus(200);
     }
 }

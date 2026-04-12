@@ -33,18 +33,6 @@ class UserManagementTest extends TestCase
         );
     }
 
-    public function test_super_admin_can_view_users_list(): void
-    {
-        $superAdmin = User::factory()->superAdmin()->create();
-
-        $response = $this->actingAs($superAdmin)->get(route('admin.users.index'));
-
-        $response->assertStatus(200);
-        $response->assertInertia(fn (AssertableInertia $page) => $page
-            ->component('admin/users/index')
-        );
-    }
-
     public function test_evaluator_cannot_view_users_list(): void
     {
         $evaluator = User::factory()->evaluator()->create();
@@ -178,22 +166,22 @@ class UserManagementTest extends TestCase
         ]);
     }
 
-    public function test_super_admin_can_create_user_with_any_role(): void
+    public function test_admin_can_create_user_with_any_role(): void
     {
-        $superAdmin = User::factory()->superAdmin()->create();
+        $admin = User::factory()->admin()->create();
 
-        $response = $this->actingAs($superAdmin)->post(route('admin.users.store'), [
-            'name' => 'New Super Admin',
-            'email' => 'newsuperadmin@example.com',
+        $response = $this->actingAs($admin)->post(route('admin.users.store'), [
+            'name' => 'New Admin',
+            'email' => 'newadmin@example.com',
             'password' => 'password',
             'password_confirmation' => 'password',
-            'role' => UserRole::SuperAdmin->value,
+            'role' => UserRole::Admin->value,
         ]);
 
         $response->assertRedirect(route('admin.users.index'));
         $this->assertDatabaseHas('users', [
-            'email' => 'newsuperadmin@example.com',
-            'role' => UserRole::SuperAdmin->value,
+            'email' => 'newadmin@example.com',
+            'role' => UserRole::Admin->value,
         ]);
     }
 }

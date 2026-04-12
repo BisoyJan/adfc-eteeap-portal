@@ -14,7 +14,7 @@ class EnsureUserHasRole
      *
      * Ensure the authenticated user has one of the specified roles.
      *
-     * @param  string  ...$roles  The allowed role values (e.g., 'admin', 'super_admin', 'evaluator', 'applicant').
+     * @param  string  ...$roles  The allowed role values (e.g., 'admin', 'evaluator', 'applicant').
      */
     public function handle(Request $request, Closure $next, string ...$roles): Response
     {

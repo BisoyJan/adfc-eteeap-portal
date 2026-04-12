@@ -35,16 +35,12 @@ class RoleMiddlewareTest extends TestCase
         $response->assertStatus(403);
     }
 
-    public function test_middleware_allows_multiple_roles(): void
+    public function test_middleware_allows_admin_role(): void
     {
         $admin = User::factory()->admin()->create();
-        $superAdmin = User::factory()->superAdmin()->create();
 
         $adminResponse = $this->actingAs($admin)->get(route('admin.users.index'));
         $adminResponse->assertStatus(200);
-
-        $superAdminResponse = $this->actingAs($superAdmin)->get(route('admin.users.index'));
-        $superAdminResponse->assertStatus(200);
     }
 
     public function test_middleware_blocks_unauthenticated_users(): void

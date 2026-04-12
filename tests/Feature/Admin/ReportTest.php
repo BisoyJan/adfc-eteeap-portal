@@ -82,11 +82,11 @@ class ReportTest extends TestCase
         );
     }
 
-    public function test_super_admin_can_view_reports(): void
+    public function test_admin_can_view_reports_fully(): void
     {
-        $superAdmin = User::factory()->superAdmin()->create();
+        $admin = User::factory()->admin()->create();
 
-        $response = $this->actingAs($superAdmin)->get(route('admin.reports'));
+        $response = $this->actingAs($admin)->get(route('admin.reports'));
 
         $response->assertStatus(200);
     }

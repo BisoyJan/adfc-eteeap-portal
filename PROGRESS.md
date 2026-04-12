@@ -3,7 +3,7 @@
 ## Summary
 - **Project**: ETEEAP Gateway: A Web-Based Portfolio & Evaluation System with Progress Tracking for ADFC
 - **Stack**: Laravel 12 + Inertia v2 + React 19 + Tailwind CSS v4 + shadcn/ui
-- **Roles**: SuperAdmin, Admin, Evaluator, Applicant
+- **Roles**: Admin, Evaluator, Applicant
 
 ## Progress
 
@@ -11,7 +11,7 @@
 |-------|------|-------------|--------|-------|
 | 0 | 0.1 | Create progress log | Completed | — |
 | 0 | 0.2 | Verify dev environment | Completed | 41 tests passing baseline |
-| 1 | 1.1 | Create UserRole enum | Completed | SuperAdmin, Admin, Evaluator, Applicant |
+| 1 | 1.1 | Create UserRole enum | Completed | Admin, Evaluator, Applicant |
 | 1 | 1.2 | Add role column migration | Completed | String column, default 'applicant' |
 | 1 | 1.3 | Update User model with role | Completed | Cast to enum, helper methods |
 | 1 | 1.4 | Create role middleware | Completed | EnsureUserHasRole middleware |

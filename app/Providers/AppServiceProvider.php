@@ -58,11 +58,11 @@ class AppServiceProvider extends ServiceProvider
     protected function configureGates(): void
     {
         Gate::define('manage-users', function (User $user): bool {
-            return $user->hasRole(UserRole::SuperAdmin, UserRole::Admin);
+            return $user->hasRole(UserRole::Admin);
         });
 
         Gate::define('manage-portfolios', function (User $user): bool {
-            return $user->hasRole(UserRole::SuperAdmin, UserRole::Admin);
+            return $user->hasRole(UserRole::Admin);
         });
 
         Gate::define('evaluate-portfolios', function (User $user): bool {
@@ -74,11 +74,7 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Gate::define('manage-rubrics', function (User $user): bool {
-            return $user->hasRole(UserRole::SuperAdmin, UserRole::Admin);
-        });
-
-        Gate::define('manage-system', function (User $user): bool {
-            return $user->hasRole(UserRole::SuperAdmin);
+            return $user->hasRole(UserRole::Admin);
         });
     }
 }

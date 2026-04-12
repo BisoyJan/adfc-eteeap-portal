@@ -183,12 +183,12 @@ class PortfolioManagementTest extends TestCase
         ]);
     }
 
-    public function test_super_admin_can_manage_portfolios(): void
+    public function test_admin_can_manage_portfolios_fully(): void
     {
-        $superAdmin = User::factory()->superAdmin()->create();
+        $admin = User::factory()->admin()->create();
         $portfolio = Portfolio::factory()->submitted()->create();
 
-        $this->actingAs($superAdmin)->get(route('admin.portfolios.index'))->assertStatus(200);
-        $this->actingAs($superAdmin)->get(route('admin.portfolios.show', $portfolio))->assertStatus(200);
+        $this->actingAs($admin)->get(route('admin.portfolios.index'))->assertStatus(200);
+        $this->actingAs($admin)->get(route('admin.portfolios.show', $portfolio))->assertStatus(200);
     }
 }

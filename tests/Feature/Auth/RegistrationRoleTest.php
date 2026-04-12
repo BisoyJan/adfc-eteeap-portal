@@ -34,13 +34,6 @@ class RegistrationRoleTest extends TestCase
         $this->assertEquals(UserRole::Applicant, $user->role);
     }
 
-    public function test_user_factory_super_admin_state(): void
-    {
-        $user = User::factory()->superAdmin()->create();
-
-        $this->assertEquals(UserRole::SuperAdmin, $user->role);
-    }
-
     public function test_user_factory_admin_state(): void
     {
         $user = User::factory()->admin()->create();

@@ -26,11 +26,11 @@ class AdminDashboardTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function test_super_admin_can_view_admin_dashboard(): void
+    public function test_admin_can_view_admin_dashboard_fully(): void
     {
-        $superAdmin = User::factory()->superAdmin()->create();
+        $admin = User::factory()->admin()->create();
 
-        $response = $this->actingAs($superAdmin)->get(route('admin.dashboard'));
+        $response = $this->actingAs($admin)->get(route('admin.dashboard'));
 
         $response->assertStatus(200);
     }

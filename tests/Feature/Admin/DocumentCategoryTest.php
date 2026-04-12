@@ -153,11 +153,11 @@ class DocumentCategoryTest extends TestCase
         $this->assertDatabaseHas('document_categories', ['id' => $category->id]);
     }
 
-    public function test_super_admin_can_manage_document_categories(): void
+    public function test_admin_can_manage_document_categories_fully(): void
     {
-        $superAdmin = User::factory()->superAdmin()->create();
+        $admin = User::factory()->admin()->create();
 
-        $this->actingAs($superAdmin)->get(route('admin.document-categories.index'))->assertStatus(200);
-        $this->actingAs($superAdmin)->get(route('admin.document-categories.create'))->assertStatus(200);
+        $this->actingAs($admin)->get(route('admin.document-categories.index'))->assertStatus(200);
+        $this->actingAs($admin)->get(route('admin.document-categories.create'))->assertStatus(200);
     }
 }

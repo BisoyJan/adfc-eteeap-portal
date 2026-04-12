@@ -36,13 +36,11 @@ class NotificationTest extends TestCase
 
         $admin1 = User::factory()->admin()->create();
         $admin2 = User::factory()->admin()->create();
-        $superAdmin = User::factory()->superAdmin()->create();
 
         $this->actingAs($applicant)->post(route('applicant.portfolios.submit', $portfolio));
 
         Notification::assertSentTo($admin1, PortfolioSubmittedNotification::class);
         Notification::assertSentTo($admin2, PortfolioSubmittedNotification::class);
-        Notification::assertSentTo($superAdmin, PortfolioSubmittedNotification::class);
     }
 
     public function test_evaluator_is_notified_when_assigned(): void

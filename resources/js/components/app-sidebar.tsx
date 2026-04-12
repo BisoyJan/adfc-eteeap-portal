@@ -1,7 +1,6 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
     BarChart3,
-    BookOpen,
     ClipboardCheck,
     ClipboardList,
     FileStack,
@@ -27,7 +26,7 @@ import type { NavItem, SharedData, UserRole } from '@/types';
 import AppLogo from './app-logo';
 
 function getNavItems(role: UserRole): NavItem[] {
-    if (role === 'admin' || role === 'super_admin') {
+    if (role === 'admin') {
         return [
             {
                 title: 'Dashboard',
@@ -69,8 +68,8 @@ function getNavItems(role: UserRole): NavItem[] {
                 role === 'applicant'
                     ? '/applicant/dashboard'
                     : role === 'evaluator'
-                      ? '/evaluator/dashboard'
-                      : dashboard(),
+                        ? '/evaluator/dashboard'
+                        : dashboard(),
             icon: LayoutGrid,
         },
     ];
@@ -94,18 +93,7 @@ function getNavItems(role: UserRole): NavItem[] {
     return items;
 }
 
-const footerNavItems: NavItem[] = [
-    {
-        title: 'Repository',
-        href: 'https://github.com/laravel/react-starter-kit',
-        icon: Folder,
-    },
-    {
-        title: 'Documentation',
-        href: 'https://laravel.com/docs/starter-kits#react',
-        icon: BookOpen,
-    },
-];
+const footerNavItems: NavItem[] = [];
 
 export function AppSidebar() {
     const { auth } = usePage<SharedData>().props;
