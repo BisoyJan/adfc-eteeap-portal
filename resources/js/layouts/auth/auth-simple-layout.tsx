@@ -1,6 +1,5 @@
 import { Link } from '@inertiajs/react';
 import {
-    GraduationCap,
     FileUp,
     ClipboardCheck,
     BarChart3,
@@ -74,9 +73,11 @@ export default function AuthSimpleLayout({
                         href={home()}
                         className="flex items-center gap-2.5"
                     >
-                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/20 backdrop-blur-sm">
-                            <GraduationCap className="h-5 w-5 text-white" />
-                        </div>
+                        <img
+                            src="/adfc-logo.png"
+                            alt="ADFC Logo"
+                            className="h-10 w-10 object-contain brightness-0 invert"
+                        />
                         <span className="text-xl font-bold tracking-tight text-white">
                             ETEEAP Gateway
                         </span>
@@ -130,9 +131,11 @@ export default function AuthSimpleLayout({
                                 href={home()}
                                 className="flex items-center gap-2 font-medium lg:hidden"
                             >
-                                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-600">
-                                    <GraduationCap className="h-5 w-5 text-white" />
-                                </div>
+                                <img
+                                    src="/adfc-logo.png"
+                                    alt="ADFC Logo"
+                                    className="h-10 w-10 object-contain"
+                                />
                                 <span className="text-xl font-bold tracking-tight text-foreground">
                                     ETEEAP Gateway
                                 </span>

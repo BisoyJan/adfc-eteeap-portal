@@ -110,9 +110,11 @@ export default function Welcome({
                 <header className="sticky top-0 z-50 border-b border-gray-100 bg-white/80 backdrop-blur-lg dark:border-neutral-800 dark:bg-neutral-950/80">
                     <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
                         <Link href="/" className="flex items-center gap-2.5">
-                            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-600 dark:bg-indigo-500">
-                                <GraduationCap className="h-5 w-5 text-white" />
-                            </div>
+                            <img
+                                src="/adfc-logo.png"
+                                alt="ADFC Logo"
+                                className="h-10 w-10 object-contain"
+                            />
                             <span className="text-xl font-bold tracking-tight text-gray-900 dark:text-white">
                                 ETEEAP Gateway
                             </span>
@@ -185,7 +187,7 @@ export default function Welcome({
                     <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 sm:py-28 lg:flex lg:items-center lg:gap-16 lg:py-36">
                         <div className="mx-auto max-w-2xl lg:mx-0 lg:shrink-0">
                             <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50 px-4 py-1.5 text-sm font-medium text-indigo-700 dark:border-indigo-800 dark:bg-indigo-950/50 dark:text-indigo-300">
-                                <GraduationCap className="h-4 w-4" />
+                                <img src="/adfc-logo.png" alt="ADFC" className="h-4 w-4 object-contain" />
                                 Asian Development Foundation College
                             </div>
 

@@ -26,9 +26,8 @@ export default function AuthCardLayout({
                     href={home()}
                     className="flex items-center gap-2 self-center font-medium"
                 >
-                    <div className="flex h-9 w-9 items-center justify-center">
-                        <AppLogoIcon className="size-9 fill-current text-black dark:text-white" />
-                    </div>
+                    <AppLogoIcon className="h-12 w-12 object-contain" />
+                    <span className="text-base font-semibold">ADFC ETEEAP</span>
                 </Link>
 
                 <div className="flex flex-col gap-6">
