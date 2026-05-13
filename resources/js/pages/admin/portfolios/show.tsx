@@ -11,6 +11,8 @@ import {
     Calendar,
     Star,
     MessageSquare,
+    TrendingUp,
+    Clock,
 } from 'lucide-react';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
@@ -152,6 +154,18 @@ interface Props {
         completed: number;
         percentage: number;
     };
+    eta: {
+        is_applicable: boolean;
+        days_active: number;
+        required_total: number;
+        required_completed: number;
+        upload_velocity_per_week: number;
+        estimated_days_remaining: number | null;
+        estimated_completion_date: string | null;
+        earliest_due_date: string | null;
+        at_risk: boolean;
+        confidence: 'none' | 'low' | 'medium' | 'high';
+    };
 }
 
 const statusBadgeVariant: Record<
@@ -245,6 +259,7 @@ export default function Show({
     categories,
     uploadedCategoryIds,
     progress,
+    eta,
 }: Props) {
     const isDraft = portfolio.status === 'draft';
     const [previewDoc, setPreviewDoc] = useState<Document | null>(null);
@@ -715,6 +730,153 @@ export default function Show({
 
                     {/* Right column (1 col): Assignments + Status */}
                     <div className="space-y-6">
+                        {/* ETA / Pace Calculator Card */}
+                        {eta.is_applicable && (
+                            <Card>
+                                <CardHeader className="pb-3">
+                                    <div className="flex items-center gap-2">
+                                        <TrendingUp className="text-muted-foreground h-4 w-4" />
+                                        <CardTitle className="text-base">
+                                            Completion Estimate
+                                        </CardTitle>
+                                    </div>
+                                    <CardDescription>
+                                        Based on document upload pace
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    {/* Velocity + Days active */}
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div className="bg-muted rounded-lg p-3">
+                                            <p className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
+                                                Days Active
+                                            </p>
+                                            <p className="mt-1 text-2xl font-bold">
+                                                {eta.days_active}
+                                            </p>
+                                        </div>
+                                        <div className="bg-muted rounded-lg p-3">
+                                            <p className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
+                                                Docs/Week
+                                            </p>
+                                            <p className="mt-1 text-2xl font-bold">
+                                                {eta.upload_velocity_per_week > 0
+                                                    ? eta.upload_velocity_per_week.toFixed(
+                                                        1,
+                                                    )
+                                                    : '—'}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Estimated completion */}
+                                    {eta.estimated_completion_date ? (
+                                        <div
+                                            className={`rounded-lg border p-3 ${eta.at_risk
+                                                    ? 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950'
+                                                    : 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950'
+                                                }`}
+                                        >
+                                            <div className="flex items-center gap-2">
+                                                <Clock
+                                                    className={`h-4 w-4 ${eta.at_risk ? 'text-red-500' : 'text-green-600'}`}
+                                                />
+                                                <p
+                                                    className={`text-xs font-medium uppercase tracking-wide ${eta.at_risk ? 'text-red-700 dark:text-red-400' : 'text-green-700 dark:text-green-400'}`}
+                                                >
+                                                    {eta.estimated_days_remaining === 0
+                                                        ? 'All required docs uploaded'
+                                                        : `Est. ${eta.estimated_days_remaining}d remaining`}
+                                                </p>
+                                            </div>
+                                            {eta.estimated_days_remaining !== 0 && (
+                                                <p
+                                                    className={`mt-1 text-sm font-semibold ${eta.at_risk ? 'text-red-800 dark:text-red-300' : 'text-green-800 dark:text-green-300'}`}
+                                                >
+                                                    ~{' '}
+                                                    {new Date(
+                                                        eta.estimated_completion_date,
+                                                    ).toLocaleDateString(
+                                                        'en-US',
+                                                        {
+                                                            month: 'short',
+                                                            day: 'numeric',
+                                                            year: 'numeric',
+                                                        },
+                                                    )}
+                                                </p>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <div className="text-muted-foreground rounded-lg border border-dashed p-3 text-center text-sm">
+                                            No uploads yet — estimate unavailable
+                                        </div>
+                                    )}
+
+                                    {/* Deadline comparison */}
+                                    {eta.earliest_due_date && (
+                                        <div className="flex items-start gap-2 text-sm">
+                                            <Calendar className="text-muted-foreground mt-0.5 h-4 w-4 shrink-0" />
+                                            <div>
+                                                <span className="text-muted-foreground">
+                                                    Deadline:{' '}
+                                                </span>
+                                                <span
+                                                    className={`font-medium ${eta.at_risk ? 'text-red-600 dark:text-red-400' : ''}`}
+                                                >
+                                                    {new Date(
+                                                        eta.earliest_due_date,
+                                                    ).toLocaleDateString(
+                                                        'en-US',
+                                                        {
+                                                            month: 'short',
+                                                            day: 'numeric',
+                                                            year: 'numeric',
+                                                        },
+                                                    )}
+                                                </span>
+                                                {eta.at_risk && (
+                                                    <span className="ml-1 text-xs text-red-500">
+                                                        (at risk)
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Confidence badge */}
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-muted-foreground text-xs">
+                                            Confidence
+                                        </span>
+                                        <Badge
+                                            variant={
+                                                eta.confidence === 'high'
+                                                    ? 'default'
+                                                    : eta.confidence === 'medium'
+                                                        ? 'secondary'
+                                                        : 'outline'
+                                            }
+                                            className={
+                                                eta.confidence === 'high'
+                                                    ? 'bg-green-100 text-green-800 hover:bg-green-100/80 dark:bg-green-900 dark:text-green-200'
+                                                    : eta.confidence === 'medium'
+                                                        ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100/80 dark:bg-yellow-900 dark:text-yellow-200'
+                                                        : ''
+                                            }
+                                        >
+                                            {eta.confidence === 'none'
+                                                ? 'No data'
+                                                : eta.confidence
+                                                    .charAt(0)
+                                                    .toUpperCase() +
+                                                eta.confidence.slice(1)}
+                                        </Badge>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        )}
+
                         {/* Section 4: Assign Evaluator Card */}
                         {!isDraft && (
                             <Card>

@@ -8,6 +8,7 @@ use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Models\DocumentCategory;
 use App\Models\Portfolio;
+use App\Models\PortfolioAssignment;
 use App\Models\User;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -62,20 +63,26 @@ class DashboardController extends Controller
                 ->whereNotIn('status', [PortfolioStatus::Draft, PortfolioStatus::Approved, PortfolioStatus::Rejected])
                 ->with('user:id,name,email')
                 ->get()
-                ->filter(function (Portfolio $portfolio) use ($requiredCategoryCount) {
+                ->map(function (Portfolio $portfolio) use ($requiredCategoryCount) {
                     $uploadedRequired = $portfolio->documents()
                         ->whereHas('category', fn ($q) => $q->where('is_required', true))
                         ->distinct('document_category_id')
                         ->count('document_category_id');
 
-                    return $uploadedRequired < $requiredCategoryCount;
+                    if ($uploadedRequired >= $requiredCategoryCount) {
+                        return null;
+                    }
+
+                    return [
+                        'id' => $portfolio->id,
+                        'title' => $portfolio->title,
+                        'user' => $portfolio->user,
+                        'status' => $portfolio->status->label(),
+                        'required_total' => $requiredCategoryCount,
+                        'required_completed' => $uploadedRequired,
+                    ];
                 })
-                ->map(fn (Portfolio $portfolio) => [
-                    'id' => $portfolio->id,
-                    'title' => $portfolio->title,
-                    'user' => $portfolio->user,
-                    'status' => $portfolio->status->label(),
-                ])
+                ->filter()
                 ->values()
                 ->take(10);
         }
@@ -92,6 +99,24 @@ class DashboardController extends Controller
             'inactive' => User::where('role', UserRole::Applicant)->where('is_active', false)->count(),
         ];
 
+        // Upcoming & overdue evaluator assignment deadlines (within 14 days or already overdue)
+        $upcomingAssignmentDeadlines = PortfolioAssignment::query()
+            ->whereIn('status', [AssignmentStatus::Pending, AssignmentStatus::InProgress])
+            ->whereNotNull('due_date')
+            ->where('due_date', '<=', now()->addDays(14))
+            ->with(['evaluator:id,name', 'portfolio:id,title,user_id', 'portfolio.user:id,name'])
+            ->orderBy('due_date')
+            ->get()
+            ->map(fn (PortfolioAssignment $a) => [
+                'id' => $a->id,
+                'portfolio_title' => $a->portfolio?->title,
+                'applicant_name' => $a->portfolio?->user?->name,
+                'evaluator_name' => $a->evaluator?->name,
+                'due_date' => $a->due_date->toDateString(),
+                'is_overdue' => $a->due_date->isPast(),
+                'days_remaining' => (int) now()->diffInDays($a->due_date, false),
+            ]);
+
         $stats = [
             'total_portfolios' => Portfolio::count(),
             'total_applicants' => User::where('role', UserRole::Applicant)->count(),
@@ -106,6 +131,7 @@ class DashboardController extends Controller
             'stats' => $stats,
             'learnerStats' => $learnerStats,
             'learnersWithIncompleteRequirements' => $learnersWithIncompleteRequirements,
+            'upcomingAssignmentDeadlines' => $upcomingAssignmentDeadlines,
         ]);
     }
 }

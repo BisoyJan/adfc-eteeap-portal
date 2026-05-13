@@ -25,9 +25,17 @@ interface Recipient {
     email: string;
 }
 
+interface MessageTemplate {
+    id: number;
+    title: string;
+    subject: string;
+    body: string;
+}
+
 interface Props {
     recipients: Recipient[];
     preselectedId: number | null;
+    templates: MessageTemplate[];
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -40,35 +48,7 @@ function formatRole(role: string): string {
     return role.charAt(0).toUpperCase() + role.slice(1);
 }
 
-const MESSAGE_TEMPLATES: Array<{ label: string; subject: string; body: string }> = [
-    {
-        label: 'Document Request',
-        subject: 'Document Request',
-        body: 'Dear applicant,\n\nWe are requesting the following document(s) from you to complete your portfolio review:\n\n[List required documents here]\n\nPlease upload these at your earliest convenience.\n\nThank you.',
-    },
-    {
-        label: 'Evaluation Update',
-        subject: 'Evaluation Update',
-        body: 'Dear applicant,\n\nWe would like to provide you with an update on the evaluation of your portfolio. Your portfolio is currently under review and we will notify you once it is complete.\n\nThank you for your patience.',
-    },
-    {
-        label: 'Welcome Message',
-        subject: 'Welcome to ETEEAP',
-        body: 'Dear applicant,\n\nWelcome to the Expanded Tertiary Education Equivalency and Accreditation Program (ETEEAP). We are excited to have you as part of the program.\n\nPlease begin by uploading your required portfolio documents. If you have any questions, feel free to reach out.\n\nBest regards.',
-    },
-    {
-        label: 'Revision Required',
-        subject: 'Revision Required for Your Portfolio',
-        body: 'Dear applicant,\n\nAfter reviewing your portfolio, we have identified areas that require revision. Please address the following:\n\n[List revision requirements here]\n\nKindly make the necessary updates and resubmit your portfolio.\n\nThank you.',
-    },
-    {
-        label: 'Approval Notice',
-        subject: 'Portfolio Approved',
-        body: 'Dear applicant,\n\nCongratulations! We are pleased to inform you that your portfolio has been reviewed and approved.\n\nYou will receive further instructions regarding the next steps in the ETEEAP process.\n\nThank you.',
-    },
-];
-
-export default function CreatePage({ recipients, preselectedId }: Props) {
+export default function CreatePage({ recipients, preselectedId, templates }: Props) {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const form = useForm<{
@@ -81,6 +61,16 @@ export default function CreatePage({ recipients, preselectedId }: Props) {
         subject: '',
         body: '',
         attachments: [],
+    });
+
+    const saveTemplateForm = useForm<{
+        title: string;
+        subject: string;
+        body: string;
+    }>({
+        title: '',
+        subject: '',
+        body: '',
     });
 
     const submit: FormEventHandler = (e) => {
@@ -157,8 +147,8 @@ export default function CreatePage({ recipients, preselectedId }: Props) {
                             <div className="space-y-1.5">
                                 <Label>Use Template</Label>
                                 <Select
-                                    onValueChange={(label) => {
-                                        const tpl = MESSAGE_TEMPLATES.find((t) => t.label === label);
+                                    onValueChange={(val) => {
+                                        const tpl = templates.find((t) => String(t.id) === val);
                                         if (tpl) {
                                             form.setData({
                                                 ...form.data,
@@ -172,11 +162,15 @@ export default function CreatePage({ recipients, preselectedId }: Props) {
                                         <SelectValue placeholder="Select a template (optional)..." />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {MESSAGE_TEMPLATES.map((t) => (
-                                            <SelectItem key={t.label} value={t.label}>
-                                                {t.label}
-                                            </SelectItem>
-                                        ))}
+                                        {templates.length === 0 ? (
+                                            <div className="px-3 py-2 text-sm text-muted-foreground">No saved templates</div>
+                                        ) : (
+                                            templates.map((t) => (
+                                                <SelectItem key={t.id} value={String(t.id)}>
+                                                    {t.title}
+                                                </SelectItem>
+                                            ))
+                                        )}
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -204,6 +198,41 @@ export default function CreatePage({ recipients, preselectedId }: Props) {
                                 />
                                 <InputError message={form.errors.body} />
                             </div>
+
+                            {/* Save as Template */}
+                            {(form.data.subject || form.data.body) && (
+                                <div className="rounded-md border border-dashed p-3 space-y-2">
+                                    <p className="text-xs font-medium text-muted-foreground">Save current subject &amp; body as a template</p>
+                                    <div className="flex gap-2">
+                                        <Input
+                                            placeholder="Template name..."
+                                            value={saveTemplateForm.data.title}
+                                            onChange={(e) => saveTemplateForm.setData('title', e.target.value)}
+                                            className="h-8 text-sm"
+                                        />
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            disabled={!saveTemplateForm.data.title || saveTemplateForm.processing}
+                                            onClick={() => {
+                                                saveTemplateForm.setData({
+                                                    title: saveTemplateForm.data.title,
+                                                    subject: form.data.subject,
+                                                    body: form.data.body,
+                                                });
+                                                saveTemplateForm.post('/message-templates', {
+                                                    preserveScroll: true,
+                                                    onSuccess: () => saveTemplateForm.reset(),
+                                                });
+                                            }}
+                                        >
+                                            Save Template
+                                        </Button>
+                                    </div>
+                                    <InputError message={saveTemplateForm.errors.title} />
+                                </div>
+                            )}
 
                             {/* Attachments */}
                             <div className="space-y-2">

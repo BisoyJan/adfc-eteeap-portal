@@ -30,6 +30,7 @@ Route::get('dashboard', function () {
 
 Route::middleware(['auth', 'verified', 'role:applicant'])->prefix('applicant')->name('applicant.')->group(function () {
     Route::get('dashboard', \App\Http\Controllers\Applicant\DashboardController::class)->name('dashboard');
+    Route::get('announcements', \App\Http\Controllers\Applicant\AnnouncementController::class)->name('announcements.index');
     Route::resource('portfolios', \App\Http\Controllers\Applicant\PortfolioController::class)->except(['edit']);
     Route::post('portfolios/{portfolio}/submit', [\App\Http\Controllers\Applicant\PortfolioController::class, 'submit'])->name('portfolios.submit');
     Route::post('portfolios/{portfolio}/documents', [\App\Http\Controllers\Applicant\PortfolioDocumentController::class, 'store'])->name('portfolios.documents.store');
@@ -52,6 +53,10 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
     Route::post('rubrics/{rubric}/toggle-active', [\App\Http\Controllers\Admin\RubricCriteriaController::class, 'toggleActive'])->name('rubrics.toggle-active');
     Route::resource('document-categories', \App\Http\Controllers\Admin\DocumentCategoryController::class)->except(['show']);
     Route::get('reports', \App\Http\Controllers\Admin\ReportController::class)->name('reports');
+    Route::get('reports/export/portfolios', [\App\Http\Controllers\Admin\ReportExportController::class, 'portfolios'])->name('reports.export.portfolios');
+    Route::get('reports/export/evaluators', [\App\Http\Controllers\Admin\ReportExportController::class, 'evaluators'])->name('reports.export.evaluators');
+    Route::get('reports/export/criteria', [\App\Http\Controllers\Admin\ReportExportController::class, 'criteria'])->name('reports.export.criteria');
+    Route::get('reports/export/waivers', [\App\Http\Controllers\Admin\ReportExportController::class, 'waivers'])->name('reports.export.waivers');
     Route::resource('announcements', \App\Http\Controllers\Admin\AnnouncementController::class)->except(['show']);
     Route::post('announcements/{announcement}/toggle-publish', [\App\Http\Controllers\Admin\AnnouncementController::class, 'togglePublish'])->name('announcements.toggle-publish');
     Route::get('activity-logs', \App\Http\Controllers\Admin\ActivityLogController::class)->name('activity-logs.index');
@@ -59,6 +64,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
 
 Route::middleware(['auth', 'verified', 'role:evaluator'])->prefix('evaluator')->name('evaluator.')->group(function () {
     Route::get('dashboard', \App\Http\Controllers\Evaluator\DashboardController::class)->name('dashboard');
+    Route::get('announcements', \App\Http\Controllers\Evaluator\AnnouncementController::class)->name('announcements.index');
     Route::get('portfolios', [\App\Http\Controllers\Evaluator\PortfolioController::class, 'index'])->name('portfolios.index');
     Route::get('portfolios/{assignment}', [\App\Http\Controllers\Evaluator\PortfolioController::class, 'show'])->name('portfolios.show');
     Route::post('portfolios/{assignment}/save', [\App\Http\Controllers\Evaluator\PortfolioController::class, 'saveEvaluation'])->name('portfolios.save');
@@ -83,6 +89,13 @@ Route::middleware(['auth', 'verified'])->prefix('messages')->name('messages.')->
     Route::post('{message}/reply', [\App\Http\Controllers\MessageController::class, 'reply'])->name('reply');
     Route::delete('{message}', [\App\Http\Controllers\MessageController::class, 'destroy'])->name('destroy');
     Route::get('attachments/{attachment}/download', [\App\Http\Controllers\MessageController::class, 'downloadAttachment'])->name('attachments.download');
+});
+
+Route::middleware(['auth', 'verified'])->prefix('message-templates')->name('message-templates.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\MessageTemplateController::class, 'index'])->name('index');
+    Route::post('/', [\App\Http\Controllers\MessageTemplateController::class, 'store'])->name('store');
+    Route::put('{messageTemplate}', [\App\Http\Controllers\MessageTemplateController::class, 'update'])->name('update');
+    Route::delete('{messageTemplate}', [\App\Http\Controllers\MessageTemplateController::class, 'destroy'])->name('destroy');
 });
 
 Route::get('documents/{document}/download', \App\Http\Controllers\DocumentDownloadController::class)

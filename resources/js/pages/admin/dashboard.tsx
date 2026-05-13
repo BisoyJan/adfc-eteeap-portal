@@ -2,6 +2,7 @@ import { Head, Link } from '@inertiajs/react';
 import {
     AlertCircle,
     ArrowRight,
+    CalendarClock,
     CheckCircle2,
     ClipboardList,
     Clock,
@@ -72,6 +73,15 @@ interface Props {
         required_total: number;
         required_completed: number;
     }>;
+    upcomingAssignmentDeadlines: Array<{
+        id: number;
+        portfolio_title: string;
+        applicant_name: string;
+        evaluator_name: string;
+        due_date: string;
+        is_overdue: boolean;
+        days_remaining: number;
+    }>;
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -136,6 +146,7 @@ export default function Dashboard({
     stats,
     learnerStats,
     learnersWithIncompleteRequirements,
+    upcomingAssignmentDeadlines,
 }: Props) {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -299,10 +310,16 @@ export default function Dashboard({
                                             <div className="min-w-0 flex-1">
                                                 <p className="truncate text-sm font-medium">{item.user.name}</p>
                                                 <p className="truncate text-xs text-muted-foreground">{item.title}</p>
+                                                <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                                                    <div
+                                                        className="h-full rounded-full bg-amber-500"
+                                                        style={{ width: `${Math.round((item.required_completed / item.required_total) * 100)}%` }}
+                                                    />
+                                                </div>
                                             </div>
-                                            <Badge variant="destructive" className="ml-2 shrink-0">
+                                            <span className="ml-2 shrink-0 text-xs font-medium text-muted-foreground">
                                                 {item.required_completed}/{item.required_total}
-                                            </Badge>
+                                            </span>
                                         </Link>
                                     ))}
                                 </div>
@@ -310,6 +327,53 @@ export default function Dashboard({
                         </CardContent>
                     </Card>
                 </div>
+
+                {/* Assignment Deadlines */}
+                {upcomingAssignmentDeadlines.length > 0 && (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <CalendarClock className="h-5 w-5 text-amber-500" />
+                                Assignment Deadlines
+                                {upcomingAssignmentDeadlines.some((d) => d.is_overdue) && (
+                                    <span className="ml-1 inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700">
+                                        {upcomingAssignmentDeadlines.filter((d) => d.is_overdue).length} overdue
+                                    </span>
+                                )}
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="rounded-md border">
+                                <table className="w-full text-sm">
+                                    <thead>
+                                        <tr className="border-b bg-muted/50">
+                                            <th className="px-4 py-2 text-left font-medium">Portfolio</th>
+                                            <th className="px-4 py-2 text-left font-medium">Evaluator</th>
+                                            <th className="px-4 py-2 text-right font-medium">Due Date</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {upcomingAssignmentDeadlines.map((d) => (
+                                            <tr key={d.id} className={`border-b last:border-0 ${d.is_overdue ? 'bg-red-50 dark:bg-red-950/20' : ''}`}>
+                                                <td className="px-4 py-2.5">
+                                                    <p className="font-medium">{d.portfolio_title}</p>
+                                                    <p className="text-xs text-muted-foreground">{d.applicant_name}</p>
+                                                </td>
+                                                <td className="px-4 py-2.5 text-muted-foreground">{d.evaluator_name}</td>
+                                                <td className="px-4 py-2.5 text-right">
+                                                    <p className="font-medium">{new Date(d.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p>
+                                                    <p className={`text-xs ${d.is_overdue ? 'font-semibold text-red-600' : d.days_remaining <= 3 ? 'font-semibold text-amber-600' : 'text-muted-foreground'}`}>
+                                                        {d.is_overdue ? `${Math.abs(d.days_remaining)}d overdue` : d.days_remaining === 0 ? 'Due today' : `${d.days_remaining}d left`}
+                                                    </p>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
 
                 {/* Two-column section (original) */}
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">

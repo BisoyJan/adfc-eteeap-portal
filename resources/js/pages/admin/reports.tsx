@@ -8,6 +8,7 @@ import {
     TrendingUp,
     Award,
     ClipboardList,
+    Download,
     Printer,
 } from 'lucide-react';
 import Heading from '@/components/heading';
@@ -77,6 +78,10 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Dashboard', href: '/dashboard' },
     { title: 'Reports', href: '/admin/reports' },
 ];
+
+function exportCsv(path: string): void {
+    window.location.href = path;
+}
 
 function getStatusColor(color: string): string {
     switch (color) {
@@ -158,10 +163,28 @@ export default function Reports({
                         title="Reports & Analytics"
                         description="Program-wide statistics, evaluation metrics, and performance insights"
                     />
-                    <Button variant="outline" onClick={() => window.print()} className="print:hidden shrink-0">
-                        <Printer className="mr-2 h-4 w-4" />
-                        Print Report
-                    </Button>
+                    <div className="print:hidden flex items-center gap-2 shrink-0">
+                        <Button variant="outline" size="sm" onClick={() => exportCsv('/admin/reports/export/portfolios')}>
+                            <Download className="mr-1.5 h-4 w-4" />
+                            Portfolios CSV
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => exportCsv('/admin/reports/export/evaluators')}>
+                            <Download className="mr-1.5 h-4 w-4" />
+                            Evaluators CSV
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => exportCsv('/admin/reports/export/criteria')}>
+                            <Download className="mr-1.5 h-4 w-4" />
+                            Criteria CSV
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => exportCsv('/admin/reports/export/waivers')}>
+                            <Download className="mr-1.5 h-4 w-4" />
+                            Waivers CSV
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => window.print()}>
+                            <Printer className="mr-1.5 h-4 w-4" />
+                            Print
+                        </Button>
+                    </div>
                 </div>
 
                 {/* Summary Stats */}

@@ -55,9 +55,9 @@ class Announcement extends Model
     public static function targetRoleOptions(): array
     {
         return [
-            'all' => 'Everyone',
-            'applicant' => 'Applicants Only',
-            'evaluator' => 'Evaluators Only',
+            ['value' => 'all', 'label' => 'Everyone'],
+            ['value' => 'applicant', 'label' => 'Applicants Only'],
+            ['value' => 'evaluator', 'label' => 'Evaluators Only'],
         ];
     }
 }

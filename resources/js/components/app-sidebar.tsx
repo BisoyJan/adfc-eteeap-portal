@@ -7,6 +7,9 @@ import {
     Folder,
     FolderOpen,
     LayoutGrid,
+    Mail,
+    Megaphone,
+    ScrollText,
     Users,
 } from 'lucide-react';
 import { NavFooter } from '@/components/nav-footer';
@@ -25,7 +28,7 @@ import { dashboard } from '@/routes';
 import type { NavItem, SharedData, UserRole } from '@/types';
 import AppLogo from './app-logo';
 
-function getNavItems(role: UserRole): NavItem[] {
+function getNavItems(role: UserRole, unreadMessageCount: number): NavItem[] {
     if (role === 'admin') {
         return [
             {
@@ -54,9 +57,25 @@ function getNavItems(role: UserRole): NavItem[] {
                 icon: FileStack,
             },
             {
+                title: 'Announcements',
+                href: '/admin/announcements',
+                icon: Megaphone,
+            },
+            {
                 title: 'Reports',
                 href: '/admin/reports',
                 icon: BarChart3,
+            },
+            {
+                title: 'Activity Logs',
+                href: '/admin/activity-logs',
+                icon: ScrollText,
+            },
+            {
+                title: 'Messages',
+                href: '/messages/inbox',
+                icon: Mail,
+                badge: unreadMessageCount,
             },
         ];
     }
@@ -80,6 +99,11 @@ function getNavItems(role: UserRole): NavItem[] {
             href: '/applicant/portfolios',
             icon: FolderOpen,
         });
+        items.push({
+            title: 'Announcements',
+            href: '/applicant/announcements',
+            icon: Megaphone,
+        });
     }
 
     if (role === 'evaluator') {
@@ -88,7 +112,19 @@ function getNavItems(role: UserRole): NavItem[] {
             href: '/evaluator/portfolios',
             icon: ClipboardCheck,
         });
+        items.push({
+            title: 'Announcements',
+            href: '/evaluator/announcements',
+            icon: Megaphone,
+        });
     }
+
+    items.push({
+        title: 'Messages',
+        href: '/messages/inbox',
+        icon: Mail,
+        badge: unreadMessageCount,
+    });
 
     return items;
 }
@@ -97,7 +133,7 @@ const footerNavItems: NavItem[] = [];
 
 export function AppSidebar() {
     const { auth } = usePage<SharedData>().props;
-    const navItems = getNavItems(auth.user.role);
+    const navItems = getNavItems(auth.user.role, auth.unreadMessageCount);
 
     return (
         <Sidebar collapsible="icon" variant="inset">

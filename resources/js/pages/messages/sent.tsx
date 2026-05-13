@@ -1,9 +1,9 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { Inbox, Send, Plus } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Inbox, Send, Plus, CheckCheck, Clock } from 'lucide-react';
 import FlashMessages from '@/components/flash-messages';
 import Heading from '@/components/heading';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 
@@ -11,6 +11,7 @@ interface Message {
     id: number;
     subject: string;
     created_at: string;
+    read_at: string | null;
     replies_count: number;
     receiver: {
         id: number;
@@ -119,9 +120,22 @@ export default function SentPage({ messages }: Props) {
                                                     </span>
                                                 </div>
                                                 <p className="truncate text-sm text-muted-foreground">{msg.subject}</p>
-                                                {msg.replies_count > 0 && (
-                                                    <p className="text-xs text-muted-foreground">{msg.replies_count} repl{msg.replies_count > 1 ? 'ies' : 'y'}</p>
-                                                )}
+                                                <div className="mt-0.5 flex items-center gap-3">
+                                                    {msg.replies_count > 0 && (
+                                                        <p className="text-xs text-muted-foreground">{msg.replies_count} repl{msg.replies_count > 1 ? 'ies' : 'y'}</p>
+                                                    )}
+                                                    {msg.read_at ? (
+                                                        <span className="flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400">
+                                                            <CheckCheck className="h-3 w-3" />
+                                                            Read
+                                                        </span>
+                                                    ) : (
+                                                        <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                                                            <Clock className="h-3 w-3" />
+                                                            Delivered
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </div>
                                         </Link>
                                     </li>

@@ -38,7 +38,8 @@ class DashboardController extends Controller
             ->get();
 
         $recentPortfolios = $user->portfolios()
-            ->with('documents')
+            ->with('documents.category')
+            ->withCount('documents')
             ->latest('updated_at')
             ->take(3)
             ->get();

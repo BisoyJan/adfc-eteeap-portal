@@ -63,16 +63,16 @@
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| Inbox for receiving learner messages | ❌ Not Implemented | No user-to-user messaging system exists |
-| Message notifications (email or in-app) | ⚠️ Partial | In-app database notifications exist (`NotificationController`) for system events (portfolio submitted, evaluator assigned, status changed). No email-based messaging or SMS |
-| Send messages to individual learners | ❌ Not Implemented | |
-| Send bulk messages to multiple learners | ❌ Not Implemented | |
-| Message templates for common responses | ❌ Not Implemented | |
-| Sent messages folder | ❌ Not Implemented | |
-| Attach files to messages | ❌ Not Implemented | |
+| Inbox for receiving learner messages | ✅ Implemented | `MessageController@inbox` — paginated inbox with unread highlighting. Messages link added to sidebar for all roles with live unread badge. |
+| Message notifications (email or in-app) | ✅ Implemented | `NewMessageNotification` fires via `database` + `mail` channels on every send/reply. Sidebar badge reflects `unreadMessagesCount()` shared globally via `HandleInertiaRequests`. |
+| Send messages to individual learners | ✅ Implemented | `MessageController@store` — role-scoped recipient selection via `getAvailableRecipients()`. Admin can message all users; evaluators message assigned applicants + admins; applicants message assigned evaluators + admins. |
+| Send bulk messages to multiple learners | ✅ Implemented | `MessageController@bulkStore` — admin-only bulk send to multiple recipients. |
+| Message templates for common responses | ⚠️ Partial | 5 hardcoded templates in `create.tsx` frontend (Document Request, Evaluation Update, Welcome, Revision Required, Approval Notice). No `MessageTemplate` DB model/migration yet — templates are client-side only. |
+| Sent messages folder | ✅ Implemented | `MessageController@sent` — paginated sent view. Now shows read receipt status per message (✅ Read / 🕐 Delivered) via `read_at` field. |
+| Attach files to messages | ✅ Implemented | `MessageController@store` stores attachments via `MessageAttachment` model. `downloadAttachment()` streams files with auth check. |
 
-**Controller:** `NotificationController`  
-**Notifications:** `EvaluatorAssignedNotification`, `PortfolioStatusChangedNotification`, `PortfolioSubmittedNotification`, `EvaluationCompletedNotification`
+**Controller:** `MessageController`  
+**Notifications:** `NewMessageNotification`, `EvaluatorAssignedNotification`, `PortfolioStatusChangedNotification`, `PortfolioSubmittedNotification`, `EvaluationCompletedNotification`
 
 ---
 
@@ -106,12 +106,12 @@
 | Feature | Status | Notes |
 |---------|--------|-------|
 | Contact information of my assessor | ⚠️ Partial | Evaluator name is visible via the `assignments` relationship loaded on the applicant portfolio show page, but there is no dedicated contact card |
-| Send message to my assessor | ❌ Not Implemented | |
-| Send message to program coordinator | ❌ Not Implemented | |
-| Inbox for receiving messages | ⚠️ Partial | `NotificationController@index` provides a notifications list (paginated). These are system events, not user-to-user messages |
-| Sent messages folder | ❌ Not Implemented | |
-| Message notifications (email or SMS) | ⚠️ Partial | In-app notifications only (database driver). No email notifications for messages; no SMS at all |
-| Read receipts (know if message was seen) | ❌ Not Implemented | |
+| Send message to my assessor | ✅ Implemented | `MessageController@store` — applicants can message their assigned evaluators and admins via `/messages/create`. Messages link in sidebar. |
+| Send message to program coordinator | ✅ Implemented | Admins are always included in applicant and evaluator recipient lists via `getAvailableRecipients()`. |
+| Inbox for receiving messages | ✅ Implemented | Full user-to-user inbox at `MessageController@inbox` with unread count badge in sidebar. |
+| Sent messages folder | ✅ Implemented | `MessageController@sent` with read receipt indicators (Read / Delivered per message). |
+| Message notifications (email or SMS) | ⚠️ Partial | Email notifications fire on each message/reply via `NewMessageNotification` (mail + database channels). No SMS. |
+| Read receipts (know if message was seen) | ✅ Implemented | `read_at` is set when receiver opens a message (`show()`). Sent view shows ✅ Read or 🕐 Delivered per message. |
 
 ---
 
@@ -142,13 +142,81 @@
 
 ## High-Priority Gaps
 
-The following are completely absent from the codebase and require new models, controllers, and views:
+The following require attention (many backend models already exist but are missing frontend integration or specific sub-components):
 
-1. **Messaging System** — user-to-user messaging (inbox, sent, bulk send, file attachments, templates) — affects both Admin and Learner
-2. **User Account Status** — deactivate/suspend accounts (`is_active` flag on `User`)
-3. **User Activity Log** — login history and action audit trail
-4. **Learner Profile (Admin View)** — dedicated learner profile page for admins
-5. **Learner Filters** — filter users by status and by assigned assessor
-6. **Announcements** — program-wide announcements from admin to learners
-7. **Deadline Display** — surface assignment `due_date` to applicant dashboard
-8. **Downloadable Reports** — PDF/Excel exports for portfolio summary, competency achievement, assessment results, course waiver, and progress-to-date
+1. **Messaging System** — ✅ DONE. Inbox, sent, compose, attachments, bulk send, read receipts, email notifications, sidebar badge, and DB-backed Message Templates all implemented.
+2. **User Account Status** — (Backend Exists). Deactivate/suspend accounts (`is_active` flag on `User` exists). Needs frontend UI to toggle status.
+3. **User Activity Log** — (Backend Exists). Models and controllers exist. Needs frontend audit trail view.
+4. **Learner Profile (Admin View)** — Dedicated learner profile page for admins.
+5. **Learner Filters** — Filter users by status and by assigned assessor in the UI.
+6. **Announcements** — (Backend Exists). Need to surface announcements to Applicant and Assessor dashboards.
+7. **Deadline Display** — Surface assignment `due_date` to applicant dashboard.
+8. **Downloadable Reports** — ✅ DONE. CSV exports for portfolios, evaluator performance, competency criteria, and course waivers. Download buttons on admin Reports page. Print-to-PDF via browser print.
+9. **Advanced ETA Calculator** — Completely missing logic to estimate complete time.
+
+---
+
+## 3. Detailed Implementation Plan for Missing & Partial Features
+
+### 3.1 Communication & Messaging System — ✅ COMPLETED
+**Completed (May 13, 2026):**
+- `unreadMessageCount` shared globally via `HandleInertiaRequests` (backend)
+- `auth.unreadMessageCount` added to `Auth` TypeScript type
+- `badge?: number` added to `NavItem` type
+- `NavMain` renders unread badge pill when `item.badge > 0`
+- `Messages` nav link (with live badge) added to Admin, Evaluator, and Applicant sidebars (`app-sidebar.tsx`)
+- `sent.tsx` — added `read_at` to message interface; shows ✅ Read / 🕐 Delivered per message
+- Read receipts: `read_at` is set server-side in `MessageController@show` when receiver opens message
+- **Message Templates (DB-backed):**
+  - Migration: `2026_05_13_000002_create_message_templates_table.php` — `id`, `user_id` (FK), `title`, `subject`, `body`, `timestamps`
+  - Model: `app/Models/MessageTemplate.php` — fillable, `user()` BelongsTo
+  - Controller: `app/Http/Controllers/MessageTemplateController.php` — `index`, `store`, `update`, `destroy` (owner-only writes)
+  - Routes: `GET/POST /message-templates`, `PUT/DELETE /message-templates/{messageTemplate}`
+  - `MessageController@create` now queries and passes user's templates as `templates` prop
+  - `pages/messages/create.tsx` — template Select uses DB templates; inline "Save as Template" form saves current subject+body
+
+### 3.2 Report and Document Generation (Frontend Integration) — ✅ COMPLETED
+**Completed (May 14, 2026):**
+- `app/Http/Controllers/Admin/ReportExportController.php` — 4 CSV stream endpoints:
+  - `portfolios()` — all portfolios with applicant, status, submitted date, assigned evaluators
+  - `evaluators()` — per-evaluator: assigned/completed/pending counts + avg score %
+  - `criteria()` — per-rubric criteria: avg score, percentage, evaluations count
+  - `waivers()` — per-waiver row: course code/name, applicant, evaluator, status, notes
+- Routes added to admin group: `GET admin/reports/export/{portfolios|evaluators|criteria|waivers}`
+- `pages/admin/reports.tsx` — header export bar with 4 "Download CSV" buttons + Print button (replaces single Print button)
+
+### 3.3 Dashboard Enhancements & Progress Monitoring
+**Current State:** ✅ COMPLETED
+**Implemented:**
+- `Admin/DashboardController.php`: `learnersWithIncompleteRequirements` now returns `required_total` and `required_completed` fields. Added `upcomingAssignmentDeadlines` query — shows pending/in-progress assignments with `due_date` within 14 days (or already overdue), including evaluator name, applicant name, and `days_remaining`.
+- `Applicant/DashboardController.php`: `recentPortfolios` now uses `with('documents.category')` and `withCount('documents')` so document progress and category `is_required` checks work correctly.
+- `pages/admin/dashboard.tsx`: Added `upcomingAssignmentDeadlines` prop and rendered "Assignment Deadlines" card with overdue (red), approaching (amber), and normal rows. Incomplete Requirements section now shows a visual progress bar and `{completed}/{total}` count instead of badge.
+
+### 3.4 Announcements System (Frontend Integration)
+**Current State:** ✅ COMPLETED
+**Implemented:**
+- Backend already passes `announcements` (published, non-expired, role-filtered) to both `Applicant\DashboardController` and `Evaluator\DashboardController`.
+- Both `pages/applicant/dashboard.tsx` and `pages/evaluator/dashboard.tsx` already render an Announcements card with title, body, and published date.
+- Added "Announcements" nav link (with `Megaphone` icon) to the admin sidebar, pointing to `/admin/announcements` where the full CRUD management UI already exists (`index`, `create`, `edit` pages).
+
+### 3.5 System Administration & User Management (Frontend Integration)
+**Current State:** ✅ COMPLETED
+**Implemented:**
+- `UserController@index` — updated to accept `search`, `role`, `status`, `evaluator_id` filters; applies them to the query; passes `filters` and `evaluators` props (was causing the `Cannot read properties of undefined (reading 'search')` crash).
+- `UserController@show` — added (route existed but method was missing); loads user with `portfolios.assignments.evaluator` and last 20 `activityLogs`; computes `portfolioStats` and `assignedEvaluators`.
+- `UserController@activate` / `deactivate` — added (routes existed but methods were missing); guard prevents self-deactivation.
+- `pages/admin/users/index.tsx` — already has full filter UI (search, role, status, assessor dropdown) and activate/deactivate toggle buttons.
+- `pages/admin/users/show.tsx` — already complete: shows user info, portfolio stats, assigned evaluators, portfolio list, and activity log history.
+- `pages/admin/activity-logs/index.tsx` — already complete: paginated table with search, action filter, and user filter.
+- `ActivityLogController` — already complete: filters by user, action, search; paginates 25/page.
+- `LogUserActivity` middleware — already registered in `bootstrap/app.php`; records login, logout, portfolio_submitted, portfolio_status_changed, evaluator_assigned, evaluation_submitted.
+- Added "Activity Logs" nav link (`ScrollText` icon) to admin sidebar under Reports.
+
+### 3.6 Advanced ETA Calculator ✅ COMPLETED
+**Features:** Estimated time to completion calculator based on learner pace.
+*   **Backend Logic (`app/Services/PaceCalculatorService.php`):**
+    *   ✅ Created `PaceCalculatorService` — calculates `days_active`, `upload_velocity_per_week`, `estimated_days_remaining`, `estimated_completion_date`, `at_risk`, `confidence` based on portfolio document upload pace.
+*   **Controllers:**
+    *   ✅ `app/Http/Controllers/Admin/PortfolioController.php` — instantiates `PaceCalculatorService::calculate()` and passes `eta` prop to Inertia render.
+*   **Frontend Components (`resources/js/`):**
+    *   ✅ `pages/admin/portfolios/show.tsx` — renders "Completion Estimate" card in the right sidebar showing velocity, estimated date, deadline comparison (at-risk warning), and confidence badge.

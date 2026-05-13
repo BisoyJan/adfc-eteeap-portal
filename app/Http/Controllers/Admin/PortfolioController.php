@@ -13,6 +13,7 @@ use App\Models\PortfolioAssignment;
 use App\Models\User;
 use App\Notifications\EvaluatorAssignedNotification;
 use App\Notifications\PortfolioStatusChangedNotification;
+use App\Services\PaceCalculatorService;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -21,8 +22,15 @@ class PortfolioController extends Controller
 {
     public function index(): Response
     {
+        $requiredCategoryIds = \App\Models\DocumentCategory::where('is_required', true)->pluck('id');
+        $requiredTotal = $requiredCategoryIds->count();
+
         $portfolios = Portfolio::query()
-            ->with(['user', 'assignments.evaluator'])
+            ->with([
+                'user',
+                'assignments.evaluator',
+                'documents' => fn ($q) => $q->select(['id', 'portfolio_id', 'document_category_id']),
+            ])
             ->when(request('status'), function ($query, $status) {
                 $query->where('status', $status);
             })
@@ -38,6 +46,35 @@ class PortfolioController extends Controller
             ->latest('updated_at')
             ->paginate(15)
             ->withQueryString();
+
+        $pace = new PaceCalculatorService;
+
+        $portfolios->getCollection()->transform(function (Portfolio $portfolio) use ($requiredCategoryIds, $requiredTotal, $pace): Portfolio {
+            $requiredCompleted = $portfolio->documents
+                ->pluck('document_category_id')
+                ->intersect($requiredCategoryIds)
+                ->unique()
+                ->count();
+
+            $portfolio->progress = [
+                'required' => $requiredTotal,
+                'completed' => $requiredCompleted,
+                'percentage' => $requiredTotal > 0
+                    ? round(($requiredCompleted / $requiredTotal) * 100)
+                    : 100,
+            ];
+
+            $eta = $pace->calculate($portfolio, $requiredTotal, $requiredCompleted);
+
+            $portfolio->eta = [
+                'estimated_completion_date' => $eta['estimated_completion_date'],
+                'at_risk' => $eta['at_risk'],
+                'confidence' => $eta['confidence'],
+                'is_applicable' => $eta['is_applicable'],
+            ];
+
+            return $portfolio;
+        });
 
         return Inertia::render('admin/portfolios/index', [
             'portfolios' => $portfolios,
@@ -77,6 +114,8 @@ class PortfolioController extends Controller
             ->whereIn('id', $uploadedCategoryIds)
             ->count();
 
+        $eta = (new PaceCalculatorService)->calculate($portfolio, $requiredCount, $completedRequiredCount);
+
         return Inertia::render('admin/portfolios/show', [
             'portfolio' => $portfolio,
             'evaluators' => $evaluators,
@@ -89,6 +128,7 @@ class PortfolioController extends Controller
                     ? round(($completedRequiredCount / $requiredCount) * 100)
                     : 100,
             ],
+            'eta' => $eta,
         ]);
     }
 

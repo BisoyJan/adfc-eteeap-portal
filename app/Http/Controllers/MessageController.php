@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\UserRole;
 use App\Models\Message;
 use App\Models\MessageAttachment;
+use App\Models\MessageTemplate;
 use App\Models\User;
 use App\Notifications\NewMessageNotification;
 use Illuminate\Http\RedirectResponse;
@@ -77,9 +78,14 @@ class MessageController extends Controller
 
         $preselectedId = $request->input('to');
 
+        $templates = MessageTemplate::where('user_id', $user->id)
+            ->latest()
+            ->get(['id', 'title', 'subject', 'body']);
+
         return Inertia::render('messages/create', [
             'recipients' => $recipients,
             'preselectedId' => $preselectedId ? (int) $preselectedId : null,
+            'templates' => $templates,
         ]);
     }
 

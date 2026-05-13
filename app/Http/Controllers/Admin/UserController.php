@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\PortfolioStatus;
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreUserRequest;
 use App\Http\Requests\Admin\UpdateUserRequest;
-use App\Models\ActivityLog;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -15,60 +15,58 @@ use Inertia\Response;
 
 class UserController extends Controller
 {
+    /**
+     * Display a listing of users.
+     */
     public function index(Request $request): Response
     {
+        $filters = $request->only(['search', 'role', 'status', 'evaluator_id']);
+        $filters = array_merge(['search' => '', 'role' => '', 'status' => '', 'evaluator_id' => ''], $filters);
+
         $users = User::query()
-            ->when($request->input('search'), function ($query, $search) {
-                $query->where(function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%")
-                        ->orWhere('email', 'like', "%{$search}%");
-                });
-            })
-            ->when($request->input('role'), fn ($q, $role) => $q->where('role', $role))
-            ->when($request->input('status'), function ($query, $status) {
-                if ($status === 'active') {
-                    $query->where('is_active', true);
-                } elseif ($status === 'inactive') {
-                    $query->where('is_active', false);
-                }
-            })
-            ->when($request->input('evaluator_id'), function ($query, $evaluatorId) {
-                $query->whereHas('portfolios.assignments', fn ($q) => $q->where('evaluator_id', $evaluatorId));
-            })
+            ->when($filters['search'], fn ($q, $s) => $q->where(fn ($q2) => $q2->where('name', 'like', "%{$s}%")->orWhere('email', 'like', "%{$s}%")))
+            ->when($filters['role'], fn ($q, $r) => $q->where('role', $r))
+            ->when($filters['status'] === 'active', fn ($q) => $q->where('is_active', true))
+            ->when($filters['status'] === 'inactive', fn ($q) => $q->where('is_active', false))
+            ->when($filters['evaluator_id'], fn ($q, $eid) => $q->whereHas('portfolios.assignments', fn ($q2) => $q2->where('evaluator_id', $eid)))
             ->orderBy('name')
             ->paginate(15)
             ->withQueryString();
 
-        $evaluators = User::where('role', UserRole::Evaluator)->orderBy('name')->get(['id', 'name']);
+        $evaluators = User::query()
+            ->where('role', UserRole::Evaluator)
+            ->orderBy('name')
+            ->get(['id', 'name']);
 
         return Inertia::render('admin/users/index', [
             'users' => $users,
             'roles' => UserRole::options(),
             'evaluators' => $evaluators,
-            'filters' => [
-                'search' => $request->input('search', ''),
-                'role' => $request->input('role', ''),
-                'status' => $request->input('status', ''),
-                'evaluator_id' => $request->input('evaluator_id', ''),
-            ],
+            'filters' => $filters,
         ]);
     }
 
+    /**
+     * Show the specified user's profile.
+     */
     public function show(User $user): Response
     {
-        $user->load(['portfolios.assignments.evaluator', 'activityLogs' => fn ($q) => $q->latest()->limit(20)]);
+        $user->load([
+            'portfolios.assignments.evaluator:id,name',
+            'activityLogs' => fn ($q) => $q->latest()->take(20),
+        ]);
 
         $portfolioStats = [
             'total' => $user->portfolios->count(),
-            'approved' => $user->portfolios->where('status.value', 'approved')->count(),
-            'under_review' => $user->portfolios->where('status.value', 'under_review')->count(),
+            'approved' => $user->portfolios->where('status', PortfolioStatus::Approved)->count(),
+            'under_review' => $user->portfolios->where('status', PortfolioStatus::UnderReview)->count(),
         ];
 
         $assignedEvaluators = $user->portfolios
-            ->flatMap(fn ($p) => $p->assignments)
-            ->map(fn ($a) => $a->evaluator)
+            ->flatMap(fn ($p) => $p->assignments->pluck('evaluator')->filter())
             ->unique('id')
-            ->values();
+            ->values()
+            ->map(fn ($e) => ['id' => $e->id, 'name' => $e->name]);
 
         return Inertia::render('admin/users/show', [
             'user' => $user,
@@ -77,6 +75,9 @@ class UserController extends Controller
         ]);
     }
 
+    /**
+     * Show the form for creating a new user.
+     */
     public function create(): Response
     {
         return Inertia::render('admin/users/create', [
@@ -84,6 +85,9 @@ class UserController extends Controller
         ]);
     }
 
+    /**
+     * Store a newly created user.
+     */
     public function store(StoreUserRequest $request): RedirectResponse
     {
         User::create($request->validated());
@@ -92,6 +96,9 @@ class UserController extends Controller
             ->with('success', 'User created successfully.');
     }
 
+    /**
+     * Show the form for editing a user.
+     */
     public function edit(User $user): Response
     {
         return Inertia::render('admin/users/edit', [
@@ -100,6 +107,9 @@ class UserController extends Controller
         ]);
     }
 
+    /**
+     * Update the specified user.
+     */
     public function update(UpdateUserRequest $request, User $user): RedirectResponse
     {
         $user->update($request->validated());
@@ -108,45 +118,9 @@ class UserController extends Controller
             ->with('success', 'User updated successfully.');
     }
 
-    public function deactivate(Request $request, User $user): RedirectResponse
-    {
-        if ($user->id === auth()->id()) {
-            return back()->with('error', 'You cannot deactivate your own account.');
-        }
-
-        $request->validate([
-            'reason' => ['nullable', 'string', 'max:500'],
-        ]);
-
-        $user->update([
-            'is_active' => false,
-            'deactivated_at' => now(),
-            'deactivation_reason' => $request->input('reason'),
-        ]);
-
-        ActivityLog::record('user_deactivated', "Deactivated account: {$user->name}", [
-            'target_user_id' => $user->id,
-            'reason' => $request->input('reason'),
-        ]);
-
-        return back()->with('success', "{$user->name}'s account has been deactivated.");
-    }
-
-    public function activate(User $user): RedirectResponse
-    {
-        $user->update([
-            'is_active' => true,
-            'deactivated_at' => null,
-            'deactivation_reason' => null,
-        ]);
-
-        ActivityLog::record('user_activated', "Reactivated account: {$user->name}", [
-            'target_user_id' => $user->id,
-        ]);
-
-        return back()->with('success', "{$user->name}'s account has been reactivated.");
-    }
-
+    /**
+     * Remove the specified user.
+     */
     public function destroy(User $user): RedirectResponse
     {
         if ($user->id === auth()->id()) {
@@ -157,5 +131,29 @@ class UserController extends Controller
 
         return redirect()->route('admin.users.index')
             ->with('success', 'User deleted successfully.');
+    }
+
+    /**
+     * Deactivate the specified user.
+     */
+    public function deactivate(User $user): RedirectResponse
+    {
+        if ($user->id === auth()->id()) {
+            return back()->with('error', 'You cannot deactivate your own account.');
+        }
+
+        $user->update(['is_active' => false]);
+
+        return back()->with('success', "{$user->name} has been deactivated.");
+    }
+
+    /**
+     * Activate the specified user.
+     */
+    public function activate(User $user): RedirectResponse
+    {
+        $user->update(['is_active' => true]);
+
+        return back()->with('success', "{$user->name} has been activated.");
     }
 }

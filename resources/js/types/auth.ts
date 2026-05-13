@@ -25,6 +25,7 @@ export type Auth = {
     user: User;
     permissions: Permissions;
     notificationCount: number;
+    unreadMessageCount: number;
 };
 
 export type TwoFactorSetupData = {

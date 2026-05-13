@@ -37,6 +37,17 @@ interface Portfolio {
             name: string;
         };
     }>;
+    progress: {
+        required: number;
+        completed: number;
+        percentage: number;
+    };
+    eta: {
+        estimated_completion_date: string | null;
+        at_risk: boolean;
+        confidence: string;
+        is_applicable: boolean;
+    };
 }
 
 interface PaginationLink {
@@ -180,6 +191,12 @@ export default function Index({ portfolios, statuses, filters }: Props) {
                                     Status
                                 </th>
                                 <th className="px-4 py-3 text-left font-medium">
+                                    Progress
+                                </th>
+                                <th className="px-4 py-3 text-left font-medium">
+                                    ETA
+                                </th>
+                                <th className="px-4 py-3 text-left font-medium">
                                     Submitted
                                 </th>
                                 <th className="px-4 py-3 text-left font-medium">
@@ -225,6 +242,49 @@ export default function Index({ portfolios, statuses, filters }: Props) {
                                             {formatStatus(portfolio.status)}
                                         </Badge>
                                     </td>
+                                    <td className="px-4 py-3">
+                                        <div className="min-w-25 space-y-1">
+                                            <div className="flex items-center justify-between text-xs">
+                                                <span className="text-muted-foreground">
+                                                    {portfolio.progress.completed}/{portfolio.progress.required}
+                                                </span>
+                                                <span className={`font-medium ${portfolio.progress.percentage === 100
+                                                        ? 'text-green-600'
+                                                        : portfolio.progress.percentage >= 50
+                                                            ? 'text-amber-600'
+                                                            : 'text-red-600'
+                                                    }`}>
+                                                    {portfolio.progress.percentage}%
+                                                </span>
+                                            </div>
+                                            <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                                                <div
+                                                    className={`h-full rounded-full transition-all ${portfolio.progress.percentage === 100
+                                                            ? 'bg-green-500 w-full'
+                                                            : portfolio.progress.percentage >= 75
+                                                                ? 'bg-green-500 w-3/4'
+                                                                : portfolio.progress.percentage >= 50
+                                                                    ? 'bg-amber-500 w-1/2'
+                                                                    : portfolio.progress.percentage >= 25
+                                                                        ? 'bg-red-500 w-1/4'
+                                                                        : 'bg-red-500 w-[5%]'
+                                                        }`}
+                                                />
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td className="px-4 py-3 text-muted-foreground">
+                                        {portfolio.eta.is_applicable && portfolio.eta.estimated_completion_date ? (
+                                            <span className={portfolio.eta.at_risk ? 'font-medium text-red-600' : ''}>
+                                                {new Date(portfolio.eta.estimated_completion_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                                {portfolio.eta.at_risk && ' ⚠'}
+                                            </span>
+                                        ) : portfolio.progress.percentage === 100 ? (
+                                            <span className="font-medium text-green-600">Complete</span>
+                                        ) : (
+                                            '—'
+                                        )}
+                                    </td>
                                     <td className="px-4 py-3 text-muted-foreground">
                                         {portfolio.submitted_at
                                             ? formatDate(portfolio.submitted_at)
@@ -252,7 +312,7 @@ export default function Index({ portfolios, statuses, filters }: Props) {
                             {portfolios.data.length === 0 && (
                                 <tr>
                                     <td
-                                        colSpan={6}
+                                        colSpan={8}
                                         className="px-4 py-8 text-center text-muted-foreground"
                                     >
                                         No portfolios found.
