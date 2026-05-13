@@ -11,6 +11,9 @@ import {
     Star,
     MessageSquare,
     Clock,
+    Mail,
+    User,
+    Printer,
 } from 'lucide-react';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
@@ -74,7 +77,7 @@ interface Portfolio {
     assignments: Array<{
         id: number;
         status: string;
-        evaluator: { id: number; name: string };
+        evaluator: { id: number; name: string; email: string } | null;
         completed_at: string | null;
     }>;
 }
@@ -360,25 +363,34 @@ export default function Show({
 
             <div className="space-y-6 p-6">
                 {/* Header */}
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <Heading
-                            title={portfolio.title}
-                            description={`Created ${new Date(portfolio.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}`}
-                        />
+                <div className="flex items-start justify-between gap-4">
+                    <Heading
+                        title={portfolio.title}
+                        description={`Created ${new Date(portfolio.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}`}
+                    />
+                    <div className="flex shrink-0 items-center gap-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => window.print()}
+                            className="print:hidden"
+                        >
+                            <Printer className="mr-1 h-4 w-4" />
+                            Print Summary
+                        </Button>
+                        <Badge
+                            variant={
+                                statusBadgeVariant[portfolio.status] ?? 'outline'
+                            }
+                            className={
+                                portfolio.status === 'approved'
+                                    ? 'border-green-300 bg-green-50 text-green-700 dark:border-green-700 dark:bg-green-950 dark:text-green-300'
+                                    : ''
+                            }
+                        >
+                            {formatStatus(portfolio.status)}
+                        </Badge>
                     </div>
-                    <Badge
-                        variant={
-                            statusBadgeVariant[portfolio.status] ?? 'outline'
-                        }
-                        className={
-                            portfolio.status === 'approved'
-                                ? 'border-green-300 bg-green-50 text-green-700 dark:border-green-700 dark:bg-green-950 dark:text-green-300'
-                                : ''
-                        }
-                    >
-                        {formatStatus(portfolio.status)}
-                    </Badge>
                 </div>
 
                 <FlashMessages />
@@ -572,6 +584,42 @@ export default function Show({
                         )}
                     </CardContent>
                 </Card>
+
+                {/* Your Assessor */}
+                {(() => {
+                    const assignment = portfolio.assignments.find(
+                        (a) => a.evaluator,
+                    );
+                    if (!assignment?.evaluator) return null;
+                    return (
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <User className="h-5 w-5" />
+                                    Your Assessor
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-3">
+                                <div className="flex items-center gap-2 text-sm">
+                                    <User className="h-4 w-4 text-muted-foreground" />
+                                    <span>{assignment.evaluator.name}</span>
+                                </div>
+                                <div className="flex items-center gap-2 text-sm">
+                                    <Mail className="h-4 w-4 text-muted-foreground" />
+                                    <span>{assignment.evaluator.email}</span>
+                                </div>
+                                <Button variant="outline" size="sm" asChild>
+                                    <Link
+                                        href={`/messages/create?to=${assignment.evaluator.id}`}
+                                    >
+                                        <MessageSquare className="mr-1.5 h-4 w-4" />
+                                        Send Message
+                                    </Link>
+                                </Button>
+                            </CardContent>
+                        </Card>
+                    );
+                })()}
 
                 {/* Evaluation Results */}
                 {evaluations && evaluations.length > 0 && (
@@ -835,7 +883,7 @@ export default function Show({
                 </div>
 
                 {/* Action bar */}
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between print:hidden">
                     <Button variant="outline" asChild>
                         <Link href="/applicant/portfolios">
                             <ArrowLeft className="mr-1.5 h-4 w-4" />

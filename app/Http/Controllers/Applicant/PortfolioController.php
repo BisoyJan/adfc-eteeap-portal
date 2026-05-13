@@ -52,7 +52,7 @@ class PortfolioController extends Controller
             abort(403);
         }
 
-        $portfolio->load(['documents.category', 'assignments.evaluator', 'waiverRecommendations.evaluator:id,name']);
+        $portfolio->load(['documents.category', 'assignments.evaluator:id,name,email', 'waiverRecommendations.evaluator:id,name']);
 
         $categories = DocumentCategory::orderBy('sort_order')->get();
 

@@ -30,6 +30,7 @@ interface Assignment {
     id: number;
     status: string;
     due_date: string | null;
+    days_remaining?: number | null;
     notes: string | null;
     assigned_at: string;
     completed_at: string | null;
@@ -153,13 +154,24 @@ export default function Index({ assignments }: Props) {
                                 <Card key={assignment.id}>
                                     <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-3">
                                         <div className="space-y-1">
-                                            <CardTitle className="text-base">
+                                            <CardTitle className="text-base flex items-center gap-2">
                                                 <Link
                                                     href={`/evaluator/portfolios/${assignment.id}`}
                                                     className="hover:underline"
                                                 >
                                                     {assignment.portfolio.title}
                                                 </Link>
+                                                {assignment.days_remaining !== null && assignment.days_remaining !== undefined && (
+                                                    assignment.days_remaining < 0 ? (
+                                                        <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900 dark:text-red-200">Overdue</span>
+                                                    ) : assignment.days_remaining === 0 ? (
+                                                        <span className="inline-flex items-center rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700 dark:bg-orange-900 dark:text-orange-200">Due Today</span>
+                                                    ) : assignment.days_remaining <= 3 ? (
+                                                        <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900 dark:text-amber-200">{assignment.days_remaining}d left</span>
+                                                    ) : assignment.days_remaining <= 7 ? (
+                                                        <span className="inline-flex items-center rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-700 dark:bg-yellow-900 dark:text-yellow-200">{assignment.days_remaining}d left</span>
+                                                    ) : null
+                                                )}
                                             </CardTitle>
                                             <div className="flex items-center gap-1 text-sm text-muted-foreground">
                                                 <User className="h-3.5 w-3.5" />

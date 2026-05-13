@@ -27,8 +27,17 @@ class PortfolioController extends Controller
         $assignments = PortfolioAssignment::query()
             ->where('evaluator_id', auth()->id())
             ->with(['portfolio.user', 'portfolio.documents'])
-            ->latest('assigned_at')
+            ->orderByRaw('CASE WHEN due_date IS NULL THEN 1 ELSE 0 END ASC')
+            ->orderBy('due_date', 'asc')
             ->paginate(10);
+
+        $assignments->getCollection()->transform(function ($assignment) {
+            $assignment->days_remaining = $assignment->due_date
+                ? (int) now()->diffInDays($assignment->due_date, false)
+                : null;
+
+            return $assignment;
+        });
 
         return Inertia::render('evaluator/portfolios/index', [
             'assignments' => $assignments,
