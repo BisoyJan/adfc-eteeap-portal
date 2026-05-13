@@ -44,6 +44,27 @@ interface Props {
         created_at: string;
         updated_at: string;
     }>;
+    portfolioProgress: Array<{
+        id: number;
+        title: string;
+        status: string;
+        required_total: number;
+        required_completed: number;
+        percentage: number;
+    }>;
+    upcomingDeadlines: Array<{
+        portfolio_id: number;
+        portfolio_title: string;
+        evaluator: { id: number; name: string } | null;
+        due_date: string;
+        days_remaining: number;
+    }>;
+    announcements: Array<{
+        id: number;
+        title: string;
+        body: string;
+        published_at: string | null;
+    }>;
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -92,6 +113,9 @@ export default function Dashboard({
     stats,
     recentNotifications,
     recentPortfolios,
+    portfolioProgress,
+    upcomingDeadlines,
+    announcements,
 }: Props) {
     const { auth } = usePage<SharedData>().props;
 
@@ -339,6 +363,99 @@ export default function Dashboard({
                         </CardContent>
                     </Card>
                 </div>
+
+                {/* Portfolio Progress */}
+                {portfolioProgress.length > 0 && (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Requirements Progress</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            {portfolioProgress.map((p) => (
+                                <div key={p.id}>
+                                    <div className="mb-1 flex justify-between text-sm">
+                                        <span className="font-medium">{p.title}</span>
+                                        <span className="text-muted-foreground">
+                                            {p.required_completed}/{p.required_total} required docs
+                                        </span>
+                                    </div>
+                                    <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                                        <div
+                                            className={`h-full rounded-full transition-all ${p.percentage === 100
+                                                    ? 'bg-green-500'
+                                                    : p.percentage >= 50
+                                                        ? 'bg-blue-500'
+                                                        : 'bg-amber-500'
+                                                }`}
+                                            style={{ width: `${p.percentage}%` }}
+                                        />
+                                    </div>
+                                    <p className="mt-0.5 text-xs text-muted-foreground">{p.percentage}% complete</p>
+                                </div>
+                            ))}
+                        </CardContent>
+                    </Card>
+                )}
+
+                {/* Upcoming Deadlines */}
+                {upcomingDeadlines.length > 0 && (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <Clock className="h-4 w-4" />
+                                Upcoming Deadlines
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <ul className="divide-y">
+                                {upcomingDeadlines.map((d, i) => (
+                                    <li key={i} className="flex items-center justify-between py-3">
+                                        <div>
+                                            <p className="font-medium">{d.portfolio_title}</p>
+                                            {d.evaluator && (
+                                                <p className="text-xs text-muted-foreground">Assessor: {d.evaluator.name}</p>
+                                            )}
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-sm font-medium">
+                                                {new Date(d.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                            </p>
+                                            <p className={`text-xs ${d.days_remaining <= 3 ? 'text-red-600' : 'text-muted-foreground'
+                                                }`}>
+                                                {d.days_remaining === 0 ? 'Due today' : `${d.days_remaining}d remaining`}
+                                            </p>
+                                        </div>
+                                    </li>
+                                ))}
+                            </ul>
+                        </CardContent>
+                    </Card>
+                )}
+
+                {/* Announcements */}
+                {announcements.length > 0 && (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <Bell className="h-4 w-4" />
+                                Announcements
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            {announcements.map((a) => (
+                                <div key={a.id} className="rounded-lg border bg-muted/30 p-4">
+                                    <p className="font-medium">{a.title}</p>
+                                    <p className="mt-1 text-sm text-muted-foreground">{a.body}</p>
+                                    {a.published_at && (
+                                        <p className="mt-2 text-xs text-muted-foreground">
+                                            {new Date(a.published_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                        </p>
+                                    )}
+                                </div>
+                            ))}
+                        </CardContent>
+                    </Card>
+                )}
             </div>
         </AppLayout>
     );

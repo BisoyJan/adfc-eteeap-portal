@@ -59,6 +59,19 @@ interface Props {
         total_evaluators: number;
         pending_assignments: number;
     };
+    learnerStats: {
+        active: number;
+        completed: number;
+        inactive: number;
+    };
+    learnersWithIncompleteRequirements: Array<{
+        id: number;
+        title: string;
+        status: string;
+        user: { id: number; name: string };
+        required_total: number;
+        required_completed: number;
+    }>;
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -121,6 +134,8 @@ export default function Dashboard({
     recentSubmissions,
     evaluatorWorkload,
     stats,
+    learnerStats,
+    learnersWithIncompleteRequirements,
 }: Props) {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -229,6 +244,74 @@ export default function Dashboard({
                 </Card>
 
                 {/* Two-column section */}
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                    {/* Learner Stats */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Learner Status Overview</CardTitle>
+                            <CardDescription>Breakdown of all learner accounts</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="grid grid-cols-3 gap-3 text-center">
+                                <div className="rounded-lg border p-3">
+                                    <div className="text-2xl font-bold text-blue-600">{learnerStats.active}</div>
+                                    <div className="text-xs text-muted-foreground">Active</div>
+                                </div>
+                                <div className="rounded-lg border p-3">
+                                    <div className="text-2xl font-bold text-green-600">{learnerStats.completed}</div>
+                                    <div className="text-xs text-muted-foreground">Completed</div>
+                                </div>
+                                <div className="rounded-lg border p-3">
+                                    <div className="text-2xl font-bold text-red-600">{learnerStats.inactive}</div>
+                                    <div className="text-xs text-muted-foreground">Inactive</div>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Incomplete Requirements */}
+                    <Card>
+                        <CardHeader>
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <CardTitle>Incomplete Requirements</CardTitle>
+                                    <CardDescription>Learners with missing required documents</CardDescription>
+                                </div>
+                                <Button variant="ghost" size="sm" asChild>
+                                    <Link href="/admin/portfolios">View All <ArrowRight className="ml-1 h-4 w-4" /></Link>
+                                </Button>
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            {learnersWithIncompleteRequirements.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center py-6 text-center">
+                                    <CheckCircle2 className="mb-2 h-8 w-8 text-green-500" />
+                                    <p className="text-sm text-muted-foreground">All learners have complete requirements</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-2">
+                                    {learnersWithIncompleteRequirements.map((item) => (
+                                        <Link
+                                            key={item.id}
+                                            href={`/admin/portfolios/${item.id}`}
+                                            className="flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50"
+                                        >
+                                            <div className="min-w-0 flex-1">
+                                                <p className="truncate text-sm font-medium">{item.user.name}</p>
+                                                <p className="truncate text-xs text-muted-foreground">{item.title}</p>
+                                            </div>
+                                            <Badge variant="destructive" className="ml-2 shrink-0">
+                                                {item.required_completed}/{item.required_total}
+                                            </Badge>
+                                        </Link>
+                                    ))}
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                </div>
+
+                {/* Two-column section (original) */}
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                     {/* Recent Submissions */}
                     <Card>

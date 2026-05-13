@@ -122,6 +122,15 @@ interface Props {
         percentage: number;
     };
     evaluations: EvaluationResult[];
+    waiverRecommendations: Array<{
+        id: number;
+        course_code: string;
+        course_name: string;
+        academic_units: number;
+        rationale: string | null;
+        status: 'recommended' | 'not_recommended';
+        evaluator: { id: number; name: string };
+    }>;
 }
 
 const statusBadgeVariant: Record<
@@ -272,6 +281,7 @@ export default function Show({
     uploadedCategoryIds,
     progress,
     evaluations,
+    waiverRecommendations,
 }: Props) {
     const editable = canEdit(portfolio.status);
     const [previewDoc, setPreviewDoc] = useState<Document | null>(null);
@@ -403,6 +413,39 @@ export default function Show({
                         </CardContent>
                     </Card>
                 )}
+
+                {/* Estimated Completion */}
+                {editable && progress.percentage < 100 && (() => {
+                    const remaining = progress.required - progress.completed;
+                    const docs = portfolio.documents;
+                    let estimate: string | null = null;
+                    if (docs.length >= 2) {
+                        const sorted = [...docs].sort(
+                            (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+                        );
+                        const firstMs = new Date(sorted[0].created_at).getTime();
+                        const lastMs = new Date(sorted[sorted.length - 1].created_at).getTime();
+                        const weeksElapsed = (lastMs - firstMs) / (1000 * 60 * 60 * 24 * 7);
+                        if (weeksElapsed > 0) {
+                            const rate = docs.length / weeksElapsed;
+                            const weeksNeeded = Math.ceil(remaining / rate);
+                            estimate = weeksNeeded === 1 ? '~1 week' : `~${weeksNeeded} weeks`;
+                        }
+                    }
+                    return (
+                        <Card>
+                            <CardContent className="pt-6">
+                                <div className="flex items-center gap-2 text-sm">
+                                    <Clock className="text-muted-foreground h-4 w-4" />
+                                    <span className="font-medium">Estimated Completion:</span>
+                                    <span className="text-muted-foreground">
+                                        {estimate ?? 'Upload more documents to estimate'}
+                                    </span>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    );
+                })()}
 
                 {/* Progress Timeline */}
                 <Card>
@@ -854,6 +897,52 @@ export default function Show({
                     previewDoc ? `/documents/${previewDoc.id}/download` : ''
                 }
             />
+            {waiverRecommendations.length > 0 && (
+                <div className="mx-auto max-w-4xl px-4 pb-6">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Course Waiver Recommendations</CardTitle>
+                            <CardDescription>
+                                Courses recommended for credit waiver by your evaluator.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-sm">
+                                    <thead>
+                                        <tr className="border-b">
+                                            <th className="pb-2 text-left font-medium">Course Code</th>
+                                            <th className="pb-2 text-left font-medium">Course Name</th>
+                                            <th className="pb-2 text-left font-medium">Units</th>
+                                            <th className="pb-2 text-left font-medium">Recommendation</th>
+                                            <th className="pb-2 text-left font-medium">Evaluator</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {waiverRecommendations.map((w) => (
+                                            <tr key={w.id} className="border-b last:border-0">
+                                                <td className="py-2 font-mono">{w.course_code}</td>
+                                                <td className="py-2">{w.course_name}</td>
+                                                <td className="py-2">{w.academic_units}</td>
+                                                <td className="py-2">
+                                                    <Badge
+                                                        variant={w.status === 'recommended' ? 'default' : 'destructive'}
+                                                        className={w.status === 'recommended' ? 'bg-green-100 text-green-800 hover:bg-green-100/80' : ''}
+                                                    >
+                                                        {w.status === 'recommended' ? 'Recommended' : 'Not Recommended'}
+                                                    </Badge>
+                                                </td>
+                                                <td className="py-2 text-muted-foreground">{w.evaluator.name}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+            )}
+
             <AlertDialog
                 open={deleteDialogOpen}
                 onOpenChange={(open) => {

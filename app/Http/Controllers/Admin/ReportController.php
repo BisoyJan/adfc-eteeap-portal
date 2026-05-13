@@ -11,6 +11,7 @@ use App\Models\EvaluationScore;
 use App\Models\Portfolio;
 use App\Models\RubricCriteria;
 use App\Models\User;
+use App\Models\WaiverRecommendation;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -112,6 +113,17 @@ class ReportController extends Controller
             ->orderBy('month')
             ->pluck('count', 'month');
 
+        $waiverTotal = WaiverRecommendation::count();
+        $waiverByStatus = WaiverRecommendation::select('status', DB::raw('count(*) as count'))
+            ->groupBy('status')
+            ->pluck('count', 'status');
+        $topWaivedCourses = WaiverRecommendation::where('status', 'recommended')
+            ->select('course_code', 'course_name', DB::raw('count(*) as count'))
+            ->groupBy('course_code', 'course_name')
+            ->orderByDesc('count')
+            ->limit(10)
+            ->get();
+
         return Inertia::render('admin/reports', [
             'portfoliosByStatus' => $portfoliosByStatus,
             'summary' => [
@@ -128,6 +140,11 @@ class ReportController extends Controller
             'evaluatorPerformance' => $evaluatorPerformance,
             'recommendationBreakdown' => $recommendationBreakdown,
             'monthlySubmissions' => $monthlySubmissions,
+            'waiverSummary' => [
+                'total' => $waiverTotal,
+                'by_status' => $waiverByStatus,
+                'top_courses' => $topWaivedCourses,
+            ],
         ]);
     }
 }

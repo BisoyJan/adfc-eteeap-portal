@@ -48,6 +48,11 @@ class Portfolio extends Model
         return $this->hasMany(Evaluation::class);
     }
 
+    public function waiverRecommendations(): HasMany
+    {
+        return $this->hasMany(WaiverRecommendation::class);
+    }
+
     public function latestAssignment(): ?PortfolioAssignment
     {
         return $this->assignments()->latest('assigned_at')->first();

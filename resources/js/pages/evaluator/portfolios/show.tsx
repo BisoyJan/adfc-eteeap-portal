@@ -1,4 +1,4 @@
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, router } from '@inertiajs/react';
 import {
     ArrowLeft,
     Download,
@@ -138,6 +138,15 @@ interface Props {
     };
     criteria: RubricCriteria[];
     evaluation: Evaluation | null;
+    waiverRecommendations: Array<{
+        id: number;
+        course_code: string;
+        course_name: string;
+        academic_units: number;
+        rationale: string | null;
+        status: 'recommended' | 'not_recommended';
+        evaluator: { id: number; name: string };
+    }>;
 }
 
 function formatDate(dateString: string): string {
@@ -235,6 +244,7 @@ export default function Show({
     progress,
     criteria,
     evaluation,
+    waiverRecommendations,
 }: Props) {
     const portfolio = assignment.portfolio;
     const isSubmitted = evaluation?.status === 'submitted';
@@ -306,6 +316,22 @@ export default function Show({
 
     function computeTotalScore(): number {
         return form.data.scores.reduce((sum, s) => sum + Number(s.score), 0);
+    }
+
+    const waiverForm = useForm({
+        course_code: '',
+        course_name: '',
+        academic_units: 3,
+        rationale: '',
+        status: 'recommended' as 'recommended' | 'not_recommended',
+    });
+
+    function handleAddWaiver(e: FormEvent) {
+        e.preventDefault();
+        waiverForm.post(`/evaluator/portfolios/${assignment.id}/waivers`, {
+            preserveScroll: true,
+            onSuccess: () => waiverForm.reset(),
+        });
     }
 
     function computeMaxPossible(): number {
@@ -865,6 +891,141 @@ export default function Show({
                         ) : null}
                     </div>
                 </div>
+            </div>
+
+            {/* Course Waiver Recommendations */}
+            <div className="mx-auto max-w-5xl px-4 pb-8">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Course Waiver Recommendations</CardTitle>
+                        <CardDescription>
+                            Recommend courses for credit waiver based on the applicant's portfolio.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                        {waiverRecommendations.length > 0 ? (
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-sm">
+                                    <thead>
+                                        <tr className="border-b">
+                                            <th className="pb-2 text-left font-medium">Course Code</th>
+                                            <th className="pb-2 text-left font-medium">Course Name</th>
+                                            <th className="pb-2 text-left font-medium">Units</th>
+                                            <th className="pb-2 text-left font-medium">Status</th>
+                                            <th className="pb-2 text-left font-medium">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {waiverRecommendations.map((w) => (
+                                            <tr key={w.id} className="border-b last:border-0">
+                                                <td className="py-2 font-mono">{w.course_code}</td>
+                                                <td className="py-2">{w.course_name}</td>
+                                                <td className="py-2">{w.academic_units}</td>
+                                                <td className="py-2">
+                                                    <Badge
+                                                        variant={w.status === 'recommended' ? 'default' : 'destructive'}
+                                                        className={w.status === 'recommended' ? 'bg-green-100 text-green-800 hover:bg-green-100/80' : ''}
+                                                    >
+                                                        {w.status === 'recommended' ? 'Recommended' : 'Not Recommended'}
+                                                    </Badge>
+                                                </td>
+                                                <td className="py-2">
+                                                    <Button
+                                                        variant="destructive"
+                                                        size="sm"
+                                                        onClick={() => {
+                                                            if (confirm('Remove this waiver recommendation?')) {
+                                                                router.delete(
+                                                                    `/evaluator/portfolios/${assignment.id}/waivers/${w.id}`,
+                                                                    { preserveScroll: true }
+                                                                );
+                                                            }
+                                                        }}
+                                                    >
+                                                        Remove
+                                                    </Button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        ) : (
+                            <p className="text-muted-foreground text-sm">No waiver recommendations yet.</p>
+                        )}
+                        {!isCompleted && (
+                            <>
+                                <Separator />
+                                <form onSubmit={handleAddWaiver} className="grid gap-4 sm:grid-cols-2">
+                                    <div className="space-y-1">
+                                        <Label htmlFor="waiver-course-code">Course Code</Label>
+                                        <Input
+                                            id="waiver-course-code"
+                                            value={waiverForm.data.course_code}
+                                            onChange={(e) => waiverForm.setData('course_code', e.target.value)}
+                                            placeholder="e.g. CS101"
+                                            maxLength={20}
+                                        />
+                                        <InputError message={waiverForm.errors.course_code} />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label htmlFor="waiver-course-name">Course Name</Label>
+                                        <Input
+                                            id="waiver-course-name"
+                                            value={waiverForm.data.course_name}
+                                            onChange={(e) => waiverForm.setData('course_name', e.target.value)}
+                                            placeholder="e.g. Introduction to Computing"
+                                        />
+                                        <InputError message={waiverForm.errors.course_name} />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label htmlFor="waiver-units">Academic Units</Label>
+                                        <Input
+                                            id="waiver-units"
+                                            type="number"
+                                            min={1}
+                                            max={12}
+                                            value={waiverForm.data.academic_units}
+                                            onChange={(e) => waiverForm.setData('academic_units', Number(e.target.value))}
+                                        />
+                                        <InputError message={waiverForm.errors.academic_units} />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label htmlFor="waiver-status">Recommendation</Label>
+                                        <Select
+                                            value={waiverForm.data.status}
+                                            onValueChange={(v) => waiverForm.setData('status', v as 'recommended' | 'not_recommended')}
+                                        >
+                                            <SelectTrigger id="waiver-status">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="recommended">Recommended</SelectItem>
+                                                <SelectItem value="not_recommended">Not Recommended</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <InputError message={waiverForm.errors.status} />
+                                    </div>
+                                    <div className="space-y-1 sm:col-span-2">
+                                        <Label htmlFor="waiver-rationale">Rationale (optional)</Label>
+                                        <Input
+                                            id="waiver-rationale"
+                                            value={waiverForm.data.rationale}
+                                            onChange={(e) => waiverForm.setData('rationale', e.target.value)}
+                                            placeholder="Reason for recommendation..."
+                                        />
+                                        <InputError message={waiverForm.errors.rationale} />
+                                    </div>
+                                    <div className="sm:col-span-2">
+                                        <Button type="submit" disabled={waiverForm.processing}>
+                                            Add Waiver Recommendation
+                                        </Button>
+                                    </div>
+                                </form>
+                            </>
+                        )}
+                    </CardContent>
+                </Card>
             </div>
 
             <FilePreviewDialog

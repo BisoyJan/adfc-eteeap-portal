@@ -8,9 +8,11 @@ import {
     TrendingUp,
     Award,
     ClipboardList,
+    Printer,
 } from 'lucide-react';
 import Heading from '@/components/heading';
 import ProgressBar from '@/components/progress-bar';
+import { Button } from '@/components/ui/button';
 import {
     Card,
     CardContent,
@@ -60,6 +62,15 @@ interface Props {
     evaluatorPerformance: EvaluatorPerformance[];
     recommendationBreakdown: Record<string, number>;
     monthlySubmissions: Record<string, number>;
+    waiverSummary: {
+        total: number;
+        by_status: Record<string, number>;
+        top_courses: Array<{
+            course_code: string;
+            course_name: string;
+            count: number;
+        }>;
+    };
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -128,6 +139,7 @@ export default function Reports({
     evaluatorPerformance,
     recommendationBreakdown,
     monthlySubmissions,
+    waiverSummary,
 }: Props) {
     const totalRecommendations = Object.values(recommendationBreakdown).reduce(
         (sum, count) => sum + count,
@@ -141,10 +153,16 @@ export default function Reports({
             <Head title="Reports & Analytics" />
 
             <div className="space-y-6 p-4 md:p-6">
-                <Heading
-                    title="Reports & Analytics"
-                    description="Program-wide statistics, evaluation metrics, and performance insights"
-                />
+                <div className="flex items-start justify-between gap-4">
+                    <Heading
+                        title="Reports & Analytics"
+                        description="Program-wide statistics, evaluation metrics, and performance insights"
+                    />
+                    <Button variant="outline" onClick={() => window.print()} className="print:hidden shrink-0">
+                        <Printer className="mr-2 h-4 w-4" />
+                        Print Report
+                    </Button>
+                </div>
 
                 {/* Summary Stats */}
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
@@ -539,6 +557,58 @@ export default function Reports({
                     </Card>
                 </div>
             </div>
+
+            {/* Course Waiver Summary */}
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <ClipboardList className="h-5 w-5" />
+                        Course Waiver Recommendations
+                    </CardTitle>
+                    <CardDescription>
+                        Summary of evaluator-recommended course waivers across all portfolios.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="flex gap-6">
+                        <div>
+                            <p className="text-sm text-muted-foreground">Total Waivers</p>
+                            <p className="text-2xl font-bold">{waiverSummary.total}</p>
+                        </div>
+                        <div>
+                            <p className="text-sm text-muted-foreground">Recommended</p>
+                            <p className="text-2xl font-bold text-green-600">{waiverSummary.by_status['recommended'] ?? 0}</p>
+                        </div>
+                        <div>
+                            <p className="text-sm text-muted-foreground">Not Recommended</p>
+                            <p className="text-2xl font-bold text-red-600">{waiverSummary.by_status['not_recommended'] ?? 0}</p>
+                        </div>
+                    </div>
+                    {waiverSummary.top_courses.length > 0 && (
+                        <div className="overflow-x-auto">
+                            <p className="mb-2 text-sm font-medium">Top Waived Courses</p>
+                            <table className="w-full text-sm">
+                                <thead>
+                                    <tr className="border-b">
+                                        <th className="pb-2 text-left font-medium">Course Code</th>
+                                        <th className="pb-2 text-left font-medium">Course Name</th>
+                                        <th className="pb-2 text-right font-medium">Count</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {waiverSummary.top_courses.map((c) => (
+                                        <tr key={c.course_code} className="border-b last:border-0">
+                                            <td className="py-1.5 font-mono">{c.course_code}</td>
+                                            <td className="py-1.5">{c.course_name}</td>
+                                            <td className="py-1.5 text-right">{c.count}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
         </AppLayout>
     );
 }

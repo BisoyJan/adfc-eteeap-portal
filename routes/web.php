@@ -40,6 +40,9 @@ Route::middleware(['auth', 'verified', 'role:applicant'])->prefix('applicant')->
 Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('dashboard', \App\Http\Controllers\Admin\DashboardController::class)->name('dashboard');
     Route::resource('users', \App\Http\Controllers\Admin\UserController::class)->except(['show']);
+    Route::get('users/{user}', [\App\Http\Controllers\Admin\UserController::class, 'show'])->name('users.show');
+    Route::post('users/{user}/deactivate', [\App\Http\Controllers\Admin\UserController::class, 'deactivate'])->name('users.deactivate');
+    Route::post('users/{user}/activate', [\App\Http\Controllers\Admin\UserController::class, 'activate'])->name('users.activate');
     Route::get('portfolios', [\App\Http\Controllers\Admin\PortfolioController::class, 'index'])->name('portfolios.index');
     Route::get('portfolios/{portfolio}', [\App\Http\Controllers\Admin\PortfolioController::class, 'show'])->name('portfolios.show');
     Route::post('portfolios/{portfolio}/assign', [\App\Http\Controllers\Admin\PortfolioController::class, 'assign'])->name('portfolios.assign');
@@ -49,6 +52,9 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
     Route::post('rubrics/{rubric}/toggle-active', [\App\Http\Controllers\Admin\RubricCriteriaController::class, 'toggleActive'])->name('rubrics.toggle-active');
     Route::resource('document-categories', \App\Http\Controllers\Admin\DocumentCategoryController::class)->except(['show']);
     Route::get('reports', \App\Http\Controllers\Admin\ReportController::class)->name('reports');
+    Route::resource('announcements', \App\Http\Controllers\Admin\AnnouncementController::class)->except(['show']);
+    Route::post('announcements/{announcement}/toggle-publish', [\App\Http\Controllers\Admin\AnnouncementController::class, 'togglePublish'])->name('announcements.toggle-publish');
+    Route::get('activity-logs', \App\Http\Controllers\Admin\ActivityLogController::class)->name('activity-logs.index');
 });
 
 Route::middleware(['auth', 'verified', 'role:evaluator'])->prefix('evaluator')->name('evaluator.')->group(function () {
@@ -57,12 +63,26 @@ Route::middleware(['auth', 'verified', 'role:evaluator'])->prefix('evaluator')->
     Route::get('portfolios/{assignment}', [\App\Http\Controllers\Evaluator\PortfolioController::class, 'show'])->name('portfolios.show');
     Route::post('portfolios/{assignment}/save', [\App\Http\Controllers\Evaluator\PortfolioController::class, 'saveEvaluation'])->name('portfolios.save');
     Route::post('portfolios/{assignment}/submit', [\App\Http\Controllers\Evaluator\PortfolioController::class, 'submitEvaluation'])->name('portfolios.submit');
+    Route::post('portfolios/{assignment}/waivers', [\App\Http\Controllers\Evaluator\PortfolioController::class, 'storeWaiver'])->name('portfolios.waivers.store');
+    Route::delete('portfolios/{assignment}/waivers/{waiver}', [\App\Http\Controllers\Evaluator\PortfolioController::class, 'destroyWaiver'])->name('portfolios.waivers.destroy');
 });
 
 Route::middleware(['auth', 'verified'])->prefix('notifications')->name('notifications.')->group(function () {
     Route::get('/', [\App\Http\Controllers\NotificationController::class, 'index'])->name('index');
     Route::patch('{id}/read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('read');
     Route::post('mark-all-read', [\App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('mark-all-read');
+});
+
+Route::middleware(['auth', 'verified'])->prefix('messages')->name('messages.')->group(function () {
+    Route::get('inbox', [\App\Http\Controllers\MessageController::class, 'inbox'])->name('inbox');
+    Route::get('sent', [\App\Http\Controllers\MessageController::class, 'sent'])->name('sent');
+    Route::get('create', [\App\Http\Controllers\MessageController::class, 'create'])->name('create');
+    Route::post('/', [\App\Http\Controllers\MessageController::class, 'store'])->name('store');
+    Route::post('bulk', [\App\Http\Controllers\MessageController::class, 'bulkStore'])->name('bulk');
+    Route::get('{message}', [\App\Http\Controllers\MessageController::class, 'show'])->name('show');
+    Route::post('{message}/reply', [\App\Http\Controllers\MessageController::class, 'reply'])->name('reply');
+    Route::delete('{message}', [\App\Http\Controllers\MessageController::class, 'destroy'])->name('destroy');
+    Route::get('attachments/{attachment}/download', [\App\Http\Controllers\MessageController::class, 'downloadAttachment'])->name('attachments.download');
 });
 
 Route::get('documents/{document}/download', \App\Http\Controllers\DocumentDownloadController::class)

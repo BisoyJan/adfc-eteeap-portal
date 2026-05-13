@@ -12,6 +12,7 @@ use App\Models\Evaluation;
 use App\Models\PortfolioAssignment;
 use App\Models\RubricCriteria;
 use App\Models\User;
+use App\Models\WaiverRecommendation;
 use App\Notifications\EvaluationCompletedNotification;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -65,6 +66,11 @@ class PortfolioController extends Controller
             ->with('scores')
             ->first();
 
+        $waiverRecommendations = WaiverRecommendation::where('portfolio_id', $assignment->portfolio_id)
+            ->with('evaluator:id,name')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
         return Inertia::render('evaluator/portfolios/show', [
             'assignment' => $assignment,
             'categories' => $categories,
@@ -78,7 +84,42 @@ class PortfolioController extends Controller
             ],
             'criteria' => $criteria,
             'evaluation' => $evaluation,
+            'waiverRecommendations' => $waiverRecommendations,
         ]);
+    }
+
+    public function storeWaiver(Request $request, PortfolioAssignment $assignment): RedirectResponse
+    {
+        if ($assignment->evaluator_id !== auth()->id()) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'course_code' => ['required', 'string', 'max:20'],
+            'course_name' => ['required', 'string', 'max:255'],
+            'academic_units' => ['required', 'integer', 'min:1', 'max:12'],
+            'rationale' => ['nullable', 'string', 'max:2000'],
+            'status' => ['required', 'in:recommended,not_recommended'],
+        ]);
+
+        WaiverRecommendation::create([
+            ...$validated,
+            'portfolio_id' => $assignment->portfolio_id,
+            'evaluator_id' => auth()->id(),
+        ]);
+
+        return back()->with('success', 'Waiver recommendation added.');
+    }
+
+    public function destroyWaiver(PortfolioAssignment $assignment, WaiverRecommendation $waiver): RedirectResponse
+    {
+        if ($assignment->evaluator_id !== auth()->id() || $waiver->portfolio_id !== $assignment->portfolio_id) {
+            abort(403);
+        }
+
+        $waiver->delete();
+
+        return back()->with('success', 'Waiver recommendation removed.');
     }
 
     public function saveEvaluation(Request $request, PortfolioAssignment $assignment): RedirectResponse

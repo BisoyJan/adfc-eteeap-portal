@@ -24,18 +24,24 @@ interface Props {
         read_at: string | null;
         created_at: string;
     }>;
-    pendingAssignments: Array<{
+    priorityQueue: Array<{
         id: number;
         status: string;
         due_date: string | null;
         assigned_at: string;
+        is_overdue: boolean;
+        days_remaining: number | null;
         portfolio: {
             id: number;
             title: string;
-            user: {
-                name: string;
-            };
+            user: { name: string };
         };
+    }>;
+    announcements: Array<{
+        id: number;
+        title: string;
+        body: string;
+        published_at: string | null;
     }>;
 }
 
@@ -81,14 +87,11 @@ function getStatusBadge(status: string) {
     }
 }
 
-function isOverdue(dueDate: string): boolean {
-    return new Date(dueDate) < new Date();
-}
-
 export default function Dashboard({
     stats,
     recentNotifications,
-    pendingAssignments,
+    priorityQueue,
+    announcements,
 }: Props) {
     const { auth } = usePage<SharedData>().props;
 
@@ -148,19 +151,19 @@ export default function Dashboard({
 
                 {/* Two-column layout */}
                 <div className="grid gap-6 md:grid-cols-2">
-                    {/* Pending Reviews */}
+                    {/* Priority Queue */}
                     <Card>
                         <CardHeader>
-                            <CardTitle>Pending Reviews</CardTitle>
+                            <CardTitle>Priority Queue</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            {pendingAssignments.length === 0 ? (
+                            {priorityQueue.length === 0 ? (
                                 <p className="text-sm text-muted-foreground">
                                     All caught up! No pending reviews.
                                 </p>
                             ) : (
                                 <div className="space-y-4">
-                                    {pendingAssignments
+                                    {priorityQueue
                                         .slice(0, 5)
                                         .map((assignment) => (
                                             <div
@@ -169,46 +172,31 @@ export default function Dashboard({
                                             >
                                                 <div className="min-w-0 flex-1 space-y-1">
                                                     <p className="truncate text-sm font-medium">
-                                                        {
-                                                            assignment.portfolio
-                                                                .title
-                                                        }
+                                                        {assignment.portfolio.title}
                                                     </p>
                                                     <p className="text-xs text-muted-foreground">
-                                                        Applicant:{' '}
-                                                        {
-                                                            assignment.portfolio
-                                                                .user.name
-                                                        }
+                                                        Applicant: {assignment.portfolio.user.name}
                                                     </p>
                                                     <div className="flex items-center gap-2">
-                                                        {getStatusBadge(
-                                                            assignment.status,
-                                                        )}
-                                                        {assignment.due_date && (
-                                                            <span
-                                                                className={`text-xs ${isOverdue(assignment.due_date) ? 'font-semibold text-red-600' : 'text-muted-foreground'}`}
-                                                            >
-                                                                {isOverdue(
-                                                                    assignment.due_date,
-                                                                )
-                                                                    ? 'Overdue: '
-                                                                    : 'Due: '}
-                                                                {new Date(
-                                                                    assignment.due_date,
-                                                                ).toLocaleDateString()}
+                                                        {getStatusBadge(assignment.status)}
+                                                        {assignment.is_overdue ? (
+                                                            <span className="text-xs font-semibold text-red-600">
+                                                                Overdue
                                                             </span>
-                                                        )}
+                                                        ) : assignment.days_remaining !== null ? (
+                                                            <span className={`text-xs ${assignment.days_remaining <= 3
+                                                                    ? 'font-semibold text-amber-600'
+                                                                    : 'text-muted-foreground'
+                                                                }`}>
+                                                                {assignment.days_remaining === 0
+                                                                    ? 'Due today'
+                                                                    : `${assignment.days_remaining}d left`}
+                                                            </span>
+                                                        ) : null}
                                                     </div>
                                                 </div>
-                                                <Button
-                                                    asChild
-                                                    size="sm"
-                                                    variant="outline"
-                                                >
-                                                    <Link
-                                                        href={`/evaluator/portfolios/${assignment.id}`}
-                                                    >
+                                                <Button asChild size="sm" variant="outline">
+                                                    <Link href={`/evaluator/portfolios/${assignment.id}`}>
                                                         Review
                                                     </Link>
                                                 </Button>
@@ -290,6 +278,28 @@ export default function Dashboard({
                         </CardContent>
                     </Card>
                 </div>
+
+                {/* Announcements */}
+                {announcements.length > 0 && (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Announcements</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            {announcements.map((a) => (
+                                <div key={a.id} className="rounded-lg border bg-muted/30 p-4">
+                                    <p className="font-medium">{a.title}</p>
+                                    <p className="mt-1 text-sm text-muted-foreground">{a.body}</p>
+                                    {a.published_at && (
+                                        <p className="mt-2 text-xs text-muted-foreground">
+                                            {new Date(a.published_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                        </p>
+                                    )}
+                                </div>
+                            ))}
+                        </CardContent>
+                    </Card>
+                )}
             </div>
         </AppLayout>
     );

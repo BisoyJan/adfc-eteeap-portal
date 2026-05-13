@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Enums\UserRole;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -25,6 +26,9 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'is_active',
+        'deactivated_at',
+        'deactivation_reason',
     ];
 
     /**
@@ -51,7 +55,14 @@ class User extends Authenticatable
             'password' => 'hashed',
             'role' => UserRole::class,
             'two_factor_confirmed_at' => 'datetime',
+            'is_active' => 'boolean',
+            'deactivated_at' => 'datetime',
         ];
+    }
+
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->where('is_active', true);
     }
 
     /**
@@ -102,5 +113,28 @@ class User extends Authenticatable
     public function evaluatorAssignments(): HasMany
     {
         return $this->hasMany(PortfolioAssignment::class, 'evaluator_id');
+    }
+
+    public function sentMessages(): HasMany
+    {
+        return $this->hasMany(Message::class, 'sender_id');
+    }
+
+    public function receivedMessages(): HasMany
+    {
+        return $this->hasMany(Message::class, 'receiver_id');
+    }
+
+    public function activityLogs(): HasMany
+    {
+        return $this->hasMany(ActivityLog::class);
+    }
+
+    public function unreadMessagesCount(): int
+    {
+        return $this->receivedMessages()
+            ->whereNull('read_at')
+            ->whereNull('receiver_deleted_at')
+            ->count();
     }
 }
