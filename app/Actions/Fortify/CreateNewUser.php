@@ -30,6 +30,10 @@ class CreateNewUser implements CreatesNewUsers
             'email' => $input['email'],
             'password' => $input['password'],
             'role' => UserRole::Applicant,
+            'current_position' => $input['current_position'] ?? null,
+            'years_it_experience' => $input['years_it_experience'] ?? null,
+            'company' => $input['company'] ?? null,
+            'highest_education' => $input['highest_education'] ?? null,
         ]);
     }
 }

@@ -1,12 +1,16 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
     BarChart3,
+    BookOpen,
+    CalendarRange,
     ClipboardCheck,
     ClipboardList,
     FileStack,
     Folder,
     FolderOpen,
+    GraduationCap,
     LayoutGrid,
+    Library,
     Mail,
     Megaphone,
     ScrollText,
@@ -45,6 +49,16 @@ function getNavItems(role: UserRole, unreadMessageCount: number): NavItem[] {
                 title: 'Manage Users',
                 href: '/admin/users',
                 icon: Users,
+            },
+            {
+                title: 'Academic Years',
+                href: '/admin/academic-years',
+                icon: CalendarRange,
+            },
+            {
+                title: 'Subjects',
+                href: '/admin/subjects',
+                icon: BookOpen,
             },
             {
                 title: 'Rubric Criteria',
@@ -100,6 +114,16 @@ function getNavItems(role: UserRole, unreadMessageCount: number): NavItem[] {
             icon: FolderOpen,
         });
         items.push({
+            title: 'My Subjects',
+            href: '/applicant/subjects',
+            icon: Library,
+        });
+        items.push({
+            title: 'My Grades',
+            href: '/applicant/grades',
+            icon: GraduationCap,
+        });
+        items.push({
             title: 'Announcements',
             href: '/applicant/announcements',
             icon: Megaphone,
@@ -111,6 +135,11 @@ function getNavItems(role: UserRole, unreadMessageCount: number): NavItem[] {
             title: 'Assigned Reviews',
             href: '/evaluator/portfolios',
             icon: ClipboardCheck,
+        });
+        items.push({
+            title: 'Subject Assignments',
+            href: '/evaluator/subjects',
+            icon: Library,
         });
         items.push({
             title: 'Announcements',

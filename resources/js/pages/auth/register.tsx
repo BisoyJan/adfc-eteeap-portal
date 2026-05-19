@@ -58,6 +58,52 @@ export default function Register() {
                             </div>
 
                             <div className="grid gap-2">
+                                <Label htmlFor="current_position">Current Position</Label>
+                                <Input
+                                    id="current_position"
+                                    type="text"
+                                    name="current_position"
+                                    placeholder="e.g. Software Engineer"
+                                />
+                                <InputError message={errors.current_position} />
+                            </div>
+
+                            <div className="grid gap-2">
+                                <Label htmlFor="company">Company / Organization</Label>
+                                <Input
+                                    id="company"
+                                    type="text"
+                                    name="company"
+                                    placeholder="e.g. Acme Corp"
+                                />
+                                <InputError message={errors.company} />
+                            </div>
+
+                            <div className="grid gap-2">
+                                <Label htmlFor="years_it_experience">Years of IT Experience</Label>
+                                <Input
+                                    id="years_it_experience"
+                                    type="number"
+                                    min={0}
+                                    max={80}
+                                    name="years_it_experience"
+                                    placeholder="e.g. 5"
+                                />
+                                <InputError message={errors.years_it_experience} />
+                            </div>
+
+                            <div className="grid gap-2">
+                                <Label htmlFor="highest_education">Highest Education</Label>
+                                <Input
+                                    id="highest_education"
+                                    type="text"
+                                    name="highest_education"
+                                    placeholder="e.g. Bachelor of Science in IT"
+                                />
+                                <InputError message={errors.highest_education} />
+                            </div>
+
+                            <div className="grid gap-2">
                                 <Label htmlFor="password">Password</Label>
                                 <Input
                                     id="password"

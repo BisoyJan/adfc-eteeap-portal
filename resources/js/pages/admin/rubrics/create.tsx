@@ -6,8 +6,19 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
+
+interface CategoryOption {
+    value: string;
+    label: string;
+}
+
+interface Props {
+    categories: CategoryOption[];
+    defaultCategory: string | null;
+}
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Dashboard', href: '/dashboard' },
@@ -15,10 +26,11 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Create', href: '/admin/rubrics/create' },
 ];
 
-export default function Create() {
+export default function Create({ categories, defaultCategory }: Props) {
     const form = useForm({
         name: '',
         description: '',
+        category: defaultCategory ?? 'portfolio',
         max_score: 10,
         sort_order: 0,
     });
@@ -55,6 +67,21 @@ export default function Create() {
                                     placeholder="Criteria name"
                                 />
                                 <InputError message={form.errors.name} />
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="category">Category</Label>
+                                <Select value={form.data.category} onValueChange={(v) => form.setData('category', v)}>
+                                    <SelectTrigger id="category">
+                                        <SelectValue placeholder="Select category" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {categories.map((c) => (
+                                            <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <InputError message={form.errors.category} />
                             </div>
 
                             <div className="space-y-2">

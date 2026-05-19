@@ -15,13 +15,20 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
+
+interface CategoryOption {
+    value: string;
+    label: string;
+}
 
 interface RubricCriteria {
     id: number;
     name: string;
     description: string | null;
+    category: string;
     max_score: number;
     sort_order: number;
     is_active: boolean;
@@ -30,6 +37,8 @@ interface RubricCriteria {
 
 interface Props {
     criteria: RubricCriteria[];
+    categories: CategoryOption[];
+    filters: { category: string | null };
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -42,12 +51,23 @@ function truncate(text: string | null, length: number = 60): string {
     return text.length > length ? text.slice(0, length) + '…' : text;
 }
 
-export default function Index({ criteria }: Props) {
+export default function Index({ criteria, categories, filters }: Props) {
     const [criteriaToDelete, setCriteriaToDelete] =
         useState<RubricCriteria | null>(null);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
     const totalMaxScore = criteria.reduce((sum, c) => sum + c.max_score, 0);
+
+    const categoryLabel = (value: string): string =>
+        categories.find((c) => c.value === value)?.label ?? value;
+
+    function handleFilterChange(value: string) {
+        router.get(
+            '/admin/rubrics',
+            value === 'all' ? {} : { category: value },
+            { preserveState: true, replace: true },
+        );
+    }
 
     function handleToggleActive(item: RubricCriteria) {
         router.post(`/admin/rubrics/${item.id}/toggle-active`, {}, {
@@ -94,6 +114,21 @@ export default function Index({ criteria }: Props) {
 
                 <FlashMessages />
 
+                <div className="flex items-center gap-3">
+                    <span className="text-sm text-muted-foreground">Category:</span>
+                    <Select value={filters.category ?? 'all'} onValueChange={handleFilterChange}>
+                        <SelectTrigger className="w-64">
+                            <SelectValue placeholder="All categories" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All categories</SelectItem>
+                            {categories.map((c) => (
+                                <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+
                 <div className="overflow-hidden rounded-lg border">
                     <table className="w-full text-sm">
                         <thead className="border-b bg-muted/50">
@@ -103,6 +138,9 @@ export default function Index({ criteria }: Props) {
                                 </th>
                                 <th className="px-4 py-3 text-left font-medium">
                                     Name
+                                </th>
+                                <th className="px-4 py-3 text-left font-medium">
+                                    Category
                                 </th>
                                 <th className="px-4 py-3 text-left font-medium">
                                     Description
@@ -126,6 +164,9 @@ export default function Index({ criteria }: Props) {
                                     </td>
                                     <td className="px-4 py-3 font-medium">
                                         {item.name}
+                                    </td>
+                                    <td className="px-4 py-3">
+                                        <Badge variant="outline">{categoryLabel(item.category)}</Badge>
                                     </td>
                                     <td className="px-4 py-3 text-muted-foreground">
                                         {truncate(item.description)}
@@ -194,7 +235,7 @@ export default function Index({ criteria }: Props) {
                             {criteria.length === 0 && (
                                 <tr>
                                     <td
-                                        colSpan={6}
+                                        colSpan={7}
                                         className="px-4 py-8 text-center text-muted-foreground"
                                     >
                                         No rubric criteria found. Create one to
@@ -207,7 +248,7 @@ export default function Index({ criteria }: Props) {
                             <tfoot className="border-t bg-muted/50">
                                 <tr>
                                     <td
-                                        colSpan={3}
+                                        colSpan={4}
                                         className="px-4 py-3 text-right font-medium"
                                     >
                                         Total Max Score

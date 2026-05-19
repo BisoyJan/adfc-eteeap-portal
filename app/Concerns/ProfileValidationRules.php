@@ -17,6 +17,10 @@ trait ProfileValidationRules
         return [
             'name' => $this->nameRules(),
             'email' => $this->emailRules($userId),
+            'current_position' => ['nullable', 'string', 'max:150'],
+            'years_it_experience' => ['nullable', 'integer', 'min:0', 'max:80'],
+            'company' => ['nullable', 'string', 'max:150'],
+            'highest_education' => ['nullable', 'string', 'max:150'],
         ];
     }
 

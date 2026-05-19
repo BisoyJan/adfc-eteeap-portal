@@ -353,6 +353,9 @@ export default function Show({
                                 Submitted {formatDate(portfolio.submitted_at)}
                             </span>
                         )}
+                        <Button variant="outline" size="sm" asChild>
+                            <Link href={`/admin/portfolios/${portfolio.id}/subjects`}>Manage Subjects</Link>
+                        </Button>
                         <Badge
                             variant={
                                 statusBadgeVariant[portfolio.status] ??

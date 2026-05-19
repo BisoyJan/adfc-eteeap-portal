@@ -19,6 +19,7 @@ class UpdateRubricCriteriaRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:2000'],
+            'category' => ['required', 'string', \Illuminate\Validation\Rule::in(\App\Enums\RubricCategory::values())],
             'max_score' => ['required', 'integer', 'min:1', 'max:100'],
             'sort_order' => ['required', 'integer', 'min:0'],
         ];

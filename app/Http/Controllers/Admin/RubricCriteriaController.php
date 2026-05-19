@@ -2,30 +2,42 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\RubricCategory;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreRubricCriteriaRequest;
 use App\Http\Requests\Admin\UpdateRubricCriteriaRequest;
 use App\Models\RubricCriteria;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class RubricCriteriaController extends Controller
 {
-    public function index(): Response
+    public function index(Request $request): Response
     {
+        $category = $request->query('category');
+
         $criteria = RubricCriteria::query()
+            ->when($category, fn ($q) => $q->where('category', $category))
             ->ordered()
             ->get();
 
         return Inertia::render('admin/rubrics/index', [
             'criteria' => $criteria,
+            'categories' => RubricCategory::options(),
+            'filters' => [
+                'category' => $category,
+            ],
         ]);
     }
 
-    public function create(): Response
+    public function create(Request $request): Response
     {
-        return Inertia::render('admin/rubrics/create');
+        return Inertia::render('admin/rubrics/create', [
+            'categories' => RubricCategory::options(),
+            'defaultCategory' => $request->query('category'),
+        ]);
     }
 
     public function store(StoreRubricCriteriaRequest $request): RedirectResponse
@@ -40,6 +52,7 @@ class RubricCriteriaController extends Controller
     {
         return Inertia::render('admin/rubrics/edit', [
             'criteria' => $rubric,
+            'categories' => RubricCategory::options(),
         ]);
     }
 

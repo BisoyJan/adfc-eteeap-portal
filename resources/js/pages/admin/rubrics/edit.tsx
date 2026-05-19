@@ -6,18 +6,26 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
+
+interface CategoryOption {
+    value: string;
+    label: string;
+}
 
 interface Props {
     criteria: {
         id: number;
         name: string;
         description: string | null;
+        category: string;
         max_score: number;
         sort_order: number;
         is_active: boolean;
     };
+    categories: CategoryOption[];
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -26,10 +34,11 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Edit', href: '#' },
 ];
 
-export default function Edit({ criteria }: Props) {
+export default function Edit({ criteria, categories }: Props) {
     const form = useForm({
         name: criteria.name,
         description: criteria.description ?? '',
+        category: criteria.category,
         max_score: criteria.max_score,
         sort_order: criteria.sort_order,
     });
@@ -66,6 +75,21 @@ export default function Edit({ criteria }: Props) {
                                     placeholder="Criteria name"
                                 />
                                 <InputError message={form.errors.name} />
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="category">Category</Label>
+                                <Select value={form.data.category} onValueChange={(v) => form.setData('category', v)}>
+                                    <SelectTrigger id="category">
+                                        <SelectValue placeholder="Select category" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {categories.map((c) => (
+                                            <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <InputError message={form.errors.category} />
                             </div>
 
                             <div className="space-y-2">

@@ -29,6 +29,10 @@ class User extends Authenticatable
         'is_active',
         'deactivated_at',
         'deactivation_reason',
+        'current_position',
+        'years_it_experience',
+        'company',
+        'highest_education',
     ];
 
     /**

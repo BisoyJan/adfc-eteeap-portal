@@ -36,6 +36,17 @@ Route::middleware(['auth', 'verified', 'role:applicant'])->prefix('applicant')->
     Route::post('portfolios/{portfolio}/documents', [\App\Http\Controllers\Applicant\PortfolioDocumentController::class, 'store'])->name('portfolios.documents.store');
     Route::delete('portfolios/{portfolio}/documents/{document}', [\App\Http\Controllers\Applicant\PortfolioDocumentController::class, 'destroy'])->name('portfolios.documents.destroy');
     Route::get('portfolios/{portfolio}/documents/{document}/download', [\App\Http\Controllers\Applicant\PortfolioDocumentController::class, 'download'])->name('portfolios.documents.download');
+
+    // Subjects (per-applicant view)
+    Route::get('subjects', [\App\Http\Controllers\Applicant\SubjectController::class, 'index'])->name('subjects.index');
+    Route::get('subjects/{portfolioSubject}', [\App\Http\Controllers\Applicant\SubjectController::class, 'show'])->name('subjects.show');
+    Route::get('modules/{module}/download', [\App\Http\Controllers\Applicant\SubjectController::class, 'downloadModule'])->name('modules.download');
+    Route::post('subjects/{portfolioSubject}/pre-assessment/start', [\App\Http\Controllers\Applicant\SubjectController::class, 'startPreAssessment'])->name('subjects.pre-assessment.start');
+    Route::get('subjects/{portfolioSubject}/pre-assessment/{attempt}', [\App\Http\Controllers\Applicant\SubjectController::class, 'editPreAssessment'])->name('subjects.pre-assessment.edit');
+    Route::put('subjects/{portfolioSubject}/pre-assessment/{attempt}', [\App\Http\Controllers\Applicant\SubjectController::class, 'savePreAssessment'])->name('subjects.pre-assessment.save');
+
+    // Grades
+    Route::get('grades', \App\Http\Controllers\Applicant\GradesController::class)->name('grades.index');
 });
 
 Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
@@ -51,6 +62,28 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
     Route::delete('portfolios/{portfolio}/assignments/{assignment}', [\App\Http\Controllers\Admin\PortfolioController::class, 'removeAssignment'])->name('portfolios.assignments.destroy');
     Route::resource('rubrics', \App\Http\Controllers\Admin\RubricCriteriaController::class)->except(['show']);
     Route::post('rubrics/{rubric}/toggle-active', [\App\Http\Controllers\Admin\RubricCriteriaController::class, 'toggleActive'])->name('rubrics.toggle-active');
+    Route::resource('academic-years', \App\Http\Controllers\Admin\AcademicYearController::class)->except(['show']);
+    Route::post('academic-years/{academic_year}/set-active', [\App\Http\Controllers\Admin\AcademicYearController::class, 'setActive'])->name('academic-years.set-active');
+    Route::resource('subjects', \App\Http\Controllers\Admin\SubjectController::class)->except(['show']);
+    Route::post('subjects/{subject}/toggle-active', [\App\Http\Controllers\Admin\SubjectController::class, 'toggleActive'])->name('subjects.toggle-active');
+
+    // Subject modules
+    Route::get('subjects/{subject}/modules', [\App\Http\Controllers\Admin\SubjectModuleController::class, 'index'])->name('subjects.modules.index');
+    Route::post('subjects/{subject}/modules', [\App\Http\Controllers\Admin\SubjectModuleController::class, 'store'])->name('subjects.modules.store');
+    Route::delete('subjects/{subject}/modules/{module}', [\App\Http\Controllers\Admin\SubjectModuleController::class, 'destroy'])->name('subjects.modules.destroy');
+    Route::get('subjects/{subject}/modules/{module}/download', [\App\Http\Controllers\Admin\SubjectModuleController::class, 'download'])->name('subjects.modules.download');
+
+    // Pre-assessment questions
+    Route::get('subjects/{subject}/pre-assessment-questions', [\App\Http\Controllers\Admin\PreAssessmentQuestionController::class, 'index'])->name('subjects.questions.index');
+    Route::post('subjects/{subject}/pre-assessment-questions', [\App\Http\Controllers\Admin\PreAssessmentQuestionController::class, 'store'])->name('subjects.questions.store');
+    Route::put('subjects/{subject}/pre-assessment-questions/{question}', [\App\Http\Controllers\Admin\PreAssessmentQuestionController::class, 'update'])->name('subjects.questions.update');
+    Route::delete('subjects/{subject}/pre-assessment-questions/{question}', [\App\Http\Controllers\Admin\PreAssessmentQuestionController::class, 'destroy'])->name('subjects.questions.destroy');
+
+    // Portfolio subjects (assignment of subjects to a portfolio)
+    Route::get('portfolios/{portfolio}/subjects', [\App\Http\Controllers\Admin\PortfolioSubjectController::class, 'index'])->name('portfolios.subjects.index');
+    Route::post('portfolios/{portfolio}/subjects', [\App\Http\Controllers\Admin\PortfolioSubjectController::class, 'store'])->name('portfolios.subjects.store');
+    Route::put('portfolios/{portfolio}/subjects/{portfolioSubject}', [\App\Http\Controllers\Admin\PortfolioSubjectController::class, 'update'])->name('portfolios.subjects.update');
+    Route::delete('portfolios/{portfolio}/subjects/{portfolioSubject}', [\App\Http\Controllers\Admin\PortfolioSubjectController::class, 'destroy'])->name('portfolios.subjects.destroy');
     Route::resource('document-categories', \App\Http\Controllers\Admin\DocumentCategoryController::class)->except(['show']);
     Route::get('reports', \App\Http\Controllers\Admin\ReportController::class)->name('reports');
     Route::get('reports/export/portfolios', [\App\Http\Controllers\Admin\ReportExportController::class, 'portfolios'])->name('reports.export.portfolios');
@@ -71,6 +104,14 @@ Route::middleware(['auth', 'verified', 'role:evaluator'])->prefix('evaluator')->
     Route::post('portfolios/{assignment}/submit', [\App\Http\Controllers\Evaluator\PortfolioController::class, 'submitEvaluation'])->name('portfolios.submit');
     Route::post('portfolios/{assignment}/waivers', [\App\Http\Controllers\Evaluator\PortfolioController::class, 'storeWaiver'])->name('portfolios.waivers.store');
     Route::delete('portfolios/{assignment}/waivers/{waiver}', [\App\Http\Controllers\Evaluator\PortfolioController::class, 'destroyWaiver'])->name('portfolios.waivers.destroy');
+
+    // Per-subject assignments (interview / worksite / written exam / pre-assessment grading)
+    Route::get('subjects', [\App\Http\Controllers\Evaluator\SubjectAssignmentController::class, 'index'])->name('subjects.index');
+    Route::get('subjects/{portfolioSubject}', [\App\Http\Controllers\Evaluator\SubjectAssignmentController::class, 'show'])->name('subjects.show');
+    Route::post('subjects/{portfolioSubject}/save', [\App\Http\Controllers\Evaluator\SubjectAssignmentController::class, 'saveEvaluation'])->name('subjects.save');
+    Route::put('subjects/{portfolioSubject}', [\App\Http\Controllers\Evaluator\SubjectAssignmentController::class, 'updateAssignment'])->name('subjects.update');
+    Route::post('subjects/{portfolioSubject}/pre-assessment/{attempt}/grade', [\App\Http\Controllers\Evaluator\SubjectAssignmentController::class, 'gradePreAssessment'])->name('subjects.pre-assessment.grade');
+    Route::get('subjects/modules/{module}/download', [\App\Http\Controllers\Evaluator\SubjectAssignmentController::class, 'downloadModule'])->name('subjects.modules.download');
 });
 
 Route::middleware(['auth', 'verified'])->prefix('notifications')->name('notifications.')->group(function () {
