@@ -23,6 +23,7 @@ class ApplicantDashboardTest extends TestCase
     public function test_applicant_can_view_dashboard(): void
     {
         $applicant = User::factory()->applicant()->create();
+        Portfolio::factory()->for($applicant, 'user')->create();
 
         $response = $this->actingAs($applicant)->get('/applicant/dashboard');
 
@@ -33,6 +34,16 @@ class ApplicantDashboardTest extends TestCase
             ->has('recentNotifications')
             ->has('recentPortfolios')
         );
+    }
+
+    public function test_first_time_applicant_is_redirected_to_portfolio_create(): void
+    {
+        $applicant = User::factory()->applicant()->create();
+
+        $response = $this->actingAs($applicant)->get('/applicant/dashboard');
+
+        $response->assertRedirect(route('applicant.portfolios.create'));
+        $response->assertSessionHas('info');
     }
 
     public function test_dashboard_shows_correct_stats(): void

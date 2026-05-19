@@ -55,19 +55,57 @@ class PortfolioTest extends TestCase
         $response->assertStatus(200);
     }
 
+    public function test_applicant_cannot_view_create_form_with_active_application(): void
+    {
+        $applicant = User::factory()->applicant()->create();
+        Portfolio::factory()->submitted()->create(['user_id' => $applicant->id]);
+
+        $response = $this->actingAs($applicant)->get(route('applicant.portfolios.create'));
+
+        $response->assertRedirect(route('applicant.portfolios.index'));
+        $response->assertSessionHas('error');
+    }
+
     public function test_applicant_can_create_portfolio(): void
     {
         $applicant = User::factory()->applicant()->create();
 
-        $response = $this->actingAs($applicant)->post(route('applicant.portfolios.store'), [
-            'title' => 'My ETEEAP Portfolio',
-        ]);
+        $response = $this->actingAs($applicant)->post(route('applicant.portfolios.store'));
 
         $response->assertRedirect();
 
         $this->assertDatabaseHas('portfolios', [
             'user_id' => $applicant->id,
-            'title' => 'My ETEEAP Portfolio',
+            'title' => 'Untitled Portfolio',
+            'status' => PortfolioStatus::Draft->value,
+        ]);
+    }
+
+    public function test_applicant_cannot_create_portfolio_when_latest_is_not_rejected(): void
+    {
+        $applicant = User::factory()->applicant()->create();
+        Portfolio::factory()->underReview()->create(['user_id' => $applicant->id]);
+
+        $response = $this->actingAs($applicant)->post(route('applicant.portfolios.store'));
+
+        $response->assertRedirect(route('applicant.portfolios.index'));
+        $response->assertSessionHas('error');
+
+        $this->assertEquals(1, Portfolio::query()->where('user_id', $applicant->id)->count());
+    }
+
+    public function test_applicant_can_reapply_after_rejected_result(): void
+    {
+        $applicant = User::factory()->applicant()->create();
+        Portfolio::factory()->rejected()->create(['user_id' => $applicant->id]);
+
+        $response = $this->actingAs($applicant)->post(route('applicant.portfolios.store'));
+
+        $response->assertRedirect();
+
+        $this->assertDatabaseHas('portfolios', [
+            'user_id' => $applicant->id,
+            'title' => 'Untitled Portfolio',
             'status' => PortfolioStatus::Draft->value,
         ]);
     }
@@ -97,6 +135,14 @@ class PortfolioTest extends TestCase
     {
         $applicant = User::factory()->applicant()->create();
         $portfolio = Portfolio::factory()->create(['user_id' => $applicant->id]);
+        $requiredCategories = DocumentCategory::factory()->required()->count(2)->create();
+
+        foreach ($requiredCategories as $category) {
+            PortfolioDocument::factory()->create([
+                'portfolio_id' => $portfolio->id,
+                'document_category_id' => $category->id,
+            ]);
+        }
 
         $response = $this->actingAs($applicant)->put(route('applicant.portfolios.update', $portfolio), [
             'title' => 'Updated Portfolio Title',
@@ -108,6 +154,23 @@ class PortfolioTest extends TestCase
             'id' => $portfolio->id,
             'title' => 'Updated Portfolio Title',
         ]);
+    }
+
+    public function test_applicant_cannot_update_title_until_required_documents_are_uploaded(): void
+    {
+        $applicant = User::factory()->applicant()->create();
+        $portfolio = Portfolio::factory()->create(['user_id' => $applicant->id]);
+        DocumentCategory::factory()->required()->count(2)->create();
+
+        $response = $this->actingAs($applicant)->put(route('applicant.portfolios.update', $portfolio), [
+            'title' => 'Blocked Title Update',
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHasErrors('title');
+
+        $portfolio->refresh();
+        $this->assertNotSame('Blocked Title Update', $portfolio->title);
     }
 
     public function test_applicant_cannot_update_submitted_portfolio(): void

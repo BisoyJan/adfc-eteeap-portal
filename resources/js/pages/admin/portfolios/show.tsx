@@ -232,9 +232,9 @@ function getRecommendationBadge(recommendation: string | null): {
                 className:
                     'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
             };
-        case 'revise':
+        case 'request_revision':
             return {
-                label: 'Revise',
+                label: 'Request Revision',
                 className:
                     'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200',
             };
@@ -354,7 +354,7 @@ export default function Show({
                             </span>
                         )}
                         <Button variant="outline" size="sm" asChild>
-                            <Link href={`/admin/portfolios/${portfolio.id}/subjects`}>Manage Subjects</Link>
+                            <Link href={`/admin/portfolios/${portfolio.id}/subjects`}>View Subjects</Link>
                         </Button>
                         <Badge
                             variant={
@@ -776,8 +776,8 @@ export default function Show({
                                     {eta.estimated_completion_date ? (
                                         <div
                                             className={`rounded-lg border p-3 ${eta.at_risk
-                                                    ? 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950'
-                                                    : 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950'
+                                                ? 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950'
+                                                : 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950'
                                                 }`}
                                         >
                                             <div className="flex items-center gap-2">

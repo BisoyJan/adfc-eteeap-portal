@@ -21,29 +21,70 @@ class PortfolioController extends Controller
 {
     public function index(): Response
     {
+        $user = auth()->user();
+
         $portfolios = auth()->user()->portfolios()
             ->latest()
             ->paginate(10);
 
+        $latestPortfolio = $user->portfolios()->latest('created_at')->first();
+        $canCreatePortfolio = $latestPortfolio === null || $latestPortfolio->status === PortfolioStatus::Rejected;
+
         return Inertia::render('applicant/portfolios/index', [
             'portfolios' => $portfolios,
+            'canCreatePortfolio' => $canCreatePortfolio,
+            'createRestrictionMessage' => $canCreatePortfolio
+                ? null
+                : 'You already have an active application. You can reapply only after a rejected result.',
         ]);
     }
 
-    public function create(): Response
+    public function create(): Response|RedirectResponse
     {
-        return Inertia::render('applicant/portfolios/create');
+        $user = auth()->user();
+        $latestPortfolio = $user->portfolios()->latest('created_at')->first();
+
+        if ($latestPortfolio !== null && $latestPortfolio->status !== PortfolioStatus::Rejected) {
+            return redirect()->route('applicant.portfolios.index')
+                ->with('error', 'You can only create a new application after a rejected result.');
+        }
+
+        $categories = DocumentCategory::orderBy('sort_order')->get([
+            'id',
+            'name',
+            'description',
+            'is_required',
+        ]);
+
+        return Inertia::render('applicant/portfolios/create', [
+            'categories' => $categories,
+            'applicantInfo' => [
+                'name' => $user->name,
+                'current_position' => $user->current_position,
+                'years_it_experience' => $user->years_it_experience,
+                'company' => $user->company,
+                'highest_education' => $user->highest_education,
+            ],
+        ]);
     }
 
     public function store(StorePortfolioRequest $request): RedirectResponse
     {
+        $user = auth()->user();
+        $latestPortfolio = $user->portfolios()->latest('created_at')->first();
+
+        if ($latestPortfolio !== null && $latestPortfolio->status !== PortfolioStatus::Rejected) {
+            return redirect()->route('applicant.portfolios.index')
+                ->with('error', 'You can only create a new application after a rejected result.');
+        }
+
         $portfolio = auth()->user()->portfolios()->create([
-            'title' => $request->validated('title'),
+            'title' => 'Untitled Portfolio',
             'status' => PortfolioStatus::Draft,
         ]);
 
         return redirect()->route('applicant.portfolios.show', $portfolio)
-            ->with('success', 'Portfolio created successfully. Start uploading your documents.');
+            ->with('success', 'Application draft created. Upload all required documents before setting your portfolio title.');
     }
 
     public function show(Portfolio $portfolio): Response|RedirectResponse
@@ -89,6 +130,25 @@ class PortfolioController extends Controller
 
     public function update(UpdatePortfolioRequest $request, Portfolio $portfolio): RedirectResponse
     {
+        $requiredCategoryIds = DocumentCategory::query()
+            ->where('is_required', true)
+            ->pluck('id');
+
+        if ($requiredCategoryIds->isNotEmpty()) {
+            $uploadedRequiredCount = $portfolio->documents()
+                ->whereIn('document_category_id', $requiredCategoryIds)
+                ->distinct('document_category_id')
+                ->count('document_category_id');
+
+            if ($uploadedRequiredCount < $requiredCategoryIds->count()) {
+                return back()
+                    ->withErrors([
+                        'title' => 'Upload all required documents before setting your portfolio title.',
+                    ])
+                    ->with('error', 'Upload all required documents before setting your portfolio title.');
+            }
+        }
+
         $portfolio->update([
             'title' => $request->validated('title'),
         ]);

@@ -105,13 +105,10 @@ class ReportController extends Controller
             ->where('status', '!=', PortfolioStatus::Draft)
             ->whereNotNull('submitted_at')
             ->where('submitted_at', '>=', now()->subMonths(6))
-            ->select(
-                DB::raw("DATE_FORMAT(submitted_at, '%Y-%m') as month"),
-                DB::raw('count(*) as count'),
-            )
-            ->groupBy('month')
-            ->orderBy('month')
-            ->pluck('count', 'month');
+            ->orderBy('submitted_at')
+            ->get(['submitted_at'])
+            ->groupBy(fn (Portfolio $portfolio) => $portfolio->submitted_at?->format('Y-m'))
+            ->map(fn ($group) => $group->count());
 
         $waiverTotal = WaiverRecommendation::count();
         $waiverByStatus = WaiverRecommendation::select('status', DB::raw('count(*) as count'))

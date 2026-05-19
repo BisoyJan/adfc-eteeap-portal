@@ -1,8 +1,9 @@
-import { Head, router, useForm } from '@inertiajs/react';
-import { Download, Save, Send } from 'lucide-react';
-import { useMemo, useState, type FormEvent } from 'react';
+import { Head, useForm } from '@inertiajs/react';
+import { Download, Save, Send, Upload } from 'lucide-react';
+import { useMemo, useRef, useState, type FormEvent } from 'react';
 import FlashMessages from '@/components/flash-messages';
 import Heading from '@/components/heading';
+import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -27,7 +28,14 @@ interface SubjEval {
     submitted_at: string | null;
     scores: SubjEvalScore[];
 }
-interface Module { id: number; title: string; file_name: string; file_size: number }
+interface Module {
+    id: number;
+    title: string;
+    description: string | null;
+    file_name: string;
+    file_size: number;
+    uploader: { id: number; name: string } | null;
+}
 interface Question { id: number; question: string; sort_order: number }
 interface Answer { id: number; question_id: number; answer: string | null; question?: Question }
 interface Attempt {
@@ -65,9 +73,9 @@ interface Props {
     statuses: Option[];
 }
 
-const CATEGORY_KEYS = ['interview', 'worksite_visit', 'written_exam'] as const;
+const CATEGORY_KEYS = ['interview', 'pre_assessment', 'written_exam', 'worksite_visit'] as const;
 
-function fmtSize(b: number) { return b < 1024 ? `${b} B` : b < 1024*1024 ? `${(b/1024).toFixed(1)} KB` : `${(b/1024/1024).toFixed(1)} MB` }
+function fmtSize(b: number) { return b < 1024 ? `${b} B` : b < 1024 * 1024 ? `${(b / 1024).toFixed(1)} KB` : `${(b / 1024 / 1024).toFixed(1)} MB` }
 
 export default function EvaluatorSubjectShow({ portfolioSubject, rubricByCategory, categories, recommendations, statuses }: Props) {
     const ps = portfolioSubject;
@@ -81,10 +89,30 @@ export default function EvaluatorSubjectShow({ portfolioSubject, rubricByCategor
         recommendation: ps.recommendation ?? '',
         notes: ps.notes ?? '',
     });
+    const fileRef = useRef<HTMLInputElement>(null);
+    const moduleForm = useForm<{ title: string; description: string; file: File | null }>({
+        title: '',
+        description: '',
+        file: null,
+    });
 
     function saveAssignment(e: FormEvent) {
         e.preventDefault();
         assignmentForm.put(`/evaluator/subjects/${ps.id}`, { preserveScroll: true });
+    }
+
+    function uploadModule(e: FormEvent) {
+        e.preventDefault();
+        moduleForm.post(`/evaluator/subjects/${ps.id}/modules`, {
+            forceFormData: true,
+            preserveScroll: true,
+            onSuccess: () => {
+                moduleForm.reset();
+                if (fileRef.current) {
+                    fileRef.current.value = '';
+                }
+            },
+        });
     }
 
     return (
@@ -96,7 +124,48 @@ export default function EvaluatorSubjectShow({ portfolioSubject, rubricByCategor
 
                 <Card>
                     <CardHeader><CardTitle>Modules ({ps.subject.modules.length})</CardTitle></CardHeader>
-                    <CardContent>
+                    <CardContent className="space-y-6">
+                        <form onSubmit={uploadModule} className="grid gap-4 rounded-md border p-4 md:grid-cols-2">
+                            <div className="space-y-1">
+                                <Label htmlFor="module-title">Title</Label>
+                                <Input
+                                    id="module-title"
+                                    value={moduleForm.data.title}
+                                    onChange={(e) => moduleForm.setData('title', e.target.value)}
+                                    required
+                                />
+                                <InputError message={moduleForm.errors.title} />
+                            </div>
+                            <div className="space-y-1">
+                                <Label htmlFor="module-file">File (max 50 MB)</Label>
+                                <Input
+                                    id="module-file"
+                                    ref={fileRef}
+                                    type="file"
+                                    onChange={(e) => moduleForm.setData('file', e.target.files?.[0] ?? null)}
+                                    required
+                                />
+                                <InputError message={moduleForm.errors.file} />
+                            </div>
+                            <div className="space-y-1 md:col-span-2">
+                                <Label htmlFor="module-description">Description (optional)</Label>
+                                <textarea
+                                    id="module-description"
+                                    aria-label="Module description"
+                                    rows={2}
+                                    className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                    value={moduleForm.data.description}
+                                    onChange={(e) => moduleForm.setData('description', e.target.value)}
+                                />
+                                <InputError message={moduleForm.errors.description} />
+                            </div>
+                            <div className="md:col-span-2">
+                                <Button type="submit" disabled={moduleForm.processing}>
+                                    <Upload className="mr-2 h-4 w-4" /> Upload Module
+                                </Button>
+                            </div>
+                        </form>
+
                         {ps.subject.modules.length === 0 ? (
                             <p className="text-sm text-muted-foreground">No modules.</p>
                         ) : (
@@ -105,7 +174,11 @@ export default function EvaluatorSubjectShow({ portfolioSubject, rubricByCategor
                                     <li key={m.id} className="flex items-center justify-between py-2">
                                         <div>
                                             <div className="font-medium">{m.title}</div>
+                                            {m.description && (
+                                                <div className="text-xs text-muted-foreground">{m.description}</div>
+                                            )}
                                             <div className="text-xs text-muted-foreground">{m.file_name} • {fmtSize(m.file_size)}</div>
+                                            <div className="text-xs text-muted-foreground">Uploaded by: {m.uploader?.name ?? 'Unknown'}</div>
                                         </div>
                                         <Button asChild variant="outline" size="sm">
                                             <a href={`/evaluator/subjects/modules/${m.id}/download`}><Download className="mr-2 h-4 w-4" /> Download</a>
@@ -259,6 +332,12 @@ function CategoryScoringBlock({ portfolioSubjectId, category, label, criteria, e
     criteria: Criteria[];
     evaluations: SubjEval[];
 }) {
+    type ScorePayload = {
+        rubric_criteria_id: number;
+        score: number;
+        comments: string;
+    };
+
     const latest = evaluations.length > 0 ? evaluations.reduce((a, b) => a.attempt_number > b.attempt_number ? a : b) : null;
     const isSubmitted = latest?.status === 'submitted';
     const nextAttempt = isSubmitted ? (latest?.attempt_number ?? 0) + 1 : (latest?.attempt_number ?? 1);
@@ -270,7 +349,7 @@ function CategoryScoringBlock({ portfolioSubjectId, category, label, criteria, e
     });
 
     const [scoreData, setScoreData] = useState(initialScores);
-    const form = useForm<{ category: string; attempt_number: number; comments: string; conducted_at: string; submit: boolean; scores: unknown[] }>({
+    const form = useForm<{ category: string; attempt_number: number; comments: string; conducted_at: string; submit: boolean; scores: ScorePayload[] }>({
         category,
         attempt_number: nextAttempt,
         comments: !isSubmitted ? (latest?.comments ?? '') : '',

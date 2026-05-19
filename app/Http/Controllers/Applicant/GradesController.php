@@ -16,7 +16,8 @@ class GradesController extends Controller
             ->with([
                 'subject.academicYear',
                 'preAssessmentAttempts' => fn ($q) => $q->orderByDesc('attempt_number'),
-                'subjectEvaluations',
+                'preAssessmentAttempts.grader:id,name',
+                'subjectEvaluations.evaluator:id,name',
             ])
             ->get()
             ->map(function (PortfolioSubject $ps) {
@@ -25,6 +26,9 @@ class GradesController extends Controller
                     ->where('status', \App\Enums\SubjectEvaluationStatus::Submitted)
                     ->groupBy(fn ($e) => $e->category->value)
                     ->map(fn ($group) => $group->sortByDesc('attempt_number')->first());
+
+                $academicYear = $ps->subject->academicYear?->name;
+                $program = 'BSIT';
 
                 return [
                     'id' => $ps->id,
@@ -44,10 +48,14 @@ class GradesController extends Controller
                         'score' => $latestPre->score,
                         'max_score' => $latestPre->max_score,
                         'graded_at' => $latestPre->graded_at,
+                        'evaluation_date' => $latestPre->graded_at ?? $latestPre->submitted_at,
+                        'evaluator_name' => $latestPre->grader?->name,
+                        'academic_year' => $academicYear,
+                        'program' => $program,
                     ] : null,
-                    'interview' => $this->formatEval($byCategory->get('interview')),
-                    'worksite_visit' => $this->formatEval($byCategory->get('worksite_visit')),
-                    'written_exam' => $this->formatEval($byCategory->get('written_exam')),
+                    'interview' => $this->formatEval($byCategory->get('interview'), $academicYear, $program),
+                    'worksite_visit' => $this->formatEval($byCategory->get('worksite_visit'), $academicYear, $program),
+                    'written_exam' => $this->formatEval($byCategory->get('written_exam'), $academicYear, $program),
                 ];
             });
 
@@ -57,9 +65,9 @@ class GradesController extends Controller
     }
 
     /**
-     * @return array{score:float|null,max_score:float|null,submitted_at:mixed}|null
+     * @return array{score:float|null,max_score:float|null,submitted_at:mixed,evaluation_date:mixed,evaluator_name:string|null,academic_year:string|null,program:string}|null
      */
-    protected function formatEval($evaluation): ?array
+    protected function formatEval($evaluation, ?string $academicYear, string $program): ?array
     {
         if (! $evaluation) {
             return null;
@@ -69,6 +77,10 @@ class GradesController extends Controller
             'score' => (float) $evaluation->score,
             'max_score' => (float) $evaluation->max_score,
             'submitted_at' => $evaluation->submitted_at,
+            'evaluation_date' => $evaluation->conducted_at ?? $evaluation->submitted_at,
+            'evaluator_name' => $evaluation->evaluator?->name,
+            'academic_year' => $academicYear,
+            'program' => $program,
         ];
     }
 }

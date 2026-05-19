@@ -32,6 +32,8 @@ class DatabaseSeeder extends Seeder
             DocumentCategorySeeder::class,
             RubricCriteriaSeeder::class,
             AcademicYearSubjectSeeder::class,
+            TestDataSeeder::class,
+            NewWorkflowFeatureSeeder::class,
         ]);
     }
 }

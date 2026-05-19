@@ -5,12 +5,16 @@ namespace App\Http\Controllers\Evaluator;
 use App\Enums\AssignmentStatus;
 use App\Enums\EvaluationStatus;
 use App\Enums\PortfolioStatus;
+use App\Enums\RubricCategory;
+use App\Enums\SubjectAssignmentStatus;
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Models\DocumentCategory;
 use App\Models\Evaluation;
 use App\Models\PortfolioAssignment;
+use App\Models\PortfolioSubject;
 use App\Models\RubricCriteria;
+use App\Models\Subject;
 use App\Models\User;
 use App\Models\WaiverRecommendation;
 use App\Notifications\EvaluationCompletedNotification;
@@ -51,7 +55,7 @@ class PortfolioController extends Controller
         }
 
         $assignment->load([
-            'portfolio.user',
+            'portfolio.user:id,name,email,current_position,years_it_experience,company,highest_education',
             'portfolio.documents.category',
             'assigner',
         ]);
@@ -68,16 +72,29 @@ class PortfolioController extends Controller
             ->whereIn('id', $uploadedCategoryIds)
             ->count();
 
-        $criteria = RubricCriteria::active()->ordered()->get();
+        $criteria = RubricCriteria::query()
+            ->active()
+            ->ofCategory(RubricCategory::Interview)
+            ->ordered()
+            ->get();
 
         $evaluation = Evaluation::where('portfolio_id', $assignment->portfolio_id)
             ->where('evaluator_id', auth()->id())
             ->with('scores')
             ->first();
 
-        $waiverRecommendations = WaiverRecommendation::where('portfolio_id', $assignment->portfolio_id)
-            ->with('evaluator:id,name')
-            ->orderBy('created_at', 'desc')
+        $assignedSubjects = PortfolioSubject::query()
+            ->where('portfolio_id', $assignment->portfolio_id)
+            ->where('evaluator_id', auth()->id())
+            ->with('subject.academicYear')
+            ->orderBy('assigned_at')
+            ->get();
+
+        $allSubjects = Subject::query()
+            ->with('academicYear')
+            ->active()
+            ->orderBy('academic_year_id')
+            ->orderBy('code')
             ->get();
 
         return Inertia::render('evaluator/portfolios/show', [
@@ -93,8 +110,61 @@ class PortfolioController extends Controller
             ],
             'criteria' => $criteria,
             'evaluation' => $evaluation,
-            'waiverRecommendations' => $waiverRecommendations,
+            'assignedSubjects' => $assignedSubjects,
+            'allSubjects' => $allSubjects,
         ]);
+    }
+
+    public function storeSubject(Request $request, PortfolioAssignment $assignment): RedirectResponse
+    {
+        if ($assignment->evaluator_id !== auth()->id()) {
+            abort(403);
+        }
+
+        if ($assignment->portfolio->status !== PortfolioStatus::Approved) {
+            return back()->with('error', 'Subjects can only be assigned after the applicant passes the interview phase.');
+        }
+
+        $data = $request->validate([
+            'subject_id' => ['required', 'exists:subjects,id'],
+            'notes' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $exists = PortfolioSubject::query()
+            ->where('portfolio_id', $assignment->portfolio_id)
+            ->where('subject_id', $data['subject_id'])
+            ->exists();
+
+        if ($exists) {
+            return back()->with('error', 'That subject is already assigned to this applicant.');
+        }
+
+        PortfolioSubject::create([
+            'portfolio_id' => $assignment->portfolio_id,
+            'subject_id' => $data['subject_id'],
+            'evaluator_id' => auth()->id(),
+            'assigned_by' => auth()->id(),
+            'status' => SubjectAssignmentStatus::Pending,
+            'notes' => $data['notes'] ?? null,
+            'assigned_at' => now(),
+        ]);
+
+        return back()->with('success', 'Subject assigned successfully.');
+    }
+
+    public function destroySubject(PortfolioAssignment $assignment, PortfolioSubject $portfolioSubject): RedirectResponse
+    {
+        if ($assignment->evaluator_id !== auth()->id()) {
+            abort(403);
+        }
+
+        if ($portfolioSubject->portfolio_id !== $assignment->portfolio_id || $portfolioSubject->evaluator_id !== auth()->id()) {
+            abort(403);
+        }
+
+        $portfolioSubject->delete();
+
+        return back()->with('success', 'Subject assignment removed.');
     }
 
     public function storeWaiver(Request $request, PortfolioAssignment $assignment): RedirectResponse
@@ -143,7 +213,7 @@ class PortfolioController extends Controller
             'scores.*.score' => ['required', 'integer', 'min:0'],
             'scores.*.comments' => ['nullable', 'string', 'max:1000'],
             'overall_comments' => ['nullable', 'string', 'max:5000'],
-            'recommendation' => ['nullable', 'string', 'in:approve,revise,reject'],
+            'recommendation' => ['nullable', 'string', 'in:approve,request_revision,reject'],
         ]);
 
         $evaluation = Evaluation::updateOrCreate(
@@ -192,7 +262,7 @@ class PortfolioController extends Controller
             'scores.*.score' => ['required', 'integer', 'min:0'],
             'scores.*.comments' => ['nullable', 'string', 'max:1000'],
             'overall_comments' => ['required', 'string', 'max:5000'],
-            'recommendation' => ['required', 'string', 'in:approve,revise,reject'],
+            'recommendation' => ['required', 'string', 'in:approve,request_revision,reject'],
         ]);
 
         $evaluation = Evaluation::updateOrCreate(
@@ -229,9 +299,14 @@ class PortfolioController extends Controller
         ]);
 
         $portfolio = $assignment->portfolio;
-        if ($portfolio->status === PortfolioStatus::UnderReview) {
-            $portfolio->update(['status' => PortfolioStatus::Evaluated]);
-        }
+        $portfolioStatus = match ($request->input('recommendation')) {
+            'approve' => PortfolioStatus::Approved,
+            'request_revision' => PortfolioStatus::RevisionRequested,
+            'reject' => PortfolioStatus::Rejected,
+            default => PortfolioStatus::UnderReview,
+        };
+
+        $portfolio->update(['status' => $portfolioStatus]);
 
         $evaluation->load(['portfolio', 'evaluator']);
         $portfolio->load('user');

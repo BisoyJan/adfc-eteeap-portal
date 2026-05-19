@@ -27,39 +27,12 @@ class SubjectModuleController extends Controller
 
     public function store(Request $request, Subject $subject): RedirectResponse
     {
-        $data = $request->validate([
-            'title' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string', 'max:2000'],
-            'file' => ['required', 'file', 'max:51200'], // 50 MB
-        ]);
-
-        $file = $request->file('file');
-        $path = $file->store("subjects/{$subject->id}/modules", 'public');
-
-        SubjectModule::create([
-            'subject_id' => $subject->id,
-            'uploaded_by' => auth()->id(),
-            'title' => $data['title'],
-            'description' => $data['description'] ?? null,
-            'file_path' => $path,
-            'file_name' => $file->getClientOriginalName(),
-            'file_size' => $file->getSize(),
-            'mime_type' => $file->getMimeType(),
-        ]);
-
-        return back()->with('success', 'Module uploaded.');
+        abort(403, 'Only evaluators can upload subject modules.');
     }
 
     public function destroy(Subject $subject, SubjectModule $module): RedirectResponse
     {
-        abort_unless($module->subject_id === $subject->id, 404);
-
-        if ($module->file_path && Storage::disk('public')->exists($module->file_path)) {
-            Storage::disk('public')->delete($module->file_path);
-        }
-        $module->delete();
-
-        return back()->with('success', 'Module deleted.');
+        abort(403, 'Admin module access is read-only.');
     }
 
     public function download(Subject $subject, SubjectModule $module): StreamedResponse

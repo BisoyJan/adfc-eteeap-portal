@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Evaluator;
 
+use App\Enums\PortfolioStatus;
 use App\Enums\RubricCategory;
 use App\Enums\SubjectAssignmentStatus;
 use App\Enums\SubjectEvaluationStatus;
@@ -12,36 +13,43 @@ use App\Models\PreAssessmentAttempt;
 use App\Models\RubricCriteria;
 use App\Models\SubjectEvaluation;
 use App\Models\SubjectModule;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
-use Symfony\Component\HttpFoundation\StreamedResponse;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class SubjectAssignmentController extends Controller
 {
-    public function index(): Response
+    public function index(Request $request): Response
     {
-        $assignments = PortfolioSubject::query()
-            ->where('evaluator_id', auth()->id())
+        $portfolioId = (int) $request->query('portfolio_id', 0);
+
+        $assignments = $this->visibleAssignmentsQuery()
+            ->when($portfolioId > 0, fn ($q) => $q->where('portfolio_id', $portfolioId))
             ->with([
                 'subject.academicYear',
                 'portfolio.user:id,name,email',
             ])
             ->latest('assigned_at')
-            ->paginate(20);
+            ->paginate(20)
+            ->withQueryString();
 
         return Inertia::render('evaluator/subjects/index', [
             'assignments' => $assignments,
             'statuses' => SubjectAssignmentStatus::options(),
+            'filters' => [
+                'portfolio_id' => $portfolioId > 0 ? $portfolioId : null,
+            ],
         ]);
     }
 
     public function show(PortfolioSubject $portfolioSubject): Response
     {
-        $this->authorizeOwn($portfolioSubject);
+        $this->authorizeVisible($portfolioSubject);
 
         $portfolioSubject->load([
             'portfolio.user',
@@ -69,7 +77,7 @@ class SubjectAssignmentController extends Controller
 
     public function gradePreAssessment(Request $request, PortfolioSubject $portfolioSubject, PreAssessmentAttempt $attempt): RedirectResponse
     {
-        $this->authorizeOwn($portfolioSubject);
+        $this->authorizeVisible($portfolioSubject);
         abort_unless($attempt->portfolio_subject_id === $portfolioSubject->id, 404);
 
         $data = $request->validate([
@@ -93,7 +101,7 @@ class SubjectAssignmentController extends Controller
 
     public function saveEvaluation(Request $request, PortfolioSubject $portfolioSubject): RedirectResponse
     {
-        $this->authorizeOwn($portfolioSubject);
+        $this->authorizeVisible($portfolioSubject);
 
         $data = $request->validate([
             'category' => ['required', 'string', 'in:'.implode(',', RubricCategory::values())],
@@ -111,6 +119,16 @@ class SubjectAssignmentController extends Controller
         $submit = $data['submit'] ?? false;
 
         DB::transaction(function () use ($portfolioSubject, $data, $attemptNumber, $submit) {
+            $existingEvaluation = SubjectEvaluation::query()
+                ->where('portfolio_subject_id', $portfolioSubject->id)
+                ->where('category', $data['category'])
+                ->where('attempt_number', $attemptNumber)
+                ->first();
+
+            $conductedAt = $data['conducted_at']
+                ?? $existingEvaluation?->conducted_at
+                ?? ($submit ? now() : null);
+
             $evaluation = SubjectEvaluation::updateOrCreate(
                 [
                     'portfolio_subject_id' => $portfolioSubject->id,
@@ -121,7 +139,7 @@ class SubjectAssignmentController extends Controller
                     'evaluator_id' => auth()->id(),
                     'status' => $submit ? SubjectEvaluationStatus::Submitted : SubjectEvaluationStatus::Draft,
                     'comments' => $data['comments'] ?? null,
-                    'conducted_at' => $data['conducted_at'] ?? null,
+                    'conducted_at' => $conductedAt,
                     'submitted_at' => $submit ? now() : null,
                 ],
             );
@@ -147,7 +165,7 @@ class SubjectAssignmentController extends Controller
 
     public function updateAssignment(Request $request, PortfolioSubject $portfolioSubject): RedirectResponse
     {
-        $this->authorizeOwn($portfolioSubject);
+        $this->authorizeVisible($portfolioSubject);
 
         $data = $request->validate([
             'status' => ['required', 'string', 'in:'.implode(',', SubjectAssignmentStatus::values())],
@@ -165,21 +183,70 @@ class SubjectAssignmentController extends Controller
         return back()->with('success', 'Assignment updated.');
     }
 
-    public function downloadModule(SubjectModule $module): StreamedResponse
+    public function downloadModule(SubjectModule $module): BinaryFileResponse
     {
-        // verify evaluator is assigned to a portfolio_subject of this subject
-        $allowed = PortfolioSubject::where('evaluator_id', auth()->id())
+        $allowed = $this->visibleAssignmentsQuery()
             ->where('subject_id', $module->subject_id)
             ->exists();
 
         abort_unless($allowed, 403);
 
-        return Storage::disk('public')->download($module->file_path, $module->file_name);
+        $disk = Storage::disk('public');
+        abort_unless($disk->exists($module->file_path), 404);
+
+        return response()->download($disk->path($module->file_path), $module->file_name);
+    }
+
+    public function uploadModule(Request $request, PortfolioSubject $portfolioSubject): RedirectResponse
+    {
+        $this->authorizeVisible($portfolioSubject);
+
+        $data = $request->validate([
+            'title' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:2000'],
+            'file' => ['required', 'file', 'max:51200'],
+        ]);
+
+        $file = $request->file('file');
+        $path = $file->store("subjects/{$portfolioSubject->subject_id}/modules", 'public');
+
+        SubjectModule::create([
+            'subject_id' => $portfolioSubject->subject_id,
+            'uploaded_by' => auth()->id(),
+            'title' => $data['title'],
+            'description' => $data['description'] ?? null,
+            'file_path' => $path,
+            'file_name' => $file->getClientOriginalName(),
+            'file_size' => $file->getSize(),
+            'mime_type' => $file->getMimeType(),
+        ]);
+
+        return back()->with('success', 'Module uploaded successfully.');
     }
 
     protected function authorizeOwn(PortfolioSubject $portfolioSubject): void
     {
         abort_unless($portfolioSubject->evaluator_id === auth()->id(), 403);
+    }
+
+    protected function authorizeVisible(PortfolioSubject $portfolioSubject): void
+    {
+        $this->authorizeOwn($portfolioSubject);
+
+        abort_unless(
+            $this->visibleAssignmentsQuery()->whereKey($portfolioSubject->id)->exists(),
+            403,
+        );
+    }
+
+    protected function visibleAssignmentsQuery(): Builder
+    {
+        return PortfolioSubject::query()
+            ->where('evaluator_id', auth()->id())
+            ->whereHas('portfolio', fn ($q) => $q->whereIn('status', [
+                PortfolioStatus::Approved->value,
+                PortfolioStatus::Evaluated->value,
+            ]));
     }
 
     protected function touchInProgress(PortfolioSubject $portfolioSubject): void

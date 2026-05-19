@@ -5,11 +5,21 @@ namespace Tests\Feature\Evaluator;
 use App\Enums\AssignmentStatus;
 use App\Enums\EvaluationStatus;
 use App\Enums\PortfolioStatus;
+use App\Enums\RubricCategory;
+use App\Enums\SubjectAssignmentStatus;
+use App\Enums\SubjectEvaluationStatus;
+use App\Models\AcademicYear;
 use App\Models\Portfolio;
 use App\Models\PortfolioAssignment;
+use App\Models\PortfolioSubject;
 use App\Models\RubricCriteria;
+use App\Models\Subject;
+use App\Models\SubjectEvaluation;
+use App\Models\SubjectModule;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class EvaluationTest extends TestCase
@@ -131,7 +141,183 @@ class EvaluationTest extends TestCase
         ]);
 
         $portfolio->refresh();
-        $this->assertEquals(PortfolioStatus::Evaluated, $portfolio->status);
+        $this->assertEquals(PortfolioStatus::Approved, $portfolio->status);
+    }
+
+    public function test_submit_with_request_revision_sets_revision_requested_status(): void
+    {
+        $evaluator = User::factory()->evaluator()->create();
+        $portfolio = Portfolio::factory()->underReview()->create();
+        $assignment = PortfolioAssignment::factory()->create([
+            'portfolio_id' => $portfolio->id,
+            'evaluator_id' => $evaluator->id,
+        ]);
+        $criteria = RubricCriteria::factory()->create(['max_score' => 20]);
+
+        $this->actingAs($evaluator)->post(route('evaluator.portfolios.submit', $assignment), [
+            'scores' => [
+                ['criteria_id' => $criteria->id, 'score' => 12, 'comments' => 'Needs revisions'],
+            ],
+            'overall_comments' => 'Please revise and re-submit.',
+            'recommendation' => 'request_revision',
+        ])->assertRedirect(route('evaluator.portfolios.index'));
+
+        $portfolio->refresh();
+        $this->assertEquals(PortfolioStatus::RevisionRequested, $portfolio->status);
+    }
+
+    public function test_evaluator_can_assign_subject_after_portfolio_is_approved(): void
+    {
+        $evaluator = User::factory()->evaluator()->create();
+        $portfolio = Portfolio::factory()->approved()->create();
+        $assignment = PortfolioAssignment::factory()->create([
+            'portfolio_id' => $portfolio->id,
+            'evaluator_id' => $evaluator->id,
+        ]);
+        $subject = $this->createSubject();
+
+        $response = $this->actingAs($evaluator)->post(route('evaluator.portfolios.subjects.store', $assignment), [
+            'subject_id' => $subject->id,
+            'notes' => 'For worksite assessment.',
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        $this->assertDatabaseHas('portfolio_subjects', [
+            'portfolio_id' => $portfolio->id,
+            'subject_id' => $subject->id,
+            'evaluator_id' => $evaluator->id,
+            'assigned_by' => $evaluator->id,
+            'status' => SubjectAssignmentStatus::Pending->value,
+        ]);
+    }
+
+    public function test_evaluator_can_upload_module_for_owned_subject_assignment(): void
+    {
+        Storage::fake('public');
+
+        $evaluator = User::factory()->evaluator()->create();
+        $portfolio = Portfolio::factory()->approved()->create();
+        $subject = $this->createSubject();
+
+        $portfolioSubject = PortfolioSubject::create([
+            'portfolio_id' => $portfolio->id,
+            'subject_id' => $subject->id,
+            'evaluator_id' => $evaluator->id,
+            'assigned_by' => $evaluator->id,
+            'status' => SubjectAssignmentStatus::InProgress,
+            'assigned_at' => now(),
+        ]);
+
+        $response = $this->actingAs($evaluator)->post(route('evaluator.subjects.modules.store', $portfolioSubject), [
+            'title' => 'Evaluator Module',
+            'description' => 'Sample upload',
+            'file' => UploadedFile::fake()->create('module.pdf', 256, 'application/pdf'),
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        $module = SubjectModule::query()->where('subject_id', $subject->id)->first();
+
+        $this->assertNotNull($module);
+        $this->assertSame($evaluator->id, $module->uploaded_by);
+        Storage::disk('public')->assertExists($module->file_path);
+    }
+
+    public function test_evaluator_cannot_open_subject_assignment_for_locked_portfolio(): void
+    {
+        $evaluator = User::factory()->evaluator()->create();
+        $portfolio = Portfolio::factory()->underReview()->create();
+        $subject = $this->createSubject();
+
+        $portfolioSubject = PortfolioSubject::create([
+            'portfolio_id' => $portfolio->id,
+            'subject_id' => $subject->id,
+            'evaluator_id' => $evaluator->id,
+            'assigned_by' => $evaluator->id,
+            'status' => SubjectAssignmentStatus::Pending,
+            'assigned_at' => now(),
+        ]);
+
+        $this->actingAs($evaluator)
+            ->get(route('evaluator.subjects.show', $portfolioSubject))
+            ->assertForbidden();
+    }
+
+    public function test_evaluator_cannot_upload_module_for_locked_portfolio_subject_assignment(): void
+    {
+        Storage::fake('public');
+
+        $evaluator = User::factory()->evaluator()->create();
+        $portfolio = Portfolio::factory()->underReview()->create();
+        $subject = $this->createSubject();
+
+        $portfolioSubject = PortfolioSubject::create([
+            'portfolio_id' => $portfolio->id,
+            'subject_id' => $subject->id,
+            'evaluator_id' => $evaluator->id,
+            'assigned_by' => $evaluator->id,
+            'status' => SubjectAssignmentStatus::InProgress,
+            'assigned_at' => now(),
+        ]);
+
+        $this->actingAs($evaluator)->post(route('evaluator.subjects.modules.store', $portfolioSubject), [
+            'title' => 'Blocked Upload',
+            'description' => 'Should be blocked for locked portfolio.',
+            'file' => UploadedFile::fake()->create('blocked.pdf', 128, 'application/pdf'),
+        ])->assertForbidden();
+
+        $this->assertDatabaseCount('subject_modules', 0);
+    }
+
+    public function test_submitted_subject_evaluation_defaults_conducted_date_when_not_provided(): void
+    {
+        $evaluator = User::factory()->evaluator()->create();
+        $portfolio = Portfolio::factory()->approved()->create();
+        $subject = $this->createSubject();
+
+        $portfolioSubject = PortfolioSubject::create([
+            'portfolio_id' => $portfolio->id,
+            'subject_id' => $subject->id,
+            'evaluator_id' => $evaluator->id,
+            'assigned_by' => $evaluator->id,
+            'status' => SubjectAssignmentStatus::InProgress,
+            'assigned_at' => now(),
+        ]);
+
+        $criteria = RubricCriteria::factory()->create([
+            'category' => RubricCategory::Interview,
+            'max_score' => 20,
+        ]);
+
+        $response = $this->actingAs($evaluator)->post(route('evaluator.subjects.save', $portfolioSubject), [
+            'category' => RubricCategory::Interview->value,
+            'attempt_number' => 1,
+            'submit' => true,
+            'comments' => 'Interview evaluation submitted.',
+            'scores' => [
+                [
+                    'rubric_criteria_id' => $criteria->id,
+                    'score' => 15,
+                    'comments' => 'Strong practical answers.',
+                ],
+            ],
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        $evaluation = SubjectEvaluation::query()
+            ->where('portfolio_subject_id', $portfolioSubject->id)
+            ->where('category', RubricCategory::Interview->value)
+            ->first();
+
+        $this->assertNotNull($evaluation);
+        $this->assertEquals(SubjectEvaluationStatus::Submitted, $evaluation->status);
+        $this->assertNotNull($evaluation->conducted_at);
+        $this->assertNotNull($evaluation->submitted_at);
     }
 
     public function test_submit_requires_overall_comments_and_recommendation(): void
@@ -212,5 +398,24 @@ class EvaluationTest extends TestCase
         ]);
 
         $response->assertStatus(403);
+    }
+
+    private function createSubject(): Subject
+    {
+        $year = AcademicYear::create([
+            'name' => 'AY 2026-2027',
+            'start_date' => now()->startOfYear()->toDateString(),
+            'end_date' => now()->endOfYear()->toDateString(),
+            'is_active' => true,
+        ]);
+
+        return Subject::create([
+            'academic_year_id' => $year->id,
+            'code' => 'CS101',
+            'name' => 'Introduction to Computing',
+            'description' => 'Core subject',
+            'units' => 3,
+            'is_active' => true,
+        ]);
     }
 }

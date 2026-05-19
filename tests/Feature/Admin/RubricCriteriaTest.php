@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Admin;
 
+use App\Enums\RubricCategory;
 use App\Models\EvaluationScore;
 use App\Models\RubricCriteria;
 use App\Models\User;
@@ -53,6 +54,7 @@ class RubricCriteriaTest extends TestCase
         $response = $this->actingAs($admin)->post(route('admin.rubrics.store'), [
             'name' => 'Work Experience Relevance',
             'description' => 'Evaluates relevance of work experience.',
+            'category' => RubricCategory::Portfolio->value,
             'max_score' => 25,
             'sort_order' => 1,
         ]);
@@ -72,6 +74,7 @@ class RubricCriteriaTest extends TestCase
 
         $response = $this->actingAs($admin)->post(route('admin.rubrics.store'), [
             'description' => 'Some description.',
+            'category' => RubricCategory::Portfolio->value,
             'max_score' => 10,
             'sort_order' => 0,
         ]);
@@ -97,6 +100,7 @@ class RubricCriteriaTest extends TestCase
         $response = $this->actingAs($admin)->put(route('admin.rubrics.update', $criteria), [
             'name' => 'Updated Criteria Name',
             'description' => 'Updated description.',
+            'category' => RubricCategory::Portfolio->value,
             'max_score' => 30,
             'sort_order' => 5,
         ]);

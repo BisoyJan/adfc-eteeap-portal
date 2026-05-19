@@ -1,6 +1,7 @@
 import { Head, Link, useForm, router } from '@inertiajs/react';
 import {
     ArrowLeft,
+    ClipboardList,
     Download,
     Eye,
     FileText,
@@ -8,6 +9,7 @@ import {
     CheckCircle2,
     Clock,
     AlertCircle,
+    Plus,
 } from 'lucide-react';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
@@ -49,13 +51,13 @@ import type { BreadcrumbItem } from '@/types';
 
 interface Document {
     id: number;
-    document_category_id: number;
     file_name: string;
     file_path: string;
     file_size: number;
     mime_type: string;
     notes: string | null;
     created_at: string;
+    document_category_id: number;
     category: {
         id: number;
         name: string;
@@ -67,13 +69,16 @@ interface Portfolio {
     id: number;
     title: string;
     status: string;
-    admin_notes: string | null;
     submitted_at: string | null;
-    created_at: string;
+    admin_notes: string | null;
     user: {
         id: number;
         name: string;
         email: string;
+        current_position: string | null;
+        years_it_experience: number | null;
+        company: string | null;
+        highest_education: string | null;
     };
     documents: Document[];
 }
@@ -82,9 +87,7 @@ interface Assignment {
     id: number;
     status: string;
     due_date: string | null;
-    notes: string | null;
     assigned_at: string;
-    completed_at: string | null;
     portfolio: Portfolio;
     assigner: {
         id: number;
@@ -97,7 +100,6 @@ interface RubricCriteria {
     name: string;
     description: string | null;
     max_score: number;
-    sort_order: number;
 }
 
 interface EvaluationScore {
@@ -110,10 +112,10 @@ interface EvaluationScore {
 interface Evaluation {
     id: number;
     status: string;
+    total_score: number | null;
+    max_possible_score: number | null;
     overall_comments: string | null;
     recommendation: string | null;
-    total_score: string | null;
-    max_possible_score: string | null;
     submitted_at: string | null;
     scores: EvaluationScore[];
 }
@@ -124,7 +126,23 @@ interface Category {
     slug: string;
     description: string | null;
     is_required: boolean;
-    sort_order: number;
+}
+
+interface SubjectOption {
+    id: number;
+    code: string;
+    name: string;
+    units: number;
+    academic_year: {
+        id: number;
+        name: string;
+    } | null;
+}
+
+interface AssignedSubject {
+    id: number;
+    notes: string | null;
+    subject: SubjectOption;
 }
 
 interface Props {
@@ -132,21 +150,14 @@ interface Props {
     categories: Category[];
     uploadedCategoryIds: number[];
     progress: {
-        required: number;
         completed: number;
+        required: number;
         percentage: number;
     };
     criteria: RubricCriteria[];
     evaluation: Evaluation | null;
-    waiverRecommendations: Array<{
-        id: number;
-        course_code: string;
-        course_name: string;
-        academic_units: number;
-        rationale: string | null;
-        status: 'recommended' | 'not_recommended';
-        evaluator: { id: number; name: string };
-    }>;
+    allSubjects: SubjectOption[];
+    assignedSubjects: AssignedSubject[];
 }
 
 function formatDate(dateString: string): string {
@@ -156,7 +167,6 @@ function formatDate(dateString: string): string {
         day: 'numeric',
     });
 }
-
 function formatStatus(status: string): string {
     return status
         .split('_')
@@ -244,7 +254,8 @@ export default function Show({
     progress,
     criteria,
     evaluation,
-    waiverRecommendations,
+    allSubjects,
+    assignedSubjects,
 }: Props) {
     const portfolio = assignment.portfolio;
     const isSubmitted = evaluation?.status === 'submitted';
@@ -254,6 +265,17 @@ export default function Show({
     const pastDue =
         assignment.due_date && isPastDue(assignment.due_date) && !isCompleted;
     const assignmentBadge = getAssignmentBadgeProps(assignment.status);
+    const canAssignSubjects = portfolio.status === 'approved';
+    const worksiteAssessmentLink =
+        assignedSubjects.length === 1
+            ? `/evaluator/subjects/${assignedSubjects[0].id}`
+            : `/evaluator/subjects?portfolio_id=${portfolio.id}`;
+    const assignedSubjectIds = new Set(
+        assignedSubjects.map((item) => item.subject.id),
+    );
+    const availableSubjects = allSubjects.filter(
+        (subject) => !assignedSubjectIds.has(subject.id),
+    );
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Dashboard', href: '/dashboard' },
@@ -318,19 +340,26 @@ export default function Show({
         return form.data.scores.reduce((sum, s) => sum + Number(s.score), 0);
     }
 
-    const waiverForm = useForm({
-        course_code: '',
-        course_name: '',
-        academic_units: 3,
-        rationale: '',
-        status: 'recommended' as 'recommended' | 'not_recommended',
+    const subjectForm = useForm({
+        subject_id: '',
+        notes: '',
     });
 
-    function handleAddWaiver(e: FormEvent) {
+    function handleAssignSubject(e: FormEvent) {
         e.preventDefault();
-        waiverForm.post(`/evaluator/portfolios/${assignment.id}/waivers`, {
+        subjectForm.post(`/evaluator/portfolios/${assignment.id}/subjects`, {
             preserveScroll: true,
-            onSuccess: () => waiverForm.reset(),
+            onSuccess: () => subjectForm.reset(),
+        });
+    }
+
+    function handleRemoveSubject(subjectId: number) {
+        if (!confirm('Remove this assigned subject?')) {
+            return;
+        }
+
+        router.delete(`/evaluator/portfolios/${assignment.id}/subjects/${subjectId}`, {
+            preserveScroll: true,
         });
     }
 
@@ -359,6 +388,19 @@ export default function Show({
                         </div>
                     </div>
                     <div className="flex items-center gap-3">
+                        {assignedSubjects.length > 0 ? (
+                            <Button variant="outline" size="sm" asChild>
+                                <Link href={worksiteAssessmentLink}>
+                                    <ClipboardList className="mr-2 h-4 w-4" />
+                                    Work Site Visit Assessment
+                                </Link>
+                            </Button>
+                        ) : (
+                            <Button variant="outline" size="sm" disabled>
+                                <ClipboardList className="mr-2 h-4 w-4" />
+                                Work Site Visit Assessment
+                            </Button>
+                        )}
                         <Badge
                             variant={
                                 portfolioStatusBadgeVariant[portfolio.status] ??
@@ -412,6 +454,37 @@ export default function Show({
                         </CardContent>
                     </Card>
                 )}
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Applicant Information</CardTitle>
+                        <CardDescription>
+                            Interview profile details submitted by the applicant
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="grid gap-4 sm:grid-cols-2">
+                        <div>
+                            <p className="text-xs text-muted-foreground">Name</p>
+                            <p className="text-sm font-medium">{portfolio.user.name}</p>
+                        </div>
+                        <div>
+                            <p className="text-xs text-muted-foreground">Current Position</p>
+                            <p className="text-sm font-medium">{portfolio.user.current_position ?? '—'}</p>
+                        </div>
+                        <div>
+                            <p className="text-xs text-muted-foreground">Years of IT Experience</p>
+                            <p className="text-sm font-medium">{portfolio.user.years_it_experience ?? '—'}</p>
+                        </div>
+                        <div>
+                            <p className="text-xs text-muted-foreground">Company / Organization</p>
+                            <p className="text-sm font-medium">{portfolio.user.company ?? '—'}</p>
+                        </div>
+                        <div className="sm:col-span-2">
+                            <p className="text-xs text-muted-foreground">Highest Educational Attainment</p>
+                            <p className="text-sm font-medium">{portfolio.user.highest_education ?? '—'}</p>
+                        </div>
+                    </CardContent>
+                </Card>
 
                 {/* Two-column layout */}
                 <div className="grid gap-6 lg:grid-cols-3">
@@ -893,17 +966,17 @@ export default function Show({
                 </div>
             </div>
 
-            {/* Course Waiver Recommendations */}
+            {/* Subject Assignment */}
             <div className="mx-auto max-w-5xl px-4 pb-8">
                 <Card>
                     <CardHeader>
-                        <CardTitle>Course Waiver Recommendations</CardTitle>
+                        <CardTitle>Assigned Subjects</CardTitle>
                         <CardDescription>
-                            Recommend courses for credit waiver based on the applicant's portfolio.
+                            Assign subjects for work site visit and outcome-based evaluation.
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
-                        {waiverRecommendations.length > 0 ? (
+                        {assignedSubjects.length > 0 ? (
                             <div className="overflow-x-auto">
                                 <table className="w-full text-sm">
                                     <thead>
@@ -911,36 +984,29 @@ export default function Show({
                                             <th className="pb-2 text-left font-medium">Course Code</th>
                                             <th className="pb-2 text-left font-medium">Course Name</th>
                                             <th className="pb-2 text-left font-medium">Units</th>
-                                            <th className="pb-2 text-left font-medium">Status</th>
-                                            <th className="pb-2 text-left font-medium">Action</th>
+                                            <th className="pb-2 text-left font-medium">Academic Year</th>
+                                            <th className="pb-2 text-left font-medium">Notes</th>
+                                            <th className="pb-2 text-left font-medium">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {waiverRecommendations.map((w) => (
-                                            <tr key={w.id} className="border-b last:border-0">
-                                                <td className="py-2 font-mono">{w.course_code}</td>
-                                                <td className="py-2">{w.course_name}</td>
-                                                <td className="py-2">{w.academic_units}</td>
-                                                <td className="py-2">
-                                                    <Badge
-                                                        variant={w.status === 'recommended' ? 'default' : 'destructive'}
-                                                        className={w.status === 'recommended' ? 'bg-green-100 text-green-800 hover:bg-green-100/80' : ''}
-                                                    >
-                                                        {w.status === 'recommended' ? 'Recommended' : 'Not Recommended'}
-                                                    </Badge>
-                                                </td>
-                                                <td className="py-2">
+                                        {assignedSubjects.map((item) => (
+                                            <tr key={item.id} className="border-b last:border-0">
+                                                <td className="py-2 font-mono">{item.subject.code}</td>
+                                                <td className="py-2">{item.subject.name}</td>
+                                                <td className="py-2">{item.subject.units}</td>
+                                                <td className="py-2">{item.subject.academic_year?.name ?? '—'}</td>
+                                                <td className="py-2 text-muted-foreground">{item.notes ?? '—'}</td>
+                                                <td className="py-2 space-x-2">
+                                                    <Button variant="outline" size="sm" asChild>
+                                                        <Link href={`/evaluator/subjects/${item.id}`}>
+                                                            Open
+                                                        </Link>
+                                                    </Button>
                                                     <Button
                                                         variant="destructive"
                                                         size="sm"
-                                                        onClick={() => {
-                                                            if (confirm('Remove this waiver recommendation?')) {
-                                                                router.delete(
-                                                                    `/evaluator/portfolios/${assignment.id}/waivers/${w.id}`,
-                                                                    { preserveScroll: true }
-                                                                );
-                                                            }
-                                                        }}
+                                                        onClick={() => handleRemoveSubject(item.id)}
                                                     >
                                                         Remove
                                                     </Button>
@@ -951,78 +1017,58 @@ export default function Show({
                                 </table>
                             </div>
                         ) : (
-                            <p className="text-muted-foreground text-sm">No waiver recommendations yet.</p>
+                            <p className="text-muted-foreground text-sm">No subjects assigned yet.</p>
                         )}
-                        {!isCompleted && (
+
+                        {canAssignSubjects ? (
                             <>
                                 <Separator />
-                                <form onSubmit={handleAddWaiver} className="grid gap-4 sm:grid-cols-2">
+                                <form onSubmit={handleAssignSubject} className="grid gap-4 sm:grid-cols-2">
                                     <div className="space-y-1">
-                                        <Label htmlFor="waiver-course-code">Course Code</Label>
-                                        <Input
-                                            id="waiver-course-code"
-                                            value={waiverForm.data.course_code}
-                                            onChange={(e) => waiverForm.setData('course_code', e.target.value)}
-                                            placeholder="e.g. CS101"
-                                            maxLength={20}
-                                        />
-                                        <InputError message={waiverForm.errors.course_code} />
-                                    </div>
-                                    <div className="space-y-1">
-                                        <Label htmlFor="waiver-course-name">Course Name</Label>
-                                        <Input
-                                            id="waiver-course-name"
-                                            value={waiverForm.data.course_name}
-                                            onChange={(e) => waiverForm.setData('course_name', e.target.value)}
-                                            placeholder="e.g. Introduction to Computing"
-                                        />
-                                        <InputError message={waiverForm.errors.course_name} />
-                                    </div>
-                                    <div className="space-y-1">
-                                        <Label htmlFor="waiver-units">Academic Units</Label>
-                                        <Input
-                                            id="waiver-units"
-                                            type="number"
-                                            min={1}
-                                            max={12}
-                                            value={waiverForm.data.academic_units}
-                                            onChange={(e) => waiverForm.setData('academic_units', Number(e.target.value))}
-                                        />
-                                        <InputError message={waiverForm.errors.academic_units} />
-                                    </div>
-                                    <div className="space-y-1">
-                                        <Label htmlFor="waiver-status">Recommendation</Label>
+                                        <Label htmlFor="subject_id">Subject</Label>
                                         <Select
-                                            value={waiverForm.data.status}
-                                            onValueChange={(v) => waiverForm.setData('status', v as 'recommended' | 'not_recommended')}
+                                            value={subjectForm.data.subject_id}
+                                            onValueChange={(value) => subjectForm.setData('subject_id', value)}
                                         >
-                                            <SelectTrigger id="waiver-status">
-                                                <SelectValue />
+                                            <SelectTrigger id="subject_id">
+                                                <SelectValue placeholder="Select a subject" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="recommended">Recommended</SelectItem>
-                                                <SelectItem value="not_recommended">Not Recommended</SelectItem>
+                                                {availableSubjects.map((subject) => (
+                                                    <SelectItem key={subject.id} value={String(subject.id)}>
+                                                        {subject.code} - {subject.name}
+                                                    </SelectItem>
+                                                ))}
                                             </SelectContent>
                                         </Select>
-                                        <InputError message={waiverForm.errors.status} />
+                                        <InputError message={subjectForm.errors.subject_id} />
                                     </div>
                                     <div className="space-y-1 sm:col-span-2">
-                                        <Label htmlFor="waiver-rationale">Rationale (optional)</Label>
-                                        <Input
-                                            id="waiver-rationale"
-                                            value={waiverForm.data.rationale}
-                                            onChange={(e) => waiverForm.setData('rationale', e.target.value)}
-                                            placeholder="Reason for recommendation..."
+                                        <Label htmlFor="subject-notes">Notes (optional)</Label>
+                                        <textarea
+                                            id="subject-notes"
+                                            className="flex min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
+                                            value={subjectForm.data.notes}
+                                            onChange={(e) => subjectForm.setData('notes', e.target.value)}
+                                            placeholder="Add assignment context for this subject..."
                                         />
-                                        <InputError message={waiverForm.errors.rationale} />
+                                        <InputError message={subjectForm.errors.notes} />
                                     </div>
                                     <div className="sm:col-span-2">
-                                        <Button type="submit" disabled={waiverForm.processing}>
-                                            Add Waiver Recommendation
+                                        <Button
+                                            type="submit"
+                                            disabled={subjectForm.processing || availableSubjects.length === 0}
+                                        >
+                                            <Plus className="mr-2 h-4 w-4" />
+                                            Assign Subject
                                         </Button>
                                     </div>
                                 </form>
                             </>
+                        ) : (
+                            <p className="text-sm text-muted-foreground">
+                                Subject assignment is available only after the interview recommendation is approved.
+                            </p>
                         )}
                     </CardContent>
                 </Card>

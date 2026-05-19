@@ -1,5 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { Pencil, Plus, ToggleLeft, ToggleRight, Trash2, BookOpen, ClipboardList } from 'lucide-react';
+import { Pencil, Plus, ToggleLeft, ToggleRight, Trash2, BookOpen } from 'lucide-react';
 import { useState } from 'react';
 import FlashMessages from '@/components/flash-messages';
 import Heading from '@/components/heading';
@@ -122,11 +122,6 @@ export default function Index({ subjects, academicYears, filters }: Props) {
                                             <Button variant="ghost" size="sm" asChild>
                                                 <Link href={`/admin/subjects/${item.id}/modules`}>
                                                     <BookOpen className="mr-1 h-4 w-4" /> Modules
-                                                </Link>
-                                            </Button>
-                                            <Button variant="ghost" size="sm" asChild>
-                                                <Link href={`/admin/subjects/${item.id}/pre-assessment-questions`}>
-                                                    <ClipboardList className="mr-1 h-4 w-4" /> Pre-Assessment
                                                 </Link>
                                             </Button>
                                             <Button variant="ghost" size="sm" asChild>

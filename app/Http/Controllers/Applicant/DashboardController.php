@@ -6,15 +6,21 @@ use App\Enums\PortfolioStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Announcement;
 use App\Models\DocumentCategory;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    public function __invoke(Request $request): Response
+    public function __invoke(Request $request): Response|RedirectResponse
     {
         $user = $request->user();
+
+        if (! $user->portfolios()->exists()) {
+            return redirect()->route('applicant.portfolios.create')
+                ->with('info', 'Upload the required documents to start your ETEEAP application.');
+        }
 
         $portfolios = $user->portfolios()
             ->withCount('documents')

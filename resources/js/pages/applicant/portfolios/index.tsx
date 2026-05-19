@@ -1,5 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { Plus, Eye, Trash2, FileText } from 'lucide-react';
+import { Plus, Eye, Trash2, FileText, AlertTriangle } from 'lucide-react';
 import { useState } from 'react';
 import FlashMessages from '@/components/flash-messages';
 import Heading from '@/components/heading';
@@ -41,6 +41,8 @@ interface Props {
         current_page: number;
         last_page: number;
     };
+    canCreatePortfolio: boolean;
+    createRestrictionMessage: string | null;
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -76,7 +78,11 @@ function formatStatus(status: string): string {
         .join(' ');
 }
 
-export default function Index({ portfolios }: Props) {
+export default function Index({
+    portfolios,
+    canCreatePortfolio,
+    createRestrictionMessage,
+}: Props) {
     const [portfolioToDelete, setPortfolioToDelete] =
         useState<Portfolio | null>(null);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -110,15 +116,33 @@ export default function Index({ portfolios }: Props) {
                         title="My Portfolios"
                         description="Manage your ETEEAP portfolio submissions"
                     />
-                    <Button asChild>
-                        <Link href="/applicant/portfolios/create">
+                    {canCreatePortfolio ? (
+                        <Button asChild>
+                            <Link href="/applicant/portfolios/create">
+                                <Plus className="mr-2 h-4 w-4" />
+                                New Portfolio
+                            </Link>
+                        </Button>
+                    ) : (
+                        <Button disabled>
                             <Plus className="mr-2 h-4 w-4" />
                             New Portfolio
-                        </Link>
-                    </Button>
+                        </Button>
+                    )}
                 </div>
 
                 <FlashMessages />
+
+                {!canCreatePortfolio && createRestrictionMessage && (
+                    <Card className="border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950">
+                        <CardContent className="flex items-start gap-3 pt-6">
+                            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+                            <p className="text-sm text-amber-700 dark:text-amber-300">
+                                {createRestrictionMessage}
+                            </p>
+                        </CardContent>
+                    </Card>
+                )}
 
                 {portfolios.data.length === 0 ? (
                     <Card className="py-12 text-center">
@@ -133,12 +157,19 @@ export default function Index({ portfolios }: Props) {
                                     portfolio submission.
                                 </p>
                             </div>
-                            <Button asChild>
-                                <Link href="/applicant/portfolios/create">
+                            {canCreatePortfolio ? (
+                                <Button asChild>
+                                    <Link href="/applicant/portfolios/create">
+                                        <Plus className="mr-2 h-4 w-4" />
+                                        Create Your First Portfolio
+                                    </Link>
+                                </Button>
+                            ) : (
+                                <Button disabled>
                                     <Plus className="mr-2 h-4 w-4" />
                                     Create Your First Portfolio
-                                </Link>
-                            </Button>
+                                </Button>
+                            )}
                         </CardContent>
                     </Card>
                 ) : (

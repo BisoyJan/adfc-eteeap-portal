@@ -40,6 +40,7 @@ Route::middleware(['auth', 'verified', 'role:applicant'])->prefix('applicant')->
     // Subjects (per-applicant view)
     Route::get('subjects', [\App\Http\Controllers\Applicant\SubjectController::class, 'index'])->name('subjects.index');
     Route::get('subjects/{portfolioSubject}', [\App\Http\Controllers\Applicant\SubjectController::class, 'show'])->name('subjects.show');
+    Route::post('subjects/{portfolioSubject}/modules', [\App\Http\Controllers\Applicant\SubjectController::class, 'uploadModule'])->name('subjects.modules.store');
     Route::get('modules/{module}/download', [\App\Http\Controllers\Applicant\SubjectController::class, 'downloadModule'])->name('modules.download');
     Route::post('subjects/{portfolioSubject}/pre-assessment/start', [\App\Http\Controllers\Applicant\SubjectController::class, 'startPreAssessment'])->name('subjects.pre-assessment.start');
     Route::get('subjects/{portfolioSubject}/pre-assessment/{attempt}', [\App\Http\Controllers\Applicant\SubjectController::class, 'editPreAssessment'])->name('subjects.pre-assessment.edit');
@@ -69,8 +70,6 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
 
     // Subject modules
     Route::get('subjects/{subject}/modules', [\App\Http\Controllers\Admin\SubjectModuleController::class, 'index'])->name('subjects.modules.index');
-    Route::post('subjects/{subject}/modules', [\App\Http\Controllers\Admin\SubjectModuleController::class, 'store'])->name('subjects.modules.store');
-    Route::delete('subjects/{subject}/modules/{module}', [\App\Http\Controllers\Admin\SubjectModuleController::class, 'destroy'])->name('subjects.modules.destroy');
     Route::get('subjects/{subject}/modules/{module}/download', [\App\Http\Controllers\Admin\SubjectModuleController::class, 'download'])->name('subjects.modules.download');
 
     // Pre-assessment questions
@@ -81,9 +80,6 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
 
     // Portfolio subjects (assignment of subjects to a portfolio)
     Route::get('portfolios/{portfolio}/subjects', [\App\Http\Controllers\Admin\PortfolioSubjectController::class, 'index'])->name('portfolios.subjects.index');
-    Route::post('portfolios/{portfolio}/subjects', [\App\Http\Controllers\Admin\PortfolioSubjectController::class, 'store'])->name('portfolios.subjects.store');
-    Route::put('portfolios/{portfolio}/subjects/{portfolioSubject}', [\App\Http\Controllers\Admin\PortfolioSubjectController::class, 'update'])->name('portfolios.subjects.update');
-    Route::delete('portfolios/{portfolio}/subjects/{portfolioSubject}', [\App\Http\Controllers\Admin\PortfolioSubjectController::class, 'destroy'])->name('portfolios.subjects.destroy');
     Route::resource('document-categories', \App\Http\Controllers\Admin\DocumentCategoryController::class)->except(['show']);
     Route::get('reports', \App\Http\Controllers\Admin\ReportController::class)->name('reports');
     Route::get('reports/export/portfolios', [\App\Http\Controllers\Admin\ReportExportController::class, 'portfolios'])->name('reports.export.portfolios');
@@ -102,6 +98,8 @@ Route::middleware(['auth', 'verified', 'role:evaluator'])->prefix('evaluator')->
     Route::get('portfolios/{assignment}', [\App\Http\Controllers\Evaluator\PortfolioController::class, 'show'])->name('portfolios.show');
     Route::post('portfolios/{assignment}/save', [\App\Http\Controllers\Evaluator\PortfolioController::class, 'saveEvaluation'])->name('portfolios.save');
     Route::post('portfolios/{assignment}/submit', [\App\Http\Controllers\Evaluator\PortfolioController::class, 'submitEvaluation'])->name('portfolios.submit');
+    Route::post('portfolios/{assignment}/subjects', [\App\Http\Controllers\Evaluator\PortfolioController::class, 'storeSubject'])->name('portfolios.subjects.store');
+    Route::delete('portfolios/{assignment}/subjects/{portfolioSubject}', [\App\Http\Controllers\Evaluator\PortfolioController::class, 'destroySubject'])->name('portfolios.subjects.destroy');
     Route::post('portfolios/{assignment}/waivers', [\App\Http\Controllers\Evaluator\PortfolioController::class, 'storeWaiver'])->name('portfolios.waivers.store');
     Route::delete('portfolios/{assignment}/waivers/{waiver}', [\App\Http\Controllers\Evaluator\PortfolioController::class, 'destroyWaiver'])->name('portfolios.waivers.destroy');
 
@@ -111,6 +109,7 @@ Route::middleware(['auth', 'verified', 'role:evaluator'])->prefix('evaluator')->
     Route::post('subjects/{portfolioSubject}/save', [\App\Http\Controllers\Evaluator\SubjectAssignmentController::class, 'saveEvaluation'])->name('subjects.save');
     Route::put('subjects/{portfolioSubject}', [\App\Http\Controllers\Evaluator\SubjectAssignmentController::class, 'updateAssignment'])->name('subjects.update');
     Route::post('subjects/{portfolioSubject}/pre-assessment/{attempt}/grade', [\App\Http\Controllers\Evaluator\SubjectAssignmentController::class, 'gradePreAssessment'])->name('subjects.pre-assessment.grade');
+    Route::post('subjects/{portfolioSubject}/modules', [\App\Http\Controllers\Evaluator\SubjectAssignmentController::class, 'uploadModule'])->name('subjects.modules.store');
     Route::get('subjects/modules/{module}/download', [\App\Http\Controllers\Evaluator\SubjectAssignmentController::class, 'downloadModule'])->name('subjects.modules.download');
 });
 

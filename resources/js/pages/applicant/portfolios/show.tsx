@@ -287,12 +287,36 @@ export default function Show({
     waiverRecommendations,
 }: Props) {
     const editable = canEdit(portfolio.status);
+    const canSetTitle = editable && progress.completed >= progress.required;
+    const titleIsSet = portfolio.title.trim() !== '' && portfolio.title !== 'Untitled Portfolio';
+    const step1Complete = progress.completed >= progress.required;
+    const step2Complete = step1Complete && titleIsSet;
+    const step3Complete = !['draft', 'revision_requested'].includes(portfolio.status);
+    const currentFlowStep = !step1Complete
+        ? 1
+        : !step2Complete
+            ? 2
+            : !step3Complete
+                ? 3
+                : null;
+    const flowSteps = [
+        { id: 1, label: 'Upload Required Documents', complete: step1Complete },
+        { id: 2, label: 'Set Portfolio Title', complete: step2Complete },
+        {
+            id: 3,
+            label: portfolio.status === 'revision_requested' ? 'Re-submit Portfolio' : 'Submit Portfolio',
+            complete: step3Complete,
+        },
+    ];
     const [previewDoc, setPreviewDoc] = useState<Document | null>(null);
     const [documentToDelete, setDocumentToDelete] = useState<Document | null>(
         null,
     );
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [submitDialogOpen, setSubmitDialogOpen] = useState(false);
+    const titleForm = useForm({
+        title: portfolio.title,
+    });
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Dashboard', href: '/dashboard' },
@@ -357,6 +381,25 @@ export default function Show({
         );
     }
 
+    function handleUpdateTitle(e: FormEvent) {
+        e.preventDefault();
+
+        if (!canSetTitle) {
+            toast.error('Upload all required documents before setting your portfolio title.');
+            return;
+        }
+
+        titleForm.put(`/applicant/portfolios/${portfolio.id}`, {
+            preserveScroll: true,
+            onSuccess: () => {
+                toast.success('Portfolio title updated successfully.');
+            },
+            onError: () => {
+                toast.error('Unable to update portfolio title. Please try again.');
+            },
+        });
+    }
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={portfolio.title} />
@@ -394,6 +437,86 @@ export default function Show({
                 </div>
 
                 <FlashMessages />
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Application Steps</CardTitle>
+                        <CardDescription>
+                            Follow these steps to complete your applicant flow.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <ol className="grid gap-2 sm:grid-cols-3">
+                            {flowSteps.map((step) => {
+                                const isCurrent = currentFlowStep === step.id;
+
+                                return (
+                                    <li
+                                        key={step.id}
+                                        className={`rounded-md border px-3 py-2 ${step.complete
+                                            ? 'border-green-300 bg-green-50 dark:border-green-800 dark:bg-green-950/40'
+                                            : isCurrent
+                                                ? 'border-primary bg-primary/5'
+                                                : 'border-muted bg-muted/30'
+                                            }`}
+                                    >
+                                        <div className="flex items-center justify-between gap-2">
+                                            <p className="text-xs font-semibold text-muted-foreground">
+                                                Step {step.id}
+                                            </p>
+                                            <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                                                {step.complete
+                                                    ? 'Done'
+                                                    : isCurrent
+                                                        ? 'Current'
+                                                        : 'Pending'}
+                                            </span>
+                                        </div>
+                                        <p className="text-sm font-medium">{step.label}</p>
+                                    </li>
+                                );
+                            })}
+                        </ol>
+                    </CardContent>
+                </Card>
+
+                {editable && (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Portfolio Title</CardTitle>
+                            <CardDescription>
+                                Set your final title after uploading all required documents.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <form onSubmit={handleUpdateTitle} className="space-y-3">
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="portfolio-title">Title</Label>
+                                    <Input
+                                        id="portfolio-title"
+                                        value={titleForm.data.title}
+                                        onChange={(e) => titleForm.setData('title', e.target.value)}
+                                        placeholder="e.g., BSIT Portfolio - 2026"
+                                        disabled={!canSetTitle || titleForm.processing}
+                                    />
+                                    <InputError message={titleForm.errors.title} />
+                                    {!canSetTitle && (
+                                        <p className="text-xs text-muted-foreground">
+                                            Upload all required documents first to unlock title editing.
+                                        </p>
+                                    )}
+                                </div>
+                                <Button
+                                    type="submit"
+                                    variant="outline"
+                                    disabled={!canSetTitle || titleForm.processing}
+                                >
+                                    {titleForm.processing ? 'Saving...' : 'Save Title'}
+                                </Button>
+                            </form>
+                        </CardContent>
+                    </Card>
+                )}
 
                 {/* Admin notes / revision feedback */}
                 {portfolio.admin_notes && (
