@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Applicant;
 
 use App\Enums\PortfolioStatus;
+use App\Enums\RubricCategory;
 use App\Enums\SubjectEvaluationStatus;
 use App\Http\Controllers\Controller;
 use App\Models\PortfolioSubject;
@@ -27,7 +28,9 @@ class SubjectController extends Controller
                 'subject.modules',
                 'subject.preAssessmentQuestions' => fn ($q) => $q->active()->ordered(),
                 'preAssessmentAttempts' => fn ($q) => $q->orderBy('attempt_number', 'desc'),
-                'subjectEvaluations' => fn ($q) => $q->where('status', SubjectEvaluationStatus::Submitted),
+                'subjectEvaluations' => fn ($q) => $q
+                    ->where('status', SubjectEvaluationStatus::Submitted)
+                    ->where('category', '!=', RubricCategory::WorksiteVisit),
             ])
             ->get();
 
@@ -49,6 +52,7 @@ class SubjectController extends Controller
                 ->orderByDesc('attempt_number'),
             'subjectEvaluations' => fn ($q) => $q
                 ->where('status', SubjectEvaluationStatus::Submitted)
+                ->where('category', '!=', RubricCategory::WorksiteVisit)
                 ->with(['scores.criteria', 'evaluator:id,name'])
                 ->orderByDesc('attempt_number'),
             'evaluator:id,name',

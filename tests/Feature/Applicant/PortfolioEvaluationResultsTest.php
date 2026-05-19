@@ -4,11 +4,18 @@ namespace Tests\Feature\Applicant;
 
 use App\Enums\EvaluationStatus;
 use App\Enums\PortfolioStatus;
+use App\Enums\RubricCategory;
+use App\Enums\SubjectAssignmentStatus;
+use App\Enums\SubjectEvaluationStatus;
+use App\Models\AcademicYear;
 use App\Models\Evaluation;
 use App\Models\EvaluationScore;
 use App\Models\Portfolio;
 use App\Models\PortfolioAssignment;
+use App\Models\PortfolioSubject;
 use App\Models\RubricCriteria;
+use App\Models\Subject;
+use App\Models\SubjectEvaluation;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -101,6 +108,118 @@ class PortfolioEvaluationResultsTest extends TestCase
                 ->component('applicant/portfolios/show')
                 ->where('portfolio.status', 'submitted')
                 ->has('evaluations')
+        );
+    }
+
+    public function test_worksite_visit_ratings_are_visible_on_portfolio_upload_page(): void
+    {
+        $applicant = User::factory()->applicant()->create();
+        $evaluator = User::factory()->evaluator()->create();
+        $portfolio = Portfolio::factory()->approved()->create(['user_id' => $applicant->id]);
+
+        $year = AcademicYear::create([
+            'name' => 'AY 2026-2027',
+            'start_date' => now()->startOfYear()->toDateString(),
+            'end_date' => now()->endOfYear()->toDateString(),
+            'is_active' => true,
+        ]);
+
+        $subject = Subject::create([
+            'academic_year_id' => $year->id,
+            'code' => 'IT301',
+            'name' => 'Worksite Practicum',
+            'description' => 'Worksite visit subject',
+            'units' => 3,
+            'is_active' => true,
+        ]);
+
+        $portfolioSubject = PortfolioSubject::create([
+            'portfolio_id' => $portfolio->id,
+            'subject_id' => $subject->id,
+            'evaluator_id' => $evaluator->id,
+            'assigned_by' => $evaluator->id,
+            'status' => 'in_progress',
+            'assigned_at' => now()->subDays(2),
+        ]);
+
+        SubjectEvaluation::create([
+            'portfolio_subject_id' => $portfolioSubject->id,
+            'evaluator_id' => $evaluator->id,
+            'category' => RubricCategory::WorksiteVisit,
+            'attempt_number' => 1,
+            'status' => SubjectEvaluationStatus::Submitted,
+            'score' => 18,
+            'max_score' => 20,
+            'comments' => 'Strong on-site performance.',
+            'conducted_at' => now()->subDay(),
+            'submitted_at' => now()->subDay(),
+        ]);
+
+        SubjectEvaluation::create([
+            'portfolio_subject_id' => $portfolioSubject->id,
+            'evaluator_id' => $evaluator->id,
+            'category' => RubricCategory::WorksiteVisit,
+            'attempt_number' => 2,
+            'status' => SubjectEvaluationStatus::Draft,
+            'score' => 0,
+            'max_score' => 20,
+        ]);
+
+        $response = $this->actingAs($applicant)->get(route('applicant.portfolios.show', $portfolio));
+
+        $response->assertStatus(200);
+        $response->assertInertia(
+            fn ($page) => $page
+                ->component('applicant/portfolios/show')
+                ->has('worksiteVisitRatings', 1)
+                ->where('worksiteVisitRatings.0.subject.code', 'IT301')
+                ->where('worksiteVisitRatings.0.evaluator.name', $evaluator->name)
+                ->where('worksiteVisitRatings.0.attempt_number', 1)
+        );
+    }
+
+    public function test_assigned_subjects_are_visible_on_portfolio_page(): void
+    {
+        $applicant = User::factory()->applicant()->create();
+        $evaluator = User::factory()->evaluator()->create();
+        $portfolio = Portfolio::factory()->approved()->create(['user_id' => $applicant->id]);
+
+        $year = AcademicYear::create([
+            'name' => 'AY 2027-2028',
+            'start_date' => now()->startOfYear()->toDateString(),
+            'end_date' => now()->endOfYear()->toDateString(),
+            'is_active' => true,
+        ]);
+
+        $subject = Subject::create([
+            'academic_year_id' => $year->id,
+            'code' => 'IT401',
+            'name' => 'Enterprise Systems',
+            'description' => 'Assigned subject sample',
+            'units' => 3,
+            'is_active' => true,
+        ]);
+
+        PortfolioSubject::create([
+            'portfolio_id' => $portfolio->id,
+            'subject_id' => $subject->id,
+            'evaluator_id' => $evaluator->id,
+            'assigned_by' => $evaluator->id,
+            'status' => SubjectAssignmentStatus::InProgress,
+            'notes' => 'Proceed with written exam after pre-assessment.',
+            'assigned_at' => now()->subDay(),
+        ]);
+
+        $response = $this->actingAs($applicant)->get(route('applicant.portfolios.show', $portfolio));
+
+        $response->assertStatus(200);
+        $response->assertInertia(
+            fn ($page) => $page
+                ->component('applicant/portfolios/show')
+                ->has('assignedSubjects', 1)
+                ->where('assignedSubjects.0.subject.code', 'IT401')
+                ->where('assignedSubjects.0.evaluator.name', $evaluator->name)
+                ->where('assignedSubjects.0.status', SubjectAssignmentStatus::InProgress->value)
         );
     }
 

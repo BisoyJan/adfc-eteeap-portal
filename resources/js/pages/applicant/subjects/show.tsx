@@ -202,8 +202,8 @@ export default function ApplicantSubjectShow({ portfolioSubject }: Props) {
                                             {m.description && <p className="text-xs text-muted-foreground">{m.description}</p>}
                                             <p className="text-xs text-muted-foreground">{m.file_name} • {fmtSize(m.file_size)}{m.uploader && ` • by ${m.uploader.name}`}</p>
                                         </div>
-                                        <Button asChild variant="outline" size="sm">
-                                            <a href={`/applicant/modules/${m.id}/download`}><Download className="mr-2 h-4 w-4" /> Download</a>
+                                        <Button asChild size="sm" className="shrink-0">
+                                            <a href={`/applicant/modules/${m.id}/download`} download><Download className="mr-2 h-4 w-4" /> Download Module</a>
                                         </Button>
                                     </li>
                                 ))}
@@ -254,7 +254,10 @@ export default function ApplicantSubjectShow({ portfolioSubject }: Props) {
                 </Card>
 
                 <Card>
-                    <CardHeader><CardTitle className="flex items-center gap-2"><GraduationCap className="h-5 w-5" /> Evaluations</CardTitle></CardHeader>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2"><GraduationCap className="h-5 w-5" /> Evaluations (Interview / Written Exam)</CardTitle>
+                        <p className="text-xs text-muted-foreground">Worksite visit ratings are available on your portfolio page under required documents.</p>
+                    </CardHeader>
                     <CardContent>
                         {portfolioSubject.subject_evaluations.length === 0 ? (
                             <p className="text-sm text-muted-foreground">No evaluations submitted yet.</p>

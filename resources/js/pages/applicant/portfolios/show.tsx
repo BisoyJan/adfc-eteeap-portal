@@ -115,6 +115,45 @@ interface EvaluationResult {
     scores: EvaluationScore[];
 }
 
+interface WorksiteVisitRating {
+    portfolio_subject_id: number;
+    subject: {
+        code: string;
+        name: string;
+    };
+    attempt_number: number;
+    score: string;
+    max_score: string;
+    conducted_at: string | null;
+    submitted_at: string | null;
+    comments: string | null;
+    evaluator: {
+        id: number;
+        name: string;
+    } | null;
+}
+
+interface AssignedSubject {
+    id: number;
+    status: string;
+    notes: string | null;
+    subject: {
+        id: number;
+        code: string;
+        name: string;
+        units: number;
+        academic_year: {
+            id: number;
+            name: string;
+        } | null;
+    };
+    evaluator: {
+        id: number;
+        name: string;
+        email: string;
+    } | null;
+}
+
 interface Props {
     portfolio: Portfolio;
     categories: Category[];
@@ -125,6 +164,8 @@ interface Props {
         percentage: number;
     };
     evaluations: EvaluationResult[];
+    worksiteVisitRatings: WorksiteVisitRating[];
+    assignedSubjects: AssignedSubject[];
     waiverRecommendations: Array<{
         id: number;
         course_code: string;
@@ -284,6 +325,8 @@ export default function Show({
     uploadedCategoryIds,
     progress,
     evaluations,
+    worksiteVisitRatings,
+    assignedSubjects,
     waiverRecommendations,
 }: Props) {
     const editable = canEdit(portfolio.status);
@@ -882,6 +925,114 @@ export default function Show({
                         })}
                     </div>
                 )}
+
+                {worksiteVisitRatings.length > 0 && (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-base">
+                                <Star className="h-4 w-4" />
+                                Worksite Visit Ratings
+                            </CardTitle>
+                            <CardDescription>
+                                Ratings are shown here in your required-documents workflow.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                            {worksiteVisitRatings.map((rating) => (
+                                <div
+                                    key={rating.portfolio_subject_id}
+                                    className="rounded-md border px-3 py-2"
+                                >
+                                    <div className="flex items-center justify-between gap-3">
+                                        <div>
+                                            <p className="font-medium">
+                                                {rating.subject.code} - {rating.subject.name}
+                                            </p>
+                                            <p className="text-xs text-muted-foreground">
+                                                Evaluator: {rating.evaluator?.name ?? '-'}
+                                            </p>
+                                        </div>
+                                        <Badge>
+                                            {rating.score} / {rating.max_score}
+                                        </Badge>
+                                    </div>
+                                    <p className="mt-1 text-xs text-muted-foreground">
+                                        Attempt {rating.attempt_number} · Date:{' '}
+                                        {rating.conducted_at
+                                            ? new Date(rating.conducted_at).toLocaleDateString('en-US', {
+                                                year: 'numeric',
+                                                month: 'short',
+                                                day: 'numeric',
+                                            })
+                                            : rating.submitted_at
+                                                ? new Date(rating.submitted_at).toLocaleDateString('en-US', {
+                                                    year: 'numeric',
+                                                    month: 'short',
+                                                    day: 'numeric',
+                                                })
+                                                : '-'}
+                                    </p>
+                                    {rating.comments && (
+                                        <p className="mt-1 text-xs text-muted-foreground">
+                                            {rating.comments}
+                                        </p>
+                                    )}
+                                </div>
+                            ))}
+                        </CardContent>
+                    </Card>
+                )}
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Assigned Subjects</CardTitle>
+                        <CardDescription>
+                            Subjects assigned for your pre-assessment, written exam, and worksite activities.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {assignedSubjects.length > 0 ? (
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-sm">
+                                    <thead>
+                                        <tr className="border-b">
+                                            <th className="pb-2 text-left font-medium">Course Code</th>
+                                            <th className="pb-2 text-left font-medium">Course Name</th>
+                                            <th className="pb-2 text-left font-medium">Units</th>
+                                            <th className="pb-2 text-left font-medium">Academic Year</th>
+                                            <th className="pb-2 text-left font-medium">Status</th>
+                                            <th className="pb-2 text-left font-medium">Evaluator</th>
+                                            <th className="pb-2 text-left font-medium">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {assignedSubjects.map((item) => (
+                                            <tr key={item.id} className="border-b last:border-0">
+                                                <td className="py-2 font-mono">{item.subject.code}</td>
+                                                <td className="py-2">{item.subject.name}</td>
+                                                <td className="py-2">{item.subject.units}</td>
+                                                <td className="py-2">{item.subject.academic_year?.name ?? '—'}</td>
+                                                <td className="py-2">
+                                                    <Badge variant="outline">{formatStatus(item.status)}</Badge>
+                                                </td>
+                                                <td className="py-2 text-muted-foreground">{item.evaluator?.name ?? '—'}</td>
+                                                <td className="py-2">
+                                                    <Button variant="outline" size="sm" asChild>
+                                                        <Link href={`/applicant/subjects/${item.id}`}>
+                                                            Open
+                                                        </Link>
+                                                    </Button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        ) : (
+                            <p className="text-sm text-muted-foreground">No subjects assigned yet.</p>
+                        )}
+                    </CardContent>
+                </Card>
 
                 {/* Document categories */}
                 <div className="space-y-4">

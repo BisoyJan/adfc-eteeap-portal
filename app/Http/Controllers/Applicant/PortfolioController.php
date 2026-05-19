@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Applicant;
 
 use App\Enums\PortfolioStatus;
+use App\Enums\RubricCategory;
+use App\Enums\SubjectEvaluationStatus;
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Applicant\StorePortfolioRequest;
@@ -10,6 +12,7 @@ use App\Http\Requests\Applicant\SubmitPortfolioRequest;
 use App\Http\Requests\Applicant\UpdatePortfolioRequest;
 use App\Models\DocumentCategory;
 use App\Models\Portfolio;
+use App\Models\PortfolioSubject;
 use App\Models\User;
 use App\Notifications\PortfolioSubmittedNotification;
 use Illuminate\Http\RedirectResponse;
@@ -112,6 +115,52 @@ class PortfolioController extends Controller
             ->with(['evaluator:id,name', 'scores.criteria'])
             ->get();
 
+        $worksiteVisitRatings = $portfolio->portfolioSubjects()
+            ->with([
+                'subject:id,code,name',
+                'subjectEvaluations' => fn ($q) => $q
+                    ->where('status', SubjectEvaluationStatus::Submitted)
+                    ->where('category', RubricCategory::WorksiteVisit)
+                    ->with('evaluator:id,name')
+                    ->orderByDesc('attempt_number'),
+            ])
+            ->get()
+            ->map(function (PortfolioSubject $portfolioSubject) {
+                $latest = $portfolioSubject->subjectEvaluations->first();
+
+                if (! $latest) {
+                    return null;
+                }
+
+                return [
+                    'portfolio_subject_id' => $portfolioSubject->id,
+                    'subject' => [
+                        'code' => $portfolioSubject->subject->code,
+                        'name' => $portfolioSubject->subject->name,
+                    ],
+                    'attempt_number' => $latest->attempt_number,
+                    'score' => $latest->score,
+                    'max_score' => $latest->max_score,
+                    'conducted_at' => $latest->conducted_at,
+                    'submitted_at' => $latest->submitted_at,
+                    'comments' => $latest->comments,
+                    'evaluator' => $latest->evaluator ? [
+                        'id' => $latest->evaluator->id,
+                        'name' => $latest->evaluator->name,
+                    ] : null,
+                ];
+            })
+            ->filter()
+            ->values();
+
+        $assignedSubjects = $portfolio->portfolioSubjects()
+            ->with([
+                'subject.academicYear:id,name',
+                'evaluator:id,name,email',
+            ])
+            ->orderBy('assigned_at')
+            ->get();
+
         return Inertia::render('applicant/portfolios/show', [
             'portfolio' => $portfolio,
             'categories' => $categories,
@@ -124,6 +173,8 @@ class PortfolioController extends Controller
                     : 100,
             ],
             'evaluations' => $evaluations,
+            'worksiteVisitRatings' => $worksiteVisitRatings,
+            'assignedSubjects' => $assignedSubjects,
             'waiverRecommendations' => $portfolio->waiverRecommendations,
         ]);
     }
