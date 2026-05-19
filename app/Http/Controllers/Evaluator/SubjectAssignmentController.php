@@ -8,9 +8,11 @@ use App\Enums\SubjectAssignmentStatus;
 use App\Enums\SubjectEvaluationStatus;
 use App\Enums\SubjectRecommendation;
 use App\Http\Controllers\Controller;
+use App\Models\PortfolioAssignment;
 use App\Models\PortfolioSubject;
 use App\Models\PreAssessmentAttempt;
 use App\Models\RubricCriteria;
+use App\Models\Subject;
 use App\Models\SubjectEvaluation;
 use App\Models\SubjectModule;
 use Illuminate\Database\Eloquent\Builder;
@@ -18,6 +20,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -38,13 +41,86 @@ class SubjectAssignmentController extends Controller
             ->paginate(20)
             ->withQueryString();
 
+        $availableSubjects = Subject::query()
+            ->active()
+            ->with('academicYear:id,name')
+            ->orderBy('code')
+            ->get(['id', 'academic_year_id', 'code', 'name', 'units']);
+
+        $enrollableApplicants = $this->enrollableAssignmentsQuery()
+            ->with([
+                'portfolio:id,title,status,user_id',
+                'portfolio.user:id,name,email',
+            ])
+            ->latest('assigned_at')
+            ->get()
+            ->map(function (PortfolioAssignment $assignment): array {
+                $portfolio = $assignment->portfolio;
+                $status = $portfolio->status;
+
+                return [
+                    'portfolio_id' => $portfolio->id,
+                    'portfolio_title' => $portfolio->title,
+                    'portfolio_status' => $status instanceof PortfolioStatus ? $status->value : (string) $status,
+                    'applicant' => [
+                        'id' => $portfolio->user->id,
+                        'name' => $portfolio->user->name,
+                        'email' => $portfolio->user->email,
+                    ],
+                ];
+            })
+            ->unique('portfolio_id')
+            ->values();
+
         return Inertia::render('evaluator/subjects/index', [
             'assignments' => $assignments,
+            'availableSubjects' => $availableSubjects,
+            'enrollableApplicants' => $enrollableApplicants,
             'statuses' => SubjectAssignmentStatus::options(),
             'filters' => [
                 'portfolio_id' => $portfolioId > 0 ? $portfolioId : null,
             ],
         ]);
+    }
+
+    public function enrollApplicant(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'portfolio_id' => ['required', 'integer', 'exists:portfolios,id'],
+            'subject_id' => [
+                'required',
+                'integer',
+                Rule::exists('subjects', 'id')->where(fn ($query) => $query->where('is_active', true)),
+            ],
+            'notes' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $eligibleAssignment = $this->enrollableAssignmentsQuery()
+            ->where('portfolio_id', $data['portfolio_id'])
+            ->first();
+
+        abort_unless($eligibleAssignment !== null, 403);
+
+        $alreadyAssigned = PortfolioSubject::query()
+            ->where('portfolio_id', $data['portfolio_id'])
+            ->where('subject_id', $data['subject_id'])
+            ->exists();
+
+        if ($alreadyAssigned) {
+            return back()->with('error', 'That subject is already assigned to this applicant.');
+        }
+
+        PortfolioSubject::create([
+            'portfolio_id' => $data['portfolio_id'],
+            'subject_id' => $data['subject_id'],
+            'evaluator_id' => auth()->id(),
+            'assigned_by' => auth()->id(),
+            'status' => SubjectAssignmentStatus::Pending,
+            'notes' => $data['notes'] ?? null,
+            'assigned_at' => now(),
+        ]);
+
+        return back()->with('success', 'Applicant enrolled to subject successfully.');
     }
 
     public function show(PortfolioSubject $portfolioSubject): Response
@@ -237,6 +313,16 @@ class SubjectAssignmentController extends Controller
             $this->visibleAssignmentsQuery()->whereKey($portfolioSubject->id)->exists(),
             403,
         );
+    }
+
+    protected function enrollableAssignmentsQuery(): Builder
+    {
+        return PortfolioAssignment::query()
+            ->where('evaluator_id', auth()->id())
+            ->whereHas('portfolio', fn ($q) => $q->whereIn('status', [
+                PortfolioStatus::Approved->value,
+                PortfolioStatus::Evaluated->value,
+            ]));
     }
 
     protected function visibleAssignmentsQuery(): Builder

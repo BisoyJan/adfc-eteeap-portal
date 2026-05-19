@@ -105,6 +105,7 @@ Route::middleware(['auth', 'verified', 'role:evaluator'])->prefix('evaluator')->
 
     // Per-subject assignments (interview / worksite / written exam / pre-assessment grading)
     Route::get('subjects', [\App\Http\Controllers\Evaluator\SubjectAssignmentController::class, 'index'])->name('subjects.index');
+    Route::post('subjects/enroll', [\App\Http\Controllers\Evaluator\SubjectAssignmentController::class, 'enrollApplicant'])->name('subjects.enroll');
     Route::get('subjects/{portfolioSubject}', [\App\Http\Controllers\Evaluator\SubjectAssignmentController::class, 'show'])->name('subjects.show');
     Route::post('subjects/{portfolioSubject}/save', [\App\Http\Controllers\Evaluator\SubjectAssignmentController::class, 'saveEvaluation'])->name('subjects.save');
     Route::put('subjects/{portfolioSubject}', [\App\Http\Controllers\Evaluator\SubjectAssignmentController::class, 'updateAssignment'])->name('subjects.update');

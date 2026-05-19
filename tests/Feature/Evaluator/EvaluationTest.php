@@ -193,6 +193,59 @@ class EvaluationTest extends TestCase
         ]);
     }
 
+    public function test_evaluator_can_enroll_applicant_to_subject_from_subject_assignments_page(): void
+    {
+        $evaluator = User::factory()->evaluator()->create();
+        $portfolio = Portfolio::factory()->approved()->create();
+
+        PortfolioAssignment::factory()->create([
+            'portfolio_id' => $portfolio->id,
+            'evaluator_id' => $evaluator->id,
+        ]);
+
+        $subject = $this->createSubject();
+
+        $response = $this->actingAs($evaluator)->post(route('evaluator.subjects.enroll'), [
+            'portfolio_id' => $portfolio->id,
+            'subject_id' => $subject->id,
+            'notes' => 'Assigned from subject assignments page.',
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        $this->assertDatabaseHas('portfolio_subjects', [
+            'portfolio_id' => $portfolio->id,
+            'subject_id' => $subject->id,
+            'evaluator_id' => $evaluator->id,
+            'assigned_by' => $evaluator->id,
+            'status' => SubjectAssignmentStatus::Pending->value,
+        ]);
+    }
+
+    public function test_evaluator_cannot_enroll_applicant_to_subject_for_locked_portfolio(): void
+    {
+        $evaluator = User::factory()->evaluator()->create();
+        $portfolio = Portfolio::factory()->underReview()->create();
+
+        PortfolioAssignment::factory()->create([
+            'portfolio_id' => $portfolio->id,
+            'evaluator_id' => $evaluator->id,
+        ]);
+
+        $subject = $this->createSubject();
+
+        $this->actingAs($evaluator)->post(route('evaluator.subjects.enroll'), [
+            'portfolio_id' => $portfolio->id,
+            'subject_id' => $subject->id,
+        ])->assertForbidden();
+
+        $this->assertDatabaseMissing('portfolio_subjects', [
+            'portfolio_id' => $portfolio->id,
+            'subject_id' => $subject->id,
+        ]);
+    }
+
     public function test_evaluator_can_upload_module_for_owned_subject_assignment(): void
     {
         Storage::fake('public');
