@@ -487,9 +487,9 @@ export default function Show({
                 </Card>
 
                 {/* Two-column layout */}
-                <div className="grid gap-6 lg:grid-cols-3">
-                    {/* Left column (2 cols): Portfolio info + Documents */}
-                    <div className="space-y-6 lg:col-span-2">
+                <div className="space-y-6">
+                    {/* Section 2: Portfolio info + Documents */}
+                    <div className="space-y-6">
                         {/* Section 2: Document Completion Progress */}
                         <Card>
                             <CardContent className="pt-6">
@@ -618,7 +618,7 @@ export default function Show({
                         </div>
                     </div>
 
-                    {/* Right column (1 col): Evaluation */}
+                    {/* Section 3: Evaluation */}
                     <div className="space-y-6">
                         {isSubmitted ? (
                             /* Read-only evaluation summary */

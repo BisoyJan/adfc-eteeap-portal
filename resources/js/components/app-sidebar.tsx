@@ -114,11 +114,6 @@ function getNavItems(role: UserRole, unreadMessageCount: number): NavItem[] {
             icon: FolderOpen,
         });
         items.push({
-            title: 'My Subjects',
-            href: '/applicant/subjects',
-            icon: Library,
-        });
-        items.push({
             title: 'My Grades',
             href: '/applicant/grades',
             icon: GraduationCap,

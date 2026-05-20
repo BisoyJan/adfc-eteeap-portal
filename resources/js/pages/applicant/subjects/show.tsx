@@ -178,6 +178,7 @@ export default function ApplicantSubjectShow({ portfolioSubject }: Props) {
                                 <textarea
                                     id="module-description"
                                     rows={2}
+                                    placeholder="Enter module description"
                                     className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                                     value={moduleForm.data.description}
                                     onChange={(e) => moduleForm.setData('description', e.target.value)}

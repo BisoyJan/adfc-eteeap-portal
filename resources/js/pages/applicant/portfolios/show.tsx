@@ -14,6 +14,7 @@ import {
     Mail,
     User,
     Printer,
+    ClipboardList,
 } from 'lucide-react';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
@@ -369,6 +370,10 @@ export default function Show({
             href: `/applicant/portfolios/${portfolio.id}`,
         },
     ];
+    const worksiteAssessmentLink =
+        assignedSubjects.length > 0
+            ? `/applicant/subjects/${assignedSubjects[0].id}`
+            : '/applicant/subjects';
 
     function handleSubmitPortfolio() {
         router.post(
@@ -464,6 +469,19 @@ export default function Show({
                             <Printer className="mr-1 h-4 w-4" />
                             Print Summary
                         </Button>
+                        {assignedSubjects.length > 0 ? (
+                            <Button variant="outline" size="sm" asChild>
+                                <Link href={worksiteAssessmentLink}>
+                                    <ClipboardList className="mr-1 h-4 w-4" />
+                                    Work Site Visit Assessment
+                                </Link>
+                            </Button>
+                        ) : (
+                            <Button variant="outline" size="sm" disabled>
+                                <ClipboardList className="mr-1 h-4 w-4" />
+                                Work Site Visit Assessment
+                            </Button>
+                        )}
                         <Badge
                             variant={
                                 statusBadgeVariant[portfolio.status] ?? 'outline'
@@ -983,57 +1001,6 @@ export default function Show({
                     </Card>
                 )}
 
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Assigned Subjects</CardTitle>
-                        <CardDescription>
-                            Subjects assigned for your pre-assessment, written exam, and worksite activities.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        {assignedSubjects.length > 0 ? (
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-sm">
-                                    <thead>
-                                        <tr className="border-b">
-                                            <th className="pb-2 text-left font-medium">Course Code</th>
-                                            <th className="pb-2 text-left font-medium">Course Name</th>
-                                            <th className="pb-2 text-left font-medium">Units</th>
-                                            <th className="pb-2 text-left font-medium">Academic Year</th>
-                                            <th className="pb-2 text-left font-medium">Status</th>
-                                            <th className="pb-2 text-left font-medium">Evaluator</th>
-                                            <th className="pb-2 text-left font-medium">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {assignedSubjects.map((item) => (
-                                            <tr key={item.id} className="border-b last:border-0">
-                                                <td className="py-2 font-mono">{item.subject.code}</td>
-                                                <td className="py-2">{item.subject.name}</td>
-                                                <td className="py-2">{item.subject.units}</td>
-                                                <td className="py-2">{item.subject.academic_year?.name ?? '—'}</td>
-                                                <td className="py-2">
-                                                    <Badge variant="outline">{formatStatus(item.status)}</Badge>
-                                                </td>
-                                                <td className="py-2 text-muted-foreground">{item.evaluator?.name ?? '—'}</td>
-                                                <td className="py-2">
-                                                    <Button variant="outline" size="sm" asChild>
-                                                        <Link href={`/applicant/subjects/${item.id}`}>
-                                                            Open
-                                                        </Link>
-                                                    </Button>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        ) : (
-                            <p className="text-sm text-muted-foreground">No subjects assigned yet.</p>
-                        )}
-                    </CardContent>
-                </Card>
-
                 {/* Document categories */}
                 <div className="space-y-4">
                     {categories.map((category) => {
@@ -1156,14 +1123,70 @@ export default function Show({
                     })}
                 </div>
 
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Assigned Subjects</CardTitle>
+                        <CardDescription>
+                            Subjects assigned for your pre-assessment, written exam, and worksite activities.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {assignedSubjects.length > 0 ? (
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-sm">
+                                    <thead>
+                                        <tr className="border-b">
+                                            <th className="pb-2 text-left font-medium">Course Code</th>
+                                            <th className="pb-2 text-left font-medium">Course Name</th>
+                                            <th className="pb-2 text-left font-medium">Units</th>
+                                            <th className="pb-2 text-left font-medium">Academic Year</th>
+                                            <th className="pb-2 text-left font-medium">Status</th>
+                                            <th className="pb-2 text-left font-medium">Evaluator</th>
+                                            <th className="pb-2 text-left font-medium">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {assignedSubjects.map((item) => (
+                                            <tr key={item.id} className="border-b last:border-0">
+                                                <td className="py-2 font-mono">{item.subject.code}</td>
+                                                <td className="py-2">{item.subject.name}</td>
+                                                <td className="py-2">{item.subject.units}</td>
+                                                <td className="py-2">{item.subject.academic_year?.name ?? '—'}</td>
+                                                <td className="py-2">
+                                                    <Badge variant="outline">{formatStatus(item.status)}</Badge>
+                                                </td>
+                                                <td className="py-2 text-muted-foreground">{item.evaluator?.name ?? '—'}</td>
+                                                <td className="py-2">
+                                                    <Button variant="outline" size="sm" asChild>
+                                                        <Link href={`/applicant/subjects/${item.id}`}>
+                                                            Open
+                                                        </Link>
+                                                    </Button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        ) : (
+                            <p className="text-sm text-muted-foreground">No subjects assigned yet.</p>
+                        )}
+                    </CardContent>
+                </Card>
+
                 {/* Action bar */}
                 <div className="flex items-center justify-between print:hidden">
-                    <Button variant="outline" asChild>
-                        <Link href="/applicant/portfolios">
-                            <ArrowLeft className="mr-1.5 h-4 w-4" />
-                            Back to Portfolios
-                        </Link>
-                    </Button>
+                    <div className="flex items-center gap-2">
+                        <Button variant="outline" asChild>
+                            <Link href="/applicant/portfolios">
+                                <ArrowLeft className="mr-1.5 h-4 w-4" />
+                                Back to Portfolios
+                            </Link>
+                        </Button>
+                        <Button variant="outline" asChild>
+                            <Link href="/applicant/subjects">My Subjects</Link>
+                        </Button>
+                    </div>
 
                     {editable &&
                         (progress.percentage >= 100 ? (

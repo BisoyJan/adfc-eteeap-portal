@@ -42,6 +42,38 @@ class EvaluationTest extends TestCase
         $response->assertStatus(200);
     }
 
+    public function test_subject_assignments_index_is_read_only_and_omits_enrollment_payload(): void
+    {
+        $evaluator = User::factory()->evaluator()->create();
+        $portfolio = Portfolio::factory()->approved()->create();
+        $subject = $this->createSubject();
+
+        PortfolioAssignment::factory()->create([
+            'portfolio_id' => $portfolio->id,
+            'evaluator_id' => $evaluator->id,
+        ]);
+
+        PortfolioSubject::create([
+            'portfolio_id' => $portfolio->id,
+            'subject_id' => $subject->id,
+            'evaluator_id' => $evaluator->id,
+            'assigned_by' => $evaluator->id,
+            'status' => SubjectAssignmentStatus::Pending,
+            'assigned_at' => now(),
+        ]);
+
+        $response = $this->actingAs($evaluator)->get(route('evaluator.subjects.index'));
+
+        $response->assertStatus(200);
+        $response->assertInertia(
+            fn ($page) => $page
+                ->component('evaluator/subjects/index')
+                ->has('assignments.data', 1)
+                ->missing('availableSubjects')
+                ->missing('enrollableApplicants')
+        );
+    }
+
     public function test_non_evaluator_cannot_view_evaluator_portfolios(): void
     {
         $admin = User::factory()->admin()->create();
