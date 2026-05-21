@@ -19,13 +19,10 @@ class GradesController extends Controller
             ->whereHas('portfolio', fn ($q) => $q->where('user_id', auth()->id()))
             ->with([
                 'subject.academicYear',
-                'preAssessmentAttempts' => fn ($q) => $q->orderByDesc('attempt_number'),
-                'preAssessmentAttempts.grader:id,name',
                 'subjectEvaluations.evaluator:id,name',
             ])
             ->get()
             ->map(function (PortfolioSubject $ps) {
-                $latestPre = $ps->preAssessmentAttempts->first();
                 $byCategory = $ps->subjectEvaluations
                     ->where('status', SubjectEvaluationStatus::Submitted)
                     ->groupBy(fn ($e) => $e->category->value)
@@ -46,17 +43,7 @@ class GradesController extends Controller
                     'status' => $ps->status->value,
                     'recommendation' => $ps->recommendation?->value,
                     'recommendation_label' => $ps->recommendation?->label(),
-                    'pre_assessment' => $latestPre ? [
-                        'attempt_number' => $latestPre->attempt_number,
-                        'submitted_at' => $latestPre->submitted_at,
-                        'score' => $latestPre->score,
-                        'max_score' => $latestPre->max_score,
-                        'graded_at' => $latestPre->graded_at,
-                        'evaluation_date' => $latestPre->graded_at ?? $latestPre->submitted_at,
-                        'evaluator_name' => $latestPre->grader?->name,
-                        'academic_year' => $academicYear,
-                        'program' => $program,
-                    ] : null,
+                    'pre_assessment' => $this->formatEval($byCategory->get('pre_assessment'), $academicYear, $program),
                     'written_exam' => $this->formatEval($byCategory->get('written_exam'), $academicYear, $program),
                 ];
             });

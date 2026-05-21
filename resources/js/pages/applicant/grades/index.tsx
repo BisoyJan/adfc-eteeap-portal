@@ -19,17 +19,7 @@ interface Row {
     status: string;
     recommendation: string | null;
     recommendation_label: string | null;
-    pre_assessment: {
-        attempt_number: number;
-        submitted_at: string | null;
-        score: string | null;
-        max_score: string | null;
-        graded_at: string | null;
-        evaluation_date: string | null;
-        evaluator_name: string | null;
-        academic_year: string | null;
-        program: string;
-    } | null;
+    pre_assessment: Score | null;
     written_exam: Score | null;
 }
 
@@ -141,12 +131,10 @@ export default function Grades({ rows, interview, worksite_visit }: { rows: Row[
                                                     <div className="text-xs text-muted-foreground">{r.subject.academic_year} • {r.subject.units} units</div>
                                                 </td>
                                                 <td className="px-3 py-3">
-                                                    <p>{r.pre_assessment?.graded_at ? `${r.pre_assessment.score} / ${r.pre_assessment.max_score}` : (r.pre_assessment?.submitted_at ? 'Submitted' : '—')}</p>
+                                                    <p>{fmt(r.pre_assessment)}</p>
                                                     {r.pre_assessment && (
                                                         <AssessmentMeta
                                                             evaluatorName={r.pre_assessment.evaluator_name}
-                                                            academicYear={r.pre_assessment.academic_year}
-                                                            program={r.pre_assessment.program}
                                                             date={r.pre_assessment.evaluation_date}
                                                         />
                                                     )}
