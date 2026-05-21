@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Applicant;
 
+use App\Enums\SubjectEvaluationStatus;
 use App\Http\Controllers\Controller;
+use App\Models\PortfolioEvaluation;
 use App\Models\PortfolioSubject;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -23,7 +25,7 @@ class GradesController extends Controller
             ->map(function (PortfolioSubject $ps) {
                 $latestPre = $ps->preAssessmentAttempts->first();
                 $byCategory = $ps->subjectEvaluations
-                    ->where('status', \App\Enums\SubjectEvaluationStatus::Submitted)
+                    ->where('status', SubjectEvaluationStatus::Submitted)
                     ->groupBy(fn ($e) => $e->category->value)
                     ->map(fn ($group) => $group->sortByDesc('attempt_number')->first());
 
@@ -53,14 +55,24 @@ class GradesController extends Controller
                         'academic_year' => $academicYear,
                         'program' => $program,
                     ] : null,
-                    'interview' => $this->formatEval($byCategory->get('interview'), $academicYear, $program),
-                    'worksite_visit' => $this->formatEval($byCategory->get('worksite_visit'), $academicYear, $program),
                     'written_exam' => $this->formatEval($byCategory->get('written_exam'), $academicYear, $program),
                 ];
             });
 
+        // Portfolio-level evaluations: interview & worksite_visit are graded once per portfolio
+        $portfolioEvals = PortfolioEvaluation::query()
+            ->whereHas('portfolio', fn ($q) => $q->where('user_id', auth()->id()))
+            ->with('evaluator:id,name')
+            ->where('status', SubjectEvaluationStatus::Submitted->value)
+            ->orderByDesc('attempt_number')
+            ->get()
+            ->groupBy(fn ($e) => $e->category->value)
+            ->map(fn ($group) => $group->first());
+
         return Inertia::render('applicant/grades/index', [
             'rows' => $portfolioSubjects,
+            'interview' => $this->formatPortfolioEval($portfolioEvals['interview'] ?? null),
+            'worksite_visit' => $this->formatPortfolioEval($portfolioEvals['worksite_visit'] ?? null),
         ]);
     }
 
@@ -81,6 +93,24 @@ class GradesController extends Controller
             'evaluator_name' => $evaluation->evaluator?->name,
             'academic_year' => $academicYear,
             'program' => $program,
+        ];
+    }
+
+    /**
+     * @return array{score:float,max_score:float,submitted_at:mixed,evaluation_date:mixed,evaluator_name:string|null}|null
+     */
+    protected function formatPortfolioEval($evaluation): ?array
+    {
+        if (! $evaluation) {
+            return null;
+        }
+
+        return [
+            'score' => (float) $evaluation->score,
+            'max_score' => (float) $evaluation->max_score,
+            'submitted_at' => $evaluation->submitted_at,
+            'evaluation_date' => $evaluation->conducted_at ?? $evaluation->submitted_at,
+            'evaluator_name' => $evaluation->evaluator?->name,
         ];
     }
 }

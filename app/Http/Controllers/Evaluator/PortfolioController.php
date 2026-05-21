@@ -7,11 +7,13 @@ use App\Enums\EvaluationStatus;
 use App\Enums\PortfolioStatus;
 use App\Enums\RubricCategory;
 use App\Enums\SubjectAssignmentStatus;
+use App\Enums\SubjectEvaluationStatus;
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Models\DocumentCategory;
 use App\Models\Evaluation;
 use App\Models\PortfolioAssignment;
+use App\Models\PortfolioEvaluation;
 use App\Models\PortfolioSubject;
 use App\Models\RubricCriteria;
 use App\Models\Subject;
@@ -20,6 +22,7 @@ use App\Models\WaiverRecommendation;
 use App\Notifications\EvaluationCompletedNotification;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -121,8 +124,8 @@ class PortfolioController extends Controller
             abort(403);
         }
 
-        if ($assignment->portfolio->status !== PortfolioStatus::Approved) {
-            return back()->with('error', 'Subjects can only be assigned after the applicant passes the interview phase.');
+        if (! in_array($assignment->portfolio->status, [PortfolioStatus::UnderReview, PortfolioStatus::Approved], true)) {
+            return back()->with('error', 'Subjects can only be assigned once the portfolio is under review or has been approved.');
         }
 
         $data = $request->validate([
@@ -299,8 +302,10 @@ class PortfolioController extends Controller
         ]);
 
         $portfolio = $assignment->portfolio;
+        // Only revision and rejection can be set by the evaluator;
+        // approval is reserved for the Admin.  Auto-transition to Evaluated
+        // happens separately when all subject grading conditions are met.
         $portfolioStatus = match ($request->input('recommendation')) {
-            'approve' => PortfolioStatus::Approved,
             'request_revision' => PortfolioStatus::RevisionRequested,
             'reject' => PortfolioStatus::Rejected,
             default => PortfolioStatus::UnderReview,
@@ -317,5 +322,156 @@ class PortfolioController extends Controller
 
         return redirect()->route('evaluator.portfolios.index')
             ->with('success', 'Evaluation submitted successfully.');
+    }
+
+    public function showWorksite(PortfolioAssignment $assignment): Response
+    {
+        if ($assignment->evaluator_id !== auth()->id()) {
+            abort(403);
+        }
+
+        $assignment->load(['portfolio.user:id,name,email']);
+
+        $criteria = RubricCriteria::query()
+            ->active()
+            ->ofCategory(RubricCategory::WorksiteVisit)
+            ->ordered()
+            ->get();
+
+        $evaluation = PortfolioEvaluation::query()
+            ->where('portfolio_id', $assignment->portfolio_id)
+            ->where('category', RubricCategory::WorksiteVisit->value)
+            ->where('evaluator_id', auth()->id())
+            ->orderByDesc('attempt_number')
+            ->with('scores')
+            ->first();
+
+        return Inertia::render('evaluator/portfolios/worksite', [
+            'assignment' => $assignment,
+            'criteria' => $criteria,
+            'evaluation' => $evaluation,
+        ]);
+    }
+
+    public function saveWorksiteEvaluation(Request $request, PortfolioAssignment $assignment): RedirectResponse
+    {
+        if ($assignment->evaluator_id !== auth()->id()) {
+            abort(403);
+        }
+
+        $data = $request->validate([
+            'attempt_number' => ['nullable', 'integer', 'min:1'],
+            'conducted_at' => ['nullable', 'date'],
+            'comments' => ['nullable', 'string', 'max:5000'],
+            'scores' => ['required', 'array'],
+            'scores.*.rubric_criteria_id' => ['required', 'exists:rubric_criterias,id'],
+            'scores.*.score' => ['required', 'numeric', 'min:0'],
+            'scores.*.comments' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $attemptNumber = $data['attempt_number'] ?? 1;
+
+        DB::transaction(function () use ($assignment, $data, $attemptNumber) {
+            $existing = PortfolioEvaluation::query()
+                ->where('portfolio_id', $assignment->portfolio_id)
+                ->where('category', RubricCategory::WorksiteVisit->value)
+                ->where('attempt_number', $attemptNumber)
+                ->first();
+
+            $conductedAt = $data['conducted_at'] ?? $existing?->conducted_at;
+
+            $evaluation = PortfolioEvaluation::updateOrCreate(
+                [
+                    'portfolio_id' => $assignment->portfolio_id,
+                    'category' => RubricCategory::WorksiteVisit->value,
+                    'attempt_number' => $attemptNumber,
+                ],
+                [
+                    'evaluator_id' => auth()->id(),
+                    'status' => SubjectEvaluationStatus::Draft,
+                    'comments' => $data['comments'] ?? null,
+                    'conducted_at' => $conductedAt,
+                ],
+            );
+
+            foreach ($data['scores'] as $row) {
+                $criteria = RubricCriteria::findOrFail($row['rubric_criteria_id']);
+                $evaluation->scores()->updateOrCreate(
+                    ['rubric_criteria_id' => $row['rubric_criteria_id']],
+                    [
+                        'score' => min((float) $row['score'], (float) $criteria->max_score),
+                        'comments' => $row['comments'] ?? null,
+                    ],
+                );
+            }
+
+            $evaluation->calculateTotalScore();
+        });
+
+        return back()->with('success', 'Worksite evaluation saved as draft.');
+    }
+
+    public function submitWorksiteEvaluation(Request $request, PortfolioAssignment $assignment): RedirectResponse
+    {
+        if ($assignment->evaluator_id !== auth()->id()) {
+            abort(403);
+        }
+
+        $data = $request->validate([
+            'attempt_number' => ['nullable', 'integer', 'min:1'],
+            'conducted_at' => ['nullable', 'date'],
+            'comments' => ['nullable', 'string', 'max:5000'],
+            'scores' => ['required', 'array'],
+            'scores.*.rubric_criteria_id' => ['required', 'exists:rubric_criterias,id'],
+            'scores.*.score' => ['required', 'numeric', 'min:0'],
+            'scores.*.comments' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $attemptNumber = $data['attempt_number'] ?? 1;
+
+        DB::transaction(function () use ($assignment, $data, $attemptNumber) {
+            $existing = PortfolioEvaluation::query()
+                ->where('portfolio_id', $assignment->portfolio_id)
+                ->where('category', RubricCategory::WorksiteVisit->value)
+                ->where('attempt_number', $attemptNumber)
+                ->first();
+
+            $conductedAt = $data['conducted_at']
+                ?? $existing?->conducted_at
+                ?? now();
+
+            $evaluation = PortfolioEvaluation::updateOrCreate(
+                [
+                    'portfolio_id' => $assignment->portfolio_id,
+                    'category' => RubricCategory::WorksiteVisit->value,
+                    'attempt_number' => $attemptNumber,
+                ],
+                [
+                    'evaluator_id' => auth()->id(),
+                    'status' => SubjectEvaluationStatus::Submitted,
+                    'comments' => $data['comments'] ?? null,
+                    'conducted_at' => $conductedAt,
+                    'submitted_at' => now(),
+                ],
+            );
+
+            foreach ($data['scores'] as $row) {
+                $criteria = RubricCriteria::findOrFail($row['rubric_criteria_id']);
+                $evaluation->scores()->updateOrCreate(
+                    ['rubric_criteria_id' => $row['rubric_criteria_id']],
+                    [
+                        'score' => min((float) $row['score'], (float) $criteria->max_score),
+                        'comments' => $row['comments'] ?? null,
+                    ],
+                );
+            }
+
+            $evaluation->calculateTotalScore();
+        });
+
+        $assignment->load('portfolio');
+        $assignment->portfolio->attemptAutoEvaluate();
+
+        return back()->with('success', 'Worksite evaluation submitted.');
     }
 }

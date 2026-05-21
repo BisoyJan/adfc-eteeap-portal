@@ -9,6 +9,7 @@ use App\Enums\SubjectEvaluationStatus;
 use App\Enums\SubjectRecommendation;
 use App\Http\Controllers\Controller;
 use App\Models\PortfolioAssignment;
+use App\Models\PortfolioEvaluation;
 use App\Models\PortfolioSubject;
 use App\Models\PreAssessmentAttempt;
 use App\Models\RubricCriteria;
@@ -146,7 +147,7 @@ class SubjectAssignmentController extends Controller
         $this->authorizeVisible($portfolioSubject);
 
         $data = $request->validate([
-            'category' => ['required', 'string', 'in:'.implode(',', RubricCategory::values())],
+            'category' => ['required', 'string', 'in:'.implode(',', RubricCategory::subjectLevelValues())],
             'attempt_number' => ['nullable', 'integer', 'min:1'],
             'comments' => ['nullable', 'string', 'max:5000'],
             'conducted_at' => ['nullable', 'date'],
@@ -205,6 +206,74 @@ class SubjectAssignmentController extends Controller
         return back()->with('success', $submit ? 'Evaluation submitted.' : 'Evaluation saved as draft.');
     }
 
+    public function savePortfolioEvaluation(Request $request, PortfolioSubject $portfolioSubject): RedirectResponse
+    {
+        $this->authorizeVisible($portfolioSubject);
+
+        $data = $request->validate([
+            'category' => ['required', 'string', 'in:'.implode(',', RubricCategory::portfolioLevelValues())],
+            'attempt_number' => ['nullable', 'integer', 'min:1'],
+            'comments' => ['nullable', 'string', 'max:5000'],
+            'conducted_at' => ['nullable', 'date'],
+            'submit' => ['nullable', 'boolean'],
+            'scores' => ['required', 'array'],
+            'scores.*.rubric_criteria_id' => ['required', 'exists:rubric_criterias,id'],
+            'scores.*.score' => ['required', 'numeric', 'min:0'],
+            'scores.*.comments' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $portfolioId = $portfolioSubject->portfolio_id;
+        $attemptNumber = $data['attempt_number'] ?? 1;
+        $submit = $data['submit'] ?? false;
+
+        DB::transaction(function () use ($portfolioId, $data, $attemptNumber, $submit) {
+            $existing = PortfolioEvaluation::query()
+                ->where('portfolio_id', $portfolioId)
+                ->where('category', $data['category'])
+                ->where('attempt_number', $attemptNumber)
+                ->first();
+
+            $conductedAt = $data['conducted_at']
+                ?? $existing?->conducted_at
+                ?? ($submit ? now() : null);
+
+            $evaluation = PortfolioEvaluation::updateOrCreate(
+                [
+                    'portfolio_id' => $portfolioId,
+                    'category' => $data['category'],
+                    'attempt_number' => $attemptNumber,
+                ],
+                [
+                    'evaluator_id' => auth()->id(),
+                    'status' => $submit ? SubjectEvaluationStatus::Submitted : SubjectEvaluationStatus::Draft,
+                    'comments' => $data['comments'] ?? null,
+                    'conducted_at' => $conductedAt,
+                    'submitted_at' => $submit ? now() : null,
+                ],
+            );
+
+            foreach ($data['scores'] as $row) {
+                $criteria = RubricCriteria::findOrFail($row['rubric_criteria_id']);
+                $evaluation->scores()->updateOrCreate(
+                    ['rubric_criteria_id' => $row['rubric_criteria_id']],
+                    [
+                        'score' => min((float) $row['score'], (float) $criteria->max_score),
+                        'comments' => $row['comments'] ?? null,
+                    ],
+                );
+            }
+
+            $evaluation->calculateTotalScore();
+        });
+
+        if ($submit) {
+            $portfolioSubject->load('portfolio');
+            $portfolioSubject->portfolio->attemptAutoEvaluate();
+        }
+
+        return back()->with('success', $submit ? 'Evaluation submitted.' : 'Evaluation saved as draft.');
+    }
+
     public function updateAssignment(Request $request, PortfolioSubject $portfolioSubject): RedirectResponse
     {
         $this->authorizeVisible($portfolioSubject);
@@ -221,6 +290,9 @@ class SubjectAssignmentController extends Controller
                 ? now()
                 : null,
         ]);
+
+        $portfolioSubject->load('portfolio');
+        $portfolioSubject->portfolio->attemptAutoEvaluate();
 
         return back()->with('success', 'Assignment updated.');
     }
@@ -286,6 +358,7 @@ class SubjectAssignmentController extends Controller
         return PortfolioAssignment::query()
             ->where('evaluator_id', auth()->id())
             ->whereHas('portfolio', fn ($q) => $q->whereIn('status', [
+                PortfolioStatus::UnderReview->value,
                 PortfolioStatus::Approved->value,
                 PortfolioStatus::Evaluated->value,
             ]));
@@ -296,6 +369,7 @@ class SubjectAssignmentController extends Controller
         return PortfolioSubject::query()
             ->where('evaluator_id', auth()->id())
             ->whereHas('portfolio', fn ($q) => $q->whereIn('status', [
+                PortfolioStatus::UnderReview->value,
                 PortfolioStatus::Approved->value,
                 PortfolioStatus::Evaluated->value,
             ]));

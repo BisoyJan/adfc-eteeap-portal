@@ -21,6 +21,27 @@ enum RubricCategory: string
         };
     }
 
+    public function isPortfolioLevel(): bool
+    {
+        return in_array($this, [self::Interview, self::WorksiteVisit], true);
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function portfolioLevelValues(): array
+    {
+        return [self::Interview->value, self::WorksiteVisit->value];
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function subjectLevelValues(): array
+    {
+        return array_values(array_diff(self::values(), self::portfolioLevelValues()));
+    }
+
     /**
      * @return array<int, string>
      */

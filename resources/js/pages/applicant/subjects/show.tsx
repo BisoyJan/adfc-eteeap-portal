@@ -215,47 +215,6 @@ export default function ApplicantSubjectShow({ portfolioSubject }: Props) {
 
                 <Card>
                     <CardHeader>
-                        <CardTitle className="flex items-center justify-between">
-                            <span>Pre-Assessment</span>
-                            <Button onClick={startPreAssessment} size="sm">
-                                {latestAttempt && !latestAttempt.submitted_at ? 'Continue Attempt' : 'Start New Attempt'}
-                            </Button>
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        {portfolioSubject.pre_assessment_attempts.length === 0 ? (
-                            <p className="text-sm text-muted-foreground">No attempts yet. Click "Start" to begin.</p>
-                        ) : (
-                            <ul className="divide-y">
-                                {portfolioSubject.pre_assessment_attempts.map((a) => (
-                                    <li key={a.id} className="flex items-center justify-between py-3">
-                                        <div>
-                                            <div className="font-medium">Attempt #{a.attempt_number}</div>
-                                            <p className="text-xs text-muted-foreground">
-                                                {a.submitted_at ? `Submitted ${new Date(a.submitted_at).toLocaleString()}` : 'Draft'}
-                                                {a.graded_at && ` • Graded ${new Date(a.graded_at).toLocaleString()}`}
-                                            </p>
-                                            <p className="text-xs text-muted-foreground">Evaluator: {a.grader?.name ?? '—'}</p>
-                                            <p className="text-xs text-muted-foreground">AY: {s.academic_year?.name ?? '—'} • Program: BSIT</p>
-                                            <p className="text-xs text-muted-foreground">Evaluation Date: {a.graded_at ? new Date(a.graded_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '—'}</p>
-                                        </div>
-                                        <div className="flex items-center gap-3">
-                                            {a.score !== null && <Badge>{a.score} / {a.max_score}</Badge>}
-                                            <Button asChild variant="outline" size="sm">
-                                                <Link href={`/applicant/subjects/${portfolioSubject.id}/pre-assessment/${a.id}`}>
-                                                    {a.submitted_at ? 'View' : 'Edit'}
-                                                </Link>
-                                            </Button>
-                                        </div>
-                                    </li>
-                                ))}
-                            </ul>
-                        )}
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader>
                         <CardTitle className="flex items-center gap-2"><GraduationCap className="h-5 w-5" /> Evaluations (Interview / Written Exam)</CardTitle>
                         <p className="text-xs text-muted-foreground">Worksite visit ratings are available on your portfolio page under required documents.</p>
                     </CardHeader>

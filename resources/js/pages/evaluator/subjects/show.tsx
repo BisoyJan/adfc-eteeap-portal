@@ -27,6 +27,7 @@ interface SubjEval {
     conducted_at: string | null;
     submitted_at: string | null;
     scores: SubjEvalScore[];
+    evaluator: { id: number; name: string } | null;
 }
 interface Module {
     id: number;
@@ -57,7 +58,11 @@ interface Props {
         status: string;
         recommendation: string | null;
         notes: string | null;
-        portfolio: { id: number; title: string; user: { id: number; name: string; email: string } };
+        portfolio: {
+            id: number;
+            title: string;
+            user: { id: number; name: string; email: string };
+        };
         subject: {
             id: number; code: string; name: string; units: number; description: string | null;
             academic_year: { name: string } | null;
@@ -73,7 +78,7 @@ interface Props {
     statuses: Option[];
 }
 
-const CATEGORY_KEYS = ['interview', 'pre_assessment', 'written_exam', 'worksite_visit'] as const;
+const SUBJECT_CATEGORY_KEYS = ['pre_assessment', 'written_exam'] as const;
 
 function fmtSize(b: number) { return b < 1024 ? `${b} B` : b < 1024 * 1024 ? `${(b / 1024).toFixed(1)} KB` : `${(b / 1024 / 1024).toFixed(1)} MB` }
 
@@ -202,10 +207,10 @@ export default function EvaluatorSubjectShow({ portfolioSubject, rubricByCategor
                     </CardContent>
                 </Card>
 
-                {CATEGORY_KEYS.map((cat) => (
+                {SUBJECT_CATEGORY_KEYS.map((cat) => (
                     <CategoryScoringBlock
                         key={cat}
-                        portfolioSubjectId={ps.id}
+                        endpoint={`/evaluator/subjects/${ps.id}/save`}
                         category={cat}
                         label={categories.find((c) => c.value === cat)?.label ?? cat}
                         criteria={rubricByCategory[cat] ?? []}
@@ -325,8 +330,8 @@ function PreAssessmentGradeBlock({ portfolioSubjectId, attempt, questions }: { p
     );
 }
 
-function CategoryScoringBlock({ portfolioSubjectId, category, label, criteria, evaluations }: {
-    portfolioSubjectId: number;
+function CategoryScoringBlock({ endpoint, category, label, criteria, evaluations }: {
+    endpoint: string;
     category: string;
     label: string;
     criteria: Criteria[];
@@ -373,13 +378,13 @@ function CategoryScoringBlock({ portfolioSubjectId, category, label, criteria, e
     function save(e: FormEvent) {
         e.preventDefault();
         build(false);
-        form.post(`/evaluator/subjects/${portfolioSubjectId}/save`, { preserveScroll: true });
+        form.post(endpoint, { preserveScroll: true });
     }
 
     function submit() {
         if (!confirm('Submit this evaluation? You can start a new attempt later but cannot edit this one.')) return;
         build(true);
-        form.post(`/evaluator/subjects/${portfolioSubjectId}/save`, { preserveScroll: true });
+        form.post(endpoint, { preserveScroll: true });
     }
 
     function startNewAttempt() {

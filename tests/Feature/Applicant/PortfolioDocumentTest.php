@@ -50,7 +50,7 @@ class PortfolioDocumentTest extends TestCase
         ]);
     }
 
-    public function test_applicant_cannot_upload_document_to_submitted_portfolio(): void
+    public function test_applicant_can_upload_missing_document_to_submitted_portfolio(): void
     {
         Storage::fake('local');
 
@@ -59,6 +59,39 @@ class PortfolioDocumentTest extends TestCase
         $category = DocumentCategory::factory()->create();
 
         $file = UploadedFile::fake()->create('test.pdf', 1024, 'application/pdf');
+
+        $response = $this->actingAs($applicant)->post(
+            route('applicant.portfolios.documents.store', $portfolio),
+            [
+                'document_category_id' => $category->id,
+                'file' => $file,
+            ]
+        );
+
+        $response->assertRedirect();
+
+        $this->assertDatabaseHas('portfolio_documents', [
+            'portfolio_id' => $portfolio->id,
+            'document_category_id' => $category->id,
+            'file_name' => 'test.pdf',
+        ]);
+    }
+
+    public function test_applicant_cannot_upload_document_to_already_filled_category_in_submitted_portfolio(): void
+    {
+        Storage::fake('local');
+
+        $applicant = User::factory()->applicant()->create();
+        $portfolio = Portfolio::factory()->submitted()->create(['user_id' => $applicant->id]);
+        $category = DocumentCategory::factory()->create();
+
+        // Create an existing document for this category
+        PortfolioDocument::factory()->create([
+            'portfolio_id' => $portfolio->id,
+            'document_category_id' => $category->id,
+        ]);
+
+        $file = UploadedFile::fake()->create('test2.pdf', 1024, 'application/pdf');
 
         $response = $this->actingAs($applicant)->post(
             route('applicant.portfolios.documents.store', $portfolio),

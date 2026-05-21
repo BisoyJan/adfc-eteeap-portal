@@ -14,7 +14,6 @@ import {
     Mail,
     User,
     Printer,
-    ClipboardList,
 } from 'lucide-react';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
@@ -117,11 +116,6 @@ interface EvaluationResult {
 }
 
 interface WorksiteVisitRating {
-    portfolio_subject_id: number;
-    subject: {
-        code: string;
-        name: string;
-    };
     attempt_number: number;
     score: string;
     max_score: string;
@@ -370,10 +364,6 @@ export default function Show({
             href: `/applicant/portfolios/${portfolio.id}`,
         },
     ];
-    const worksiteAssessmentLink =
-        assignedSubjects.length > 0
-            ? `/applicant/subjects/${assignedSubjects[0].id}`
-            : '/applicant/subjects';
 
     function handleSubmitPortfolio() {
         router.post(
@@ -469,19 +459,6 @@ export default function Show({
                             <Printer className="mr-1 h-4 w-4" />
                             Print Summary
                         </Button>
-                        {assignedSubjects.length > 0 ? (
-                            <Button variant="outline" size="sm" asChild>
-                                <Link href={worksiteAssessmentLink}>
-                                    <ClipboardList className="mr-1 h-4 w-4" />
-                                    Work Site Visit Assessment
-                                </Link>
-                            </Button>
-                        ) : (
-                            <Button variant="outline" size="sm" disabled>
-                                <ClipboardList className="mr-1 h-4 w-4" />
-                                Work Site Visit Assessment
-                            </Button>
-                        )}
                         <Badge
                             variant={
                                 statusBadgeVariant[portfolio.status] ?? 'outline'
@@ -956,15 +933,15 @@ export default function Show({
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-3">
-                            {worksiteVisitRatings.map((rating) => (
+                            {worksiteVisitRatings.map((rating, index) => (
                                 <div
-                                    key={rating.portfolio_subject_id}
+                                    key={index}
                                     className="rounded-md border px-3 py-2"
                                 >
                                     <div className="flex items-center justify-between gap-3">
                                         <div>
                                             <p className="font-medium">
-                                                {rating.subject.code} - {rating.subject.name}
+                                                Worksite Visit — Attempt {rating.attempt_number}
                                             </p>
                                             <p className="text-xs text-muted-foreground">
                                                 Evaluator: {rating.evaluator?.name ?? '-'}
@@ -975,7 +952,7 @@ export default function Show({
                                         </Badge>
                                     </div>
                                     <p className="mt-1 text-xs text-muted-foreground">
-                                        Attempt {rating.attempt_number} · Date:{' '}
+                                        Date:{' '}
                                         {rating.conducted_at
                                             ? new Date(rating.conducted_at).toLocaleDateString('en-US', {
                                                 year: 'numeric',
@@ -1108,7 +1085,7 @@ export default function Show({
                                     )}
 
                                     {/* Upload form */}
-                                    {editable && (
+                                    {(editable || (docs.length === 0 && !['approved', 'rejected'].includes(portfolio.status))) && (
                                         <>
                                             <Separator />
                                             <CategoryUploadForm

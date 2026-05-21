@@ -102,12 +102,16 @@ Route::middleware(['auth', 'verified', 'role:evaluator'])->prefix('evaluator')->
     Route::delete('portfolios/{assignment}/subjects/{portfolioSubject}', [\App\Http\Controllers\Evaluator\PortfolioController::class, 'destroySubject'])->name('portfolios.subjects.destroy');
     Route::post('portfolios/{assignment}/waivers', [\App\Http\Controllers\Evaluator\PortfolioController::class, 'storeWaiver'])->name('portfolios.waivers.store');
     Route::delete('portfolios/{assignment}/waivers/{waiver}', [\App\Http\Controllers\Evaluator\PortfolioController::class, 'destroyWaiver'])->name('portfolios.waivers.destroy');
+    Route::get('portfolios/{assignment}/worksite', [\App\Http\Controllers\Evaluator\PortfolioController::class, 'showWorksite'])->name('portfolios.worksite');
+    Route::post('portfolios/{assignment}/worksite', [\App\Http\Controllers\Evaluator\PortfolioController::class, 'saveWorksiteEvaluation'])->name('portfolios.worksite.save');
+    Route::post('portfolios/{assignment}/worksite/submit', [\App\Http\Controllers\Evaluator\PortfolioController::class, 'submitWorksiteEvaluation'])->name('portfolios.worksite.submit');
 
-    // Per-subject assignments (interview / worksite / written exam / pre-assessment grading)
+    // Per-subject assignments (written exam / pre-assessment grading)
     Route::get('subjects', [\App\Http\Controllers\Evaluator\SubjectAssignmentController::class, 'index'])->name('subjects.index');
     Route::post('subjects/enroll', [\App\Http\Controllers\Evaluator\SubjectAssignmentController::class, 'enrollApplicant'])->name('subjects.enroll');
     Route::get('subjects/{portfolioSubject}', [\App\Http\Controllers\Evaluator\SubjectAssignmentController::class, 'show'])->name('subjects.show');
     Route::post('subjects/{portfolioSubject}/save', [\App\Http\Controllers\Evaluator\SubjectAssignmentController::class, 'saveEvaluation'])->name('subjects.save');
+    Route::post('subjects/{portfolioSubject}/portfolio-evaluation', [\App\Http\Controllers\Evaluator\SubjectAssignmentController::class, 'savePortfolioEvaluation'])->name('subjects.portfolio-evaluation.save');
     Route::put('subjects/{portfolioSubject}', [\App\Http\Controllers\Evaluator\SubjectAssignmentController::class, 'updateAssignment'])->name('subjects.update');
     Route::post('subjects/{portfolioSubject}/pre-assessment/{attempt}/grade', [\App\Http\Controllers\Evaluator\SubjectAssignmentController::class, 'gradePreAssessment'])->name('subjects.pre-assessment.grade');
     Route::post('subjects/{portfolioSubject}/modules', [\App\Http\Controllers\Evaluator\SubjectAssignmentController::class, 'uploadModule'])->name('subjects.modules.store');

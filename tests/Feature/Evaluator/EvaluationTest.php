@@ -11,6 +11,7 @@ use App\Enums\SubjectEvaluationStatus;
 use App\Models\AcademicYear;
 use App\Models\Portfolio;
 use App\Models\PortfolioAssignment;
+use App\Models\PortfolioEvaluation;
 use App\Models\PortfolioSubject;
 use App\Models\RubricCriteria;
 use App\Models\Subject;
@@ -173,7 +174,7 @@ class EvaluationTest extends TestCase
         ]);
 
         $portfolio->refresh();
-        $this->assertEquals(PortfolioStatus::Approved, $portfolio->status);
+        $this->assertEquals(PortfolioStatus::UnderReview, $portfolio->status);
     }
 
     public function test_submit_with_request_revision_sets_revision_requested_status(): void
@@ -258,7 +259,7 @@ class EvaluationTest extends TestCase
     public function test_evaluator_cannot_enroll_applicant_to_subject_for_locked_portfolio(): void
     {
         $evaluator = User::factory()->evaluator()->create();
-        $portfolio = Portfolio::factory()->underReview()->create();
+        $portfolio = Portfolio::factory()->submitted()->create();
 
         PortfolioAssignment::factory()->create([
             'portfolio_id' => $portfolio->id,
@@ -314,7 +315,7 @@ class EvaluationTest extends TestCase
     public function test_evaluator_cannot_open_subject_assignment_for_locked_portfolio(): void
     {
         $evaluator = User::factory()->evaluator()->create();
-        $portfolio = Portfolio::factory()->underReview()->create();
+        $portfolio = Portfolio::factory()->submitted()->create();
         $subject = $this->createSubject();
 
         $portfolioSubject = PortfolioSubject::create([
@@ -336,7 +337,7 @@ class EvaluationTest extends TestCase
         Storage::fake('public');
 
         $evaluator = User::factory()->evaluator()->create();
-        $portfolio = Portfolio::factory()->underReview()->create();
+        $portfolio = Portfolio::factory()->submitted()->create();
         $subject = $this->createSubject();
 
         $portfolioSubject = PortfolioSubject::create([
@@ -373,12 +374,12 @@ class EvaluationTest extends TestCase
         ]);
 
         $criteria = RubricCriteria::factory()->create([
-            'category' => RubricCategory::Interview,
+            'category' => RubricCategory::WrittenExam,
             'max_score' => 20,
         ]);
 
         $response = $this->actingAs($evaluator)->post(route('evaluator.subjects.save', $portfolioSubject), [
-            'category' => RubricCategory::Interview->value,
+            'category' => RubricCategory::WrittenExam->value,
             'attempt_number' => 1,
             'submit' => true,
             'comments' => 'Interview evaluation submitted.',
@@ -396,7 +397,7 @@ class EvaluationTest extends TestCase
 
         $evaluation = SubjectEvaluation::query()
             ->where('portfolio_subject_id', $portfolioSubject->id)
-            ->where('category', RubricCategory::Interview->value)
+            ->where('category', RubricCategory::WrittenExam->value)
             ->first();
 
         $this->assertNotNull($evaluation);
@@ -483,6 +484,97 @@ class EvaluationTest extends TestCase
         ]);
 
         $response->assertStatus(403);
+    }
+
+    public function test_portfolio_transitions_to_evaluated_when_all_subjects_completed_and_worksite_submitted(): void
+    {
+        $evaluator = User::factory()->evaluator()->create();
+        $portfolio = Portfolio::factory()->underReview()->create();
+
+        PortfolioAssignment::factory()->create([
+            'portfolio_id' => $portfolio->id,
+            'evaluator_id' => $evaluator->id,
+        ]);
+
+        $subject = $this->createSubject();
+
+        $portfolioSubject = PortfolioSubject::create([
+            'portfolio_id' => $portfolio->id,
+            'subject_id' => $subject->id,
+            'evaluator_id' => $evaluator->id,
+            'assigned_by' => $evaluator->id,
+            'status' => SubjectAssignmentStatus::InProgress,
+            'assigned_at' => now(),
+        ]);
+
+        // Submitted worksite visit portfolio-level evaluation
+        PortfolioEvaluation::create([
+            'portfolio_id' => $portfolio->id,
+            'evaluator_id' => $evaluator->id,
+            'category' => RubricCategory::WorksiteVisit->value,
+            'attempt_number' => 1,
+            'status' => SubjectEvaluationStatus::Submitted->value,
+            'submitted_at' => now(),
+        ]);
+
+        $this->actingAs($evaluator)->put(
+            route('evaluator.subjects.update', $portfolioSubject),
+            ['status' => SubjectAssignmentStatus::Completed->value],
+        )->assertRedirect();
+
+        $portfolio->refresh();
+        $this->assertEquals(PortfolioStatus::Evaluated, $portfolio->status);
+    }
+
+    public function test_portfolio_stays_under_review_when_worksite_not_yet_submitted(): void
+    {
+        $evaluator = User::factory()->evaluator()->create();
+        $portfolio = Portfolio::factory()->underReview()->create();
+
+        PortfolioAssignment::factory()->create([
+            'portfolio_id' => $portfolio->id,
+            'evaluator_id' => $evaluator->id,
+        ]);
+
+        $subject = $this->createSubject();
+
+        $portfolioSubject = PortfolioSubject::create([
+            'portfolio_id' => $portfolio->id,
+            'subject_id' => $subject->id,
+            'evaluator_id' => $evaluator->id,
+            'assigned_by' => $evaluator->id,
+            'status' => SubjectAssignmentStatus::InProgress,
+            'assigned_at' => now(),
+        ]);
+
+        // No worksite evaluation submitted yet
+        $this->actingAs($evaluator)->put(
+            route('evaluator.subjects.update', $portfolioSubject),
+            ['status' => SubjectAssignmentStatus::Completed->value],
+        )->assertRedirect();
+
+        $portfolio->refresh();
+        $this->assertEquals(PortfolioStatus::UnderReview, $portfolio->status);
+    }
+
+    public function test_evaluator_can_open_subject_assignment_when_portfolio_is_under_review(): void
+    {
+        $evaluator = User::factory()->evaluator()->create();
+        $portfolio = Portfolio::factory()->underReview()->create();
+        $subject = $this->createSubject();
+
+        $portfolioSubject = PortfolioSubject::create([
+            'portfolio_id' => $portfolio->id,
+            'subject_id' => $subject->id,
+            'evaluator_id' => $evaluator->id,
+            'assigned_by' => $evaluator->id,
+            'status' => SubjectAssignmentStatus::Pending,
+            'assigned_at' => now(),
+        ]);
+
+        $this->actingAs($evaluator)
+            ->get(route('evaluator.subjects.show', $portfolioSubject))
+            ->assertOk();
     }
 
     private function createSubject(): Subject

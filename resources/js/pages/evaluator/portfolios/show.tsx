@@ -266,10 +266,6 @@ export default function Show({
         assignment.due_date && isPastDue(assignment.due_date) && !isCompleted;
     const assignmentBadge = getAssignmentBadgeProps(assignment.status);
     const canAssignSubjects = portfolio.status === 'approved';
-    const worksiteAssessmentLink =
-        assignedSubjects.length === 1
-            ? `/evaluator/subjects/${assignedSubjects[0].id}`
-            : `/evaluator/subjects?portfolio_id=${portfolio.id}`;
     const assignedSubjectIds = new Set(
         assignedSubjects.map((item) => item.subject.id),
     );
@@ -388,19 +384,12 @@ export default function Show({
                         </div>
                     </div>
                     <div className="flex items-center gap-3">
-                        {assignedSubjects.length > 0 ? (
-                            <Button variant="outline" size="sm" asChild>
-                                <Link href={worksiteAssessmentLink}>
-                                    <ClipboardList className="mr-2 h-4 w-4" />
-                                    Work Site Visit Assessment
-                                </Link>
-                            </Button>
-                        ) : (
-                            <Button variant="outline" size="sm" disabled>
+                        <Button variant="outline" size="sm" asChild>
+                            <Link href={`/evaluator/portfolios/${assignment.id}/worksite`}>
                                 <ClipboardList className="mr-2 h-4 w-4" />
                                 Work Site Visit Assessment
-                            </Button>
-                        )}
+                            </Link>
+                        </Button>
                         <Badge
                             variant={
                                 portfolioStatusBadgeVariant[portfolio.status] ??
@@ -487,7 +476,7 @@ export default function Show({
                 </Card>
 
                 {/* Two-column layout */}
-                <div className="space-y-6">
+                <div className="grid gap-6 lg:grid-cols-[1fr_420px] lg:items-start">
                     {/* Section 2: Portfolio info + Documents */}
                     <div className="space-y-6">
                         {/* Section 2: Document Completion Progress */}
@@ -619,7 +608,7 @@ export default function Show({
                     </div>
 
                     {/* Section 3: Evaluation */}
-                    <div className="space-y-6">
+                    <div className="space-y-6 lg:sticky lg:top-6">
                         {isSubmitted ? (
                             /* Read-only evaluation summary */
                             <Card>

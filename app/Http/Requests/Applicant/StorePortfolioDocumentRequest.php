@@ -9,10 +9,11 @@ class StorePortfolioDocumentRequest extends FormRequest
     public function authorize(): bool
     {
         $portfolio = $this->route('portfolio');
+        $categoryId = (int) $this->input('document_category_id');
 
         return $this->user()->can('submit-portfolios')
             && $portfolio->user_id === $this->user()->id
-            && $portfolio->canBeEdited();
+            && $portfolio->canUploadToCategory($categoryId);
     }
 
     /**

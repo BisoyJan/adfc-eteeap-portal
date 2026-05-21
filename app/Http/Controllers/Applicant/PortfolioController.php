@@ -12,7 +12,6 @@ use App\Http\Requests\Applicant\SubmitPortfolioRequest;
 use App\Http\Requests\Applicant\UpdatePortfolioRequest;
 use App\Models\DocumentCategory;
 use App\Models\Portfolio;
-use App\Models\PortfolioSubject;
 use App\Models\User;
 use App\Notifications\PortfolioSubmittedNotification;
 use Illuminate\Http\RedirectResponse;
@@ -115,42 +114,24 @@ class PortfolioController extends Controller
             ->with(['evaluator:id,name', 'scores.criteria'])
             ->get();
 
-        $worksiteVisitRatings = $portfolio->portfolioSubjects()
-            ->with([
-                'subject:id,code,name',
-                'subjectEvaluations' => fn ($q) => $q
-                    ->where('status', SubjectEvaluationStatus::Submitted)
-                    ->where('category', RubricCategory::WorksiteVisit)
-                    ->with('evaluator:id,name')
-                    ->orderByDesc('attempt_number'),
-            ])
+        $worksiteVisitRatings = $portfolio->portfolioEvaluations()
+            ->where('category', RubricCategory::WorksiteVisit)
+            ->where('status', SubjectEvaluationStatus::Submitted)
+            ->with('evaluator:id,name')
+            ->orderByDesc('attempt_number')
             ->get()
-            ->map(function (PortfolioSubject $portfolioSubject) {
-                $latest = $portfolioSubject->subjectEvaluations->first();
-
-                if (! $latest) {
-                    return null;
-                }
-
-                return [
-                    'portfolio_subject_id' => $portfolioSubject->id,
-                    'subject' => [
-                        'code' => $portfolioSubject->subject->code,
-                        'name' => $portfolioSubject->subject->name,
-                    ],
-                    'attempt_number' => $latest->attempt_number,
-                    'score' => $latest->score,
-                    'max_score' => $latest->max_score,
-                    'conducted_at' => $latest->conducted_at,
-                    'submitted_at' => $latest->submitted_at,
-                    'comments' => $latest->comments,
-                    'evaluator' => $latest->evaluator ? [
-                        'id' => $latest->evaluator->id,
-                        'name' => $latest->evaluator->name,
-                    ] : null,
-                ];
-            })
-            ->filter()
+            ->map(fn ($eval) => [
+                'attempt_number' => $eval->attempt_number,
+                'score' => $eval->score,
+                'max_score' => $eval->max_score,
+                'conducted_at' => $eval->conducted_at,
+                'submitted_at' => $eval->submitted_at,
+                'comments' => $eval->comments,
+                'evaluator' => $eval->evaluator ? [
+                    'id' => $eval->evaluator->id,
+                    'name' => $eval->evaluator->name,
+                ] : null,
+            ])
             ->values();
 
         $assignedSubjects = $portfolio->portfolioSubjects()

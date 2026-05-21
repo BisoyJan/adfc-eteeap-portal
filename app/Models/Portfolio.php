@@ -3,6 +3,9 @@
 namespace App\Models;
 
 use App\Enums\PortfolioStatus;
+use App\Enums\RubricCategory;
+use App\Enums\SubjectAssignmentStatus;
+use App\Enums\SubjectEvaluationStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -58,6 +61,11 @@ class Portfolio extends Model
         return $this->hasMany(PortfolioSubject::class);
     }
 
+    public function portfolioEvaluations(): HasMany
+    {
+        return $this->hasMany(PortfolioEvaluation::class);
+    }
+
     public function latestAssignment(): ?PortfolioAssignment
     {
         return $this->assignments()->latest('assigned_at')->first();
@@ -81,6 +89,19 @@ class Portfolio extends Model
         ], true);
     }
 
+    public function canUploadToCategory(int $categoryId): bool
+    {
+        if ($this->canBeEdited()) {
+            return true;
+        }
+
+        if (in_array($this->status, [PortfolioStatus::Approved, PortfolioStatus::Rejected], true)) {
+            return false;
+        }
+
+        return ! $this->documents()->where('document_category_id', $categoryId)->exists();
+    }
+
     public function canBeSubmitted(): bool
     {
         return in_array($this->status, [
@@ -92,5 +113,38 @@ class Portfolio extends Model
     public function canBeDeleted(): bool
     {
         return $this->status === PortfolioStatus::Draft;
+    }
+
+    /**
+     * Returns true when every subject is completed and the worksite visit
+     * portfolio-level evaluation has been submitted.
+     */
+    public function isFullyEvaluated(): bool
+    {
+        $subjects = $this->portfolioSubjects()->get(['id', 'status']);
+
+        if ($subjects->isEmpty()) {
+            return false;
+        }
+
+        if ($subjects->contains(fn ($s) => $s->status !== SubjectAssignmentStatus::Completed)) {
+            return false;
+        }
+
+        return $this->portfolioEvaluations()
+            ->where('category', RubricCategory::WorksiteVisit->value)
+            ->where('status', SubjectEvaluationStatus::Submitted->value)
+            ->exists();
+    }
+
+    /**
+     * Automatically transitions the portfolio to Evaluated when all grading
+     * conditions are satisfied.  Only acts if status is currently UnderReview.
+     */
+    public function attemptAutoEvaluate(): void
+    {
+        if ($this->status === PortfolioStatus::UnderReview && $this->isFullyEvaluated()) {
+            $this->update(['status' => PortfolioStatus::Evaluated]);
+        }
     }
 }
