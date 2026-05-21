@@ -381,13 +381,13 @@ function CategoryScoringBlock({ endpoint, category, label, criteria, evaluations
     function save(e: FormEvent) {
         e.preventDefault();
         build(false);
-        form.post(endpoint, { preserveScroll: true });
+        form.post(endpoint, { preserveScroll: true, onSuccess: () => setNewAttemptStarted(false) });
     }
 
     function submit() {
         if (!confirm('Submit this evaluation? You can start a new attempt later but cannot edit this one.')) return;
         build(true);
-        form.post(endpoint, { preserveScroll: true });
+        form.post(endpoint, { preserveScroll: true, onSuccess: () => setNewAttemptStarted(false) });
     }
 
     function startNewAttempt() {
