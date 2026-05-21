@@ -12,10 +12,10 @@ use App\Models\Evaluation;
 use App\Models\EvaluationScore;
 use App\Models\Portfolio;
 use App\Models\PortfolioAssignment;
+use App\Models\PortfolioEvaluation;
 use App\Models\PortfolioSubject;
 use App\Models\RubricCriteria;
 use App\Models\Subject;
-use App\Models\SubjectEvaluation;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -117,33 +117,8 @@ class PortfolioEvaluationResultsTest extends TestCase
         $evaluator = User::factory()->evaluator()->create();
         $portfolio = Portfolio::factory()->approved()->create(['user_id' => $applicant->id]);
 
-        $year = AcademicYear::create([
-            'name' => 'AY 2026-2027',
-            'start_date' => now()->startOfYear()->toDateString(),
-            'end_date' => now()->endOfYear()->toDateString(),
-            'is_active' => true,
-        ]);
-
-        $subject = Subject::create([
-            'academic_year_id' => $year->id,
-            'code' => 'IT301',
-            'name' => 'Worksite Practicum',
-            'description' => 'Worksite visit subject',
-            'units' => 3,
-            'is_active' => true,
-        ]);
-
-        $portfolioSubject = PortfolioSubject::create([
+        PortfolioEvaluation::create([
             'portfolio_id' => $portfolio->id,
-            'subject_id' => $subject->id,
-            'evaluator_id' => $evaluator->id,
-            'assigned_by' => $evaluator->id,
-            'status' => 'in_progress',
-            'assigned_at' => now()->subDays(2),
-        ]);
-
-        SubjectEvaluation::create([
-            'portfolio_subject_id' => $portfolioSubject->id,
             'evaluator_id' => $evaluator->id,
             'category' => RubricCategory::WorksiteVisit,
             'attempt_number' => 1,
@@ -155,8 +130,8 @@ class PortfolioEvaluationResultsTest extends TestCase
             'submitted_at' => now()->subDay(),
         ]);
 
-        SubjectEvaluation::create([
-            'portfolio_subject_id' => $portfolioSubject->id,
+        PortfolioEvaluation::create([
+            'portfolio_id' => $portfolio->id,
             'evaluator_id' => $evaluator->id,
             'category' => RubricCategory::WorksiteVisit,
             'attempt_number' => 2,
@@ -172,7 +147,6 @@ class PortfolioEvaluationResultsTest extends TestCase
             fn ($page) => $page
                 ->component('applicant/portfolios/show')
                 ->has('worksiteVisitRatings', 1)
-                ->where('worksiteVisitRatings.0.subject.code', 'IT301')
                 ->where('worksiteVisitRatings.0.evaluator.name', $evaluator->name)
                 ->where('worksiteVisitRatings.0.attempt_number', 1)
         );

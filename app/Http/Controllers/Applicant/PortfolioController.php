@@ -30,14 +30,16 @@ class PortfolioController extends Controller
             ->paginate(10);
 
         $latestPortfolio = $user->portfolios()->latest('created_at')->first();
-        $canCreatePortfolio = $latestPortfolio === null || $latestPortfolio->status === PortfolioStatus::Rejected;
+        $canCreatePortfolio = $latestPortfolio === null
+            || $latestPortfolio->status === PortfolioStatus::Rejected
+            || $latestPortfolio->status === PortfolioStatus::Approved;
 
         return Inertia::render('applicant/portfolios/index', [
             'portfolios' => $portfolios,
             'canCreatePortfolio' => $canCreatePortfolio,
             'createRestrictionMessage' => $canCreatePortfolio
                 ? null
-                : 'You already have an active application. You can reapply only after a rejected result.',
+                : 'You already have an active application. You can reapply only after your application is rejected or approved.',
         ]);
     }
 
@@ -46,9 +48,12 @@ class PortfolioController extends Controller
         $user = auth()->user();
         $latestPortfolio = $user->portfolios()->latest('created_at')->first();
 
-        if ($latestPortfolio !== null && $latestPortfolio->status !== PortfolioStatus::Rejected) {
+        if ($latestPortfolio !== null
+            && $latestPortfolio->status !== PortfolioStatus::Rejected
+            && $latestPortfolio->status !== PortfolioStatus::Approved
+        ) {
             return redirect()->route('applicant.portfolios.index')
-                ->with('error', 'You can only create a new application after a rejected result.');
+                ->with('error', 'You can only create a new application after your application is rejected or approved.');
         }
 
         $categories = DocumentCategory::orderBy('sort_order')->get([
@@ -75,9 +80,12 @@ class PortfolioController extends Controller
         $user = auth()->user();
         $latestPortfolio = $user->portfolios()->latest('created_at')->first();
 
-        if ($latestPortfolio !== null && $latestPortfolio->status !== PortfolioStatus::Rejected) {
+        if ($latestPortfolio !== null
+            && $latestPortfolio->status !== PortfolioStatus::Rejected
+            && $latestPortfolio->status !== PortfolioStatus::Approved
+        ) {
             return redirect()->route('applicant.portfolios.index')
-                ->with('error', 'You can only create a new application after a rejected result.');
+                ->with('error', 'You can only create a new application after your application is rejected or approved.');
         }
 
         $portfolio = auth()->user()->portfolios()->create([
@@ -134,13 +142,20 @@ class PortfolioController extends Controller
             ])
             ->values();
 
-        $assignedSubjects = $portfolio->portfolioSubjects()
-            ->with([
-                'subject.academicYear:id,name',
-                'evaluator:id,name,email',
-            ])
-            ->orderBy('assigned_at')
-            ->get();
+        $canViewSubjects = in_array($portfolio->status, [
+            PortfolioStatus::Approved,
+            PortfolioStatus::Evaluated,
+        ]);
+
+        $assignedSubjects = $canViewSubjects
+            ? $portfolio->portfolioSubjects()
+                ->with([
+                    'subject.academicYear:id,name',
+                    'evaluator:id,name,email',
+                ])
+                ->orderBy('assigned_at')
+                ->get()
+            : collect();
 
         return Inertia::render('applicant/portfolios/show', [
             'portfolio' => $portfolio,
