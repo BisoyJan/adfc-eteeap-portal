@@ -338,18 +338,22 @@ class PortfolioController extends Controller
             ->ordered()
             ->get();
 
-        $evaluation = PortfolioEvaluation::query()
+        $allEvaluations = PortfolioEvaluation::query()
             ->where('portfolio_id', $assignment->portfolio_id)
             ->where('category', RubricCategory::WorksiteVisit->value)
             ->where('evaluator_id', auth()->id())
             ->orderByDesc('attempt_number')
             ->with('scores')
-            ->first();
+            ->get();
+
+        $currentEvaluation = $allEvaluations->first();
+        $pastEvaluations = $allEvaluations->skip(1)->values();
 
         return Inertia::render('evaluator/portfolios/worksite', [
             'assignment' => $assignment,
             'criteria' => $criteria,
-            'evaluation' => $evaluation,
+            'evaluation' => $currentEvaluation,
+            'pastEvaluations' => $pastEvaluations,
         ]);
     }
 

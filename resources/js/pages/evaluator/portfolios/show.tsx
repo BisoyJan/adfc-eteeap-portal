@@ -965,39 +965,41 @@ export default function Show({
                     </CardHeader>
                     <CardContent className="space-y-6">
                         {assignedSubjects.length > 0 ? (
-                            <div className="overflow-x-auto">
+                            <div className="overflow-x-auto rounded-md border">
                                 <table className="w-full text-sm">
                                     <thead>
-                                        <tr className="border-b">
-                                            <th className="pb-2 text-left font-medium">Course Code</th>
-                                            <th className="pb-2 text-left font-medium">Course Name</th>
-                                            <th className="pb-2 text-left font-medium">Units</th>
-                                            <th className="pb-2 text-left font-medium">Academic Year</th>
-                                            <th className="pb-2 text-left font-medium">Notes</th>
-                                            <th className="pb-2 text-left font-medium">Actions</th>
+                                        <tr className="border-b bg-muted/50">
+                                            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">Course Code</th>
+                                            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">Course Name</th>
+                                            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">Units</th>
+                                            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">Academic Year</th>
+                                            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">Notes</th>
+                                            <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wide text-muted-foreground">Actions</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
+                                    <tbody className="divide-y">
                                         {assignedSubjects.map((item) => (
-                                            <tr key={item.id} className="border-b last:border-0">
-                                                <td className="py-2 font-mono">{item.subject.code}</td>
-                                                <td className="py-2">{item.subject.name}</td>
-                                                <td className="py-2">{item.subject.units}</td>
-                                                <td className="py-2">{item.subject.academic_year?.name ?? '—'}</td>
-                                                <td className="py-2 text-muted-foreground">{item.notes ?? '—'}</td>
-                                                <td className="py-2 space-x-2">
-                                                    <Button variant="outline" size="sm" asChild>
-                                                        <Link href={`/evaluator/subjects/${item.id}`}>
-                                                            Open
-                                                        </Link>
-                                                    </Button>
-                                                    <Button
-                                                        variant="destructive"
-                                                        size="sm"
-                                                        onClick={() => handleRemoveSubject(item.id)}
-                                                    >
-                                                        Remove
-                                                    </Button>
+                                            <tr key={item.id} className="transition-colors hover:bg-muted/30">
+                                                <td className="px-4 py-3 font-mono text-sm font-medium">{item.subject.code}</td>
+                                                <td className="px-4 py-3">{item.subject.name}</td>
+                                                <td className="px-4 py-3 text-muted-foreground">{item.subject.units}</td>
+                                                <td className="px-4 py-3 text-muted-foreground">{item.subject.academic_year?.name ?? '—'}</td>
+                                                <td className="px-4 py-3 text-muted-foreground">{item.notes ?? '—'}</td>
+                                                <td className="px-4 py-3">
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        <Button variant="outline" size="sm" asChild>
+                                                            <Link href={`/evaluator/subjects/${item.id}`}>
+                                                                Open
+                                                            </Link>
+                                                        </Button>
+                                                        <Button
+                                                            variant="destructive"
+                                                            size="sm"
+                                                            onClick={() => handleRemoveSubject(item.id)}
+                                                        >
+                                                            Remove
+                                                        </Button>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         ))}
@@ -1005,58 +1007,62 @@ export default function Show({
                                 </table>
                             </div>
                         ) : (
-                            <p className="text-muted-foreground text-sm">No subjects assigned yet.</p>
+                            <div className="rounded-md border border-dashed px-4 py-8 text-center">
+                                <p className="text-sm text-muted-foreground">No subjects assigned yet.</p>
+                            </div>
                         )}
 
                         {canAssignSubjects ? (
                             <>
                                 <Separator />
-                                <form onSubmit={handleAssignSubject} className="grid gap-4 sm:grid-cols-2">
-                                    <div className="space-y-1">
-                                        <Label htmlFor="subject_id">Subject</Label>
-                                        <Select
-                                            value={subjectForm.data.subject_id}
-                                            onValueChange={(value) => subjectForm.setData('subject_id', value)}
-                                        >
-                                            <SelectTrigger id="subject_id">
-                                                <SelectValue placeholder="Select a subject" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {availableSubjects.map((subject) => (
-                                                    <SelectItem key={subject.id} value={String(subject.id)}>
-                                                        {subject.code} - {subject.name}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                        <InputError message={subjectForm.errors.subject_id} />
+                                <form onSubmit={handleAssignSubject} className="space-y-4">
+                                    <div className="grid gap-4 sm:grid-cols-2">
+                                        <div className="space-y-1.5">
+                                            <Label htmlFor="subject_id">Subject</Label>
+                                            <Select
+                                                value={subjectForm.data.subject_id}
+                                                onValueChange={(value) => subjectForm.setData('subject_id', value)}
+                                            >
+                                                <SelectTrigger id="subject_id">
+                                                    <SelectValue placeholder="Select a subject" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {availableSubjects.map((subject) => (
+                                                        <SelectItem key={subject.id} value={String(subject.id)}>
+                                                            {subject.code} — {subject.name}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                            <InputError message={subjectForm.errors.subject_id} />
+                                        </div>
+                                        <div className="space-y-1.5 sm:col-span-2">
+                                            <Label htmlFor="subject-notes">Notes <span className="text-muted-foreground">(optional)</span></Label>
+                                            <textarea
+                                                id="subject-notes"
+                                                className="flex min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
+                                                value={subjectForm.data.notes}
+                                                onChange={(e) => subjectForm.setData('notes', e.target.value)}
+                                                placeholder="Add context for this subject assignment..."
+                                            />
+                                            <InputError message={subjectForm.errors.notes} />
+                                        </div>
                                     </div>
-                                    <div className="space-y-1 sm:col-span-2">
-                                        <Label htmlFor="subject-notes">Notes (optional)</Label>
-                                        <textarea
-                                            id="subject-notes"
-                                            className="flex min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
-                                            value={subjectForm.data.notes}
-                                            onChange={(e) => subjectForm.setData('notes', e.target.value)}
-                                            placeholder="Add assignment context for this subject..."
-                                        />
-                                        <InputError message={subjectForm.errors.notes} />
-                                    </div>
-                                    <div className="sm:col-span-2">
-                                        <Button
-                                            type="submit"
-                                            disabled={subjectForm.processing || availableSubjects.length === 0}
-                                        >
-                                            <Plus className="mr-2 h-4 w-4" />
-                                            Assign Subject
-                                        </Button>
-                                    </div>
+                                    <Button
+                                        type="submit"
+                                        disabled={subjectForm.processing || availableSubjects.length === 0}
+                                    >
+                                        <Plus className="mr-2 h-4 w-4" />
+                                        {subjectForm.processing ? 'Assigning...' : 'Assign Subject'}
+                                    </Button>
                                 </form>
                             </>
                         ) : (
-                            <p className="text-sm text-muted-foreground">
-                                Subject assignment is available once the portfolio is under review or approved. Submit the interview evaluation with an "Approve" recommendation to unlock this.
-                            </p>
+                            <div className="rounded-md border border-dashed px-4 py-4">
+                                <p className="text-sm text-muted-foreground">
+                                    Subject assignment is available once the portfolio is under review or approved. Submit the interview evaluation with an &quot;Approve&quot; recommendation to unlock this.
+                                </p>
+                            </div>
                         )}
                     </CardContent>
                 </Card>
