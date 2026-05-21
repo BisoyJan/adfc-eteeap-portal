@@ -265,7 +265,7 @@ export default function Show({
     const pastDue =
         assignment.due_date && isPastDue(assignment.due_date) && !isCompleted;
     const assignmentBadge = getAssignmentBadgeProps(assignment.status);
-    const canAssignSubjects = portfolio.status === 'approved';
+    const canAssignSubjects = ['under_review', 'approved'].includes(portfolio.status);
     const assignedSubjectIds = new Set(
         assignedSubjects.map((item) => item.subject.id),
     );
@@ -613,7 +613,7 @@ export default function Show({
                             /* Read-only evaluation summary */
                             <Card>
                                 <CardHeader>
-                                    <CardTitle>Evaluation Summary</CardTitle>
+                                    <CardTitle>Interview Evaluation Summary</CardTitle>
                                     <CardDescription>
                                         Submitted{' '}
                                         {evaluation.submitted_at
@@ -731,10 +731,9 @@ export default function Show({
                             /* Evaluation form */
                             <Card>
                                 <CardHeader>
-                                    <CardTitle>Evaluation Scoring</CardTitle>
+                                    <CardTitle>Interview Assessment</CardTitle>
                                     <CardDescription>
-                                        Score the portfolio using the rubric
-                                        criteria below.
+                                        Score the applicant's interview using the rubric criteria below.
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent>
@@ -1056,7 +1055,7 @@ export default function Show({
                             </>
                         ) : (
                             <p className="text-sm text-muted-foreground">
-                                Subject assignment is available only after the interview recommendation is approved.
+                                Subject assignment is available once the portfolio is under review or approved. Submit the interview evaluation with an "Approve" recommendation to unlock this.
                             </p>
                         )}
                     </CardContent>
