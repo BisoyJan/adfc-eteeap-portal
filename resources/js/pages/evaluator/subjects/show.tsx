@@ -347,6 +347,9 @@ function CategoryScoringBlock({ endpoint, category, label, criteria, evaluations
     const isSubmitted = latest?.status === 'submitted';
     const nextAttempt = isSubmitted ? (latest?.attempt_number ?? 0) + 1 : (latest?.attempt_number ?? 1);
 
+    const [newAttemptStarted, setNewAttemptStarted] = useState(false);
+    const editingEnabled = !isSubmitted || newAttemptStarted;
+
     const initialScores: Record<number, { score: string; comments: string }> = {};
     criteria.forEach((c) => {
         const existing = !isSubmitted ? latest?.scores.find((s) => s.rubric_criteria_id === c.id) : undefined;
@@ -389,11 +392,11 @@ function CategoryScoringBlock({ endpoint, category, label, criteria, evaluations
 
     function startNewAttempt() {
         if (!confirm('Start a new attempt? This will create attempt #' + nextAttempt)) return;
-        // Force the form to a clean state for the new attempt
         const blank: Record<number, { score: string; comments: string }> = {};
         criteria.forEach((c) => { blank[c.id] = { score: '', comments: '' } });
         setScoreData(blank);
         form.setData({ category, attempt_number: nextAttempt, comments: '', conducted_at: '', submit: false, scores: [] });
+        setNewAttemptStarted(true);
     }
 
     return (
@@ -407,7 +410,7 @@ function CategoryScoringBlock({ endpoint, category, label, criteria, evaluations
                                 #{e.attempt_number}: {e.score}/{e.max_score}
                             </Badge>
                         ))}
-                        {isSubmitted && (<Button size="sm" variant="outline" onClick={startNewAttempt}>Retake</Button>)}
+                        {isSubmitted && !newAttemptStarted && (<Button size="sm" variant="outline" onClick={startNewAttempt}>Retake</Button>)}
                     </div>
                 </CardTitle>
             </CardHeader>
@@ -437,7 +440,7 @@ function CategoryScoringBlock({ endpoint, category, label, criteria, evaluations
                                                     type="number" min={0} max={c.max_score} step="0.01"
                                                     value={scoreData[c.id]?.score ?? ''}
                                                     onChange={(e) => setScoreData((p) => ({ ...p, [c.id]: { ...p[c.id], score: e.target.value } }))}
-                                                    disabled={isSubmitted}
+                                                    disabled={!editingEnabled}
                                                     placeholder={`/ ${c.max_score}`}
                                                 />
                                             </td>
@@ -445,7 +448,7 @@ function CategoryScoringBlock({ endpoint, category, label, criteria, evaluations
                                                 <Input
                                                     value={scoreData[c.id]?.comments ?? ''}
                                                     onChange={(e) => setScoreData((p) => ({ ...p, [c.id]: { ...p[c.id], comments: e.target.value } }))}
-                                                    disabled={isSubmitted}
+                                                    disabled={!editingEnabled}
                                                 />
                                             </td>
                                         </tr>
@@ -456,18 +459,18 @@ function CategoryScoringBlock({ endpoint, category, label, criteria, evaluations
                         <div className="grid gap-3 md:grid-cols-3">
                             <div className="space-y-1">
                                 <Label className="text-xs">Attempt #</Label>
-                                <Input type="number" min={1} value={form.data.attempt_number} onChange={(e) => form.setData('attempt_number', Number(e.target.value))} disabled={isSubmitted} />
+                                <Input type="number" min={1} value={form.data.attempt_number} onChange={(e) => form.setData('attempt_number', Number(e.target.value))} disabled={!editingEnabled} />
                             </div>
                             <div className="space-y-1">
                                 <Label className="text-xs">Conducted At</Label>
-                                <Input type="datetime-local" value={form.data.conducted_at?.substring(0, 16) ?? ''} onChange={(e) => form.setData('conducted_at', e.target.value)} disabled={isSubmitted} />
+                                <Input type="datetime-local" value={form.data.conducted_at?.substring(0, 16) ?? ''} onChange={(e) => form.setData('conducted_at', e.target.value)} disabled={!editingEnabled} />
                             </div>
                             <div className="space-y-1 md:col-span-1">
                                 <Label className="text-xs">Overall Comments</Label>
-                                <Input value={form.data.comments} onChange={(e) => form.setData('comments', e.target.value)} disabled={isSubmitted} />
+                                <Input value={form.data.comments} onChange={(e) => form.setData('comments', e.target.value)} disabled={!editingEnabled} />
                             </div>
                         </div>
-                        {!isSubmitted && (
+                        {editingEnabled && (
                             <div className="flex gap-2">
                                 <Button type="submit" variant="outline" disabled={form.processing}><Save className="mr-2 h-4 w-4" /> Save Draft</Button>
                                 <Button type="button" onClick={submit} disabled={form.processing}><Send className="mr-2 h-4 w-4" /> Submit</Button>
