@@ -31,7 +31,7 @@ class SubjectFlowTest extends TestCase
         $applicant = User::factory()->applicant()->create();
 
         $visibleSubject = $this->createPortfolioSubjectForApplicant($applicant, PortfolioStatus::Approved);
-        $this->createPortfolioSubjectForApplicant($applicant, PortfolioStatus::UnderReview);
+        $this->createPortfolioSubjectForApplicant($applicant, PortfolioStatus::Submitted);
 
         $response = $this->actingAs($applicant)->get(route('applicant.subjects.index'));
 
@@ -47,7 +47,7 @@ class SubjectFlowTest extends TestCase
     public function test_applicant_cannot_open_subject_from_locked_portfolio(): void
     {
         $applicant = User::factory()->applicant()->create();
-        $lockedSubject = $this->createPortfolioSubjectForApplicant($applicant, PortfolioStatus::UnderReview);
+        $lockedSubject = $this->createPortfolioSubjectForApplicant($applicant, PortfolioStatus::Submitted);
 
         $this->actingAs($applicant)
             ->get(route('applicant.subjects.show', $lockedSubject))
@@ -82,7 +82,7 @@ class SubjectFlowTest extends TestCase
         Storage::fake('public');
 
         $applicant = User::factory()->applicant()->create();
-        $portfolioSubject = $this->createPortfolioSubjectForApplicant($applicant, PortfolioStatus::UnderReview);
+        $portfolioSubject = $this->createPortfolioSubjectForApplicant($applicant, PortfolioStatus::Submitted);
 
         $this->actingAs($applicant)->post(route('applicant.subjects.modules.store', $portfolioSubject), [
             'title' => 'Blocked Applicant Module',

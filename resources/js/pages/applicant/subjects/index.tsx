@@ -11,13 +11,13 @@ interface PortfolioSubject {
     id: number;
     status: string;
     recommendation: string | null;
+    modules: unknown[];
     subject: {
         id: number;
         code: string;
         name: string;
         units: number;
         academic_year: { name: string } | null;
-        modules: unknown[];
         pre_assessment_questions: unknown[];
     };
     pre_assessment_attempts: { id: number; attempt_number: number; submitted_at: string | null; score: string | null }[];
@@ -55,7 +55,7 @@ export default function ApplicantSubjects({ portfolioSubjects }: Props) {
                                 </CardHeader>
                                 <CardContent className="space-y-3">
                                     <div className="flex flex-wrap gap-2 text-xs">
-                                        <Badge variant="secondary"><BookOpen className="mr-1 h-3 w-3" /> {ps.subject.modules.length} modules</Badge>
+                                        <Badge variant="secondary"><BookOpen className="mr-1 h-3 w-3" /> {ps.modules.length} modules</Badge>
                                         <Badge variant="secondary"><ClipboardList className="mr-1 h-3 w-3" /> {ps.subject.pre_assessment_questions.length} questions</Badge>
                                         <Badge>{ps.status.replace('_', ' ')}</Badge>
                                         {latest && (

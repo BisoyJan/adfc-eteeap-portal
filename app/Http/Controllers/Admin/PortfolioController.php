@@ -184,4 +184,12 @@ class PortfolioController extends Controller
 
         return back()->with('success', 'Assignment removed successfully.');
     }
+
+    public function destroy(Portfolio $portfolio): RedirectResponse
+    {
+        $portfolio->delete();
+
+        return redirect()->route('admin.portfolios.index')
+            ->with('success', 'Portfolio deleted successfully.');
+    }
 }

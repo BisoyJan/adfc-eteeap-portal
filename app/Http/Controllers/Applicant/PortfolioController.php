@@ -145,6 +145,7 @@ class PortfolioController extends Controller
         $canViewSubjects = in_array($portfolio->status, [
             PortfolioStatus::Approved,
             PortfolioStatus::Evaluated,
+            PortfolioStatus::UnderReview,
         ]);
 
         $assignedSubjects = $canViewSubjects

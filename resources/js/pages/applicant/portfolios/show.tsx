@@ -1134,7 +1134,7 @@ export default function Show({
                                                 </td>
                                                 <td className="py-2 text-muted-foreground">{item.evaluator?.name ?? '—'}</td>
                                                 <td className="py-2">
-                                                    {(portfolio.status === 'approved' || portfolio.status === 'evaluated') && (
+                                                    {(portfolio.status === 'approved' || portfolio.status === 'evaluated' || portfolio.status === 'under_review') && (
                                                         <Button variant="outline" size="sm" asChild>
                                                             <Link href={`/applicant/subjects/${item.id}`}>
                                                                 Open

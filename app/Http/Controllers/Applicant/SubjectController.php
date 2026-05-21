@@ -25,7 +25,7 @@ class SubjectController extends Controller
         $portfolioSubjects = $this->visibleSubjectsQuery()
             ->with([
                 'subject.academicYear',
-                'subject.modules',
+                'modules',
                 'subject.preAssessmentQuestions' => fn ($q) => $q->active()->ordered(),
                 'preAssessmentAttempts' => fn ($q) => $q->orderBy('attempt_number', 'desc'),
                 'subjectEvaluations' => fn ($q) => $q
@@ -45,7 +45,7 @@ class SubjectController extends Controller
 
         $portfolioSubject->load([
             'subject.academicYear',
-            'subject.modules.uploader:id,name',
+            'modules.uploader:id,name',
             'subject.preAssessmentQuestions' => fn ($q) => $q->active()->ordered(),
             'preAssessmentAttempts' => fn ($q) => $q
                 ->with(['answers', 'grader:id,name'])
@@ -66,7 +66,7 @@ class SubjectController extends Controller
     public function downloadModule(SubjectModule $module): BinaryFileResponse
     {
         $hasAccess = $this->visibleSubjectsQuery()
-            ->where('subject_id', $module->subject_id)
+            ->whereKey($module->portfolio_subject_id)
             ->exists();
 
         abort_unless($hasAccess, 403);
@@ -88,10 +88,11 @@ class SubjectController extends Controller
         ]);
 
         $file = $request->file('file');
-        $path = $file->store("subjects/{$portfolioSubject->subject_id}/modules", 'public');
+        $path = $file->store("portfolio-subjects/{$portfolioSubject->id}/modules", 'public');
 
         SubjectModule::create([
             'subject_id' => $portfolioSubject->subject_id,
+            'portfolio_subject_id' => $portfolioSubject->id,
             'uploaded_by' => auth()->id(),
             'title' => $data['title'],
             'description' => $data['description'] ?? null,
@@ -201,6 +202,7 @@ class SubjectController extends Controller
                 ->whereIn('status', [
                     PortfolioStatus::Approved->value,
                     PortfolioStatus::Evaluated->value,
+                    PortfolioStatus::UnderReview->value,
                 ]));
     }
 }

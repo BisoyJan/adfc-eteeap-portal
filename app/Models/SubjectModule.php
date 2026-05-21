@@ -9,6 +9,7 @@ class SubjectModule extends Model
 {
     protected $fillable = [
         'subject_id',
+        'portfolio_subject_id',
         'uploaded_by',
         'title',
         'description',
@@ -21,6 +22,11 @@ class SubjectModule extends Model
     public function subject(): BelongsTo
     {
         return $this->belongsTo(Subject::class);
+    }
+
+    public function portfolioSubject(): BelongsTo
+    {
+        return $this->belongsTo(PortfolioSubject::class);
     }
 
     public function uploader(): BelongsTo

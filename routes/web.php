@@ -61,6 +61,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
     Route::post('portfolios/{portfolio}/assign', [\App\Http\Controllers\Admin\PortfolioController::class, 'assign'])->name('portfolios.assign');
     Route::put('portfolios/{portfolio}/status', [\App\Http\Controllers\Admin\PortfolioController::class, 'updateStatus'])->name('portfolios.status');
     Route::delete('portfolios/{portfolio}/assignments/{assignment}', [\App\Http\Controllers\Admin\PortfolioController::class, 'removeAssignment'])->name('portfolios.assignments.destroy');
+    Route::delete('portfolios/{portfolio}', [\App\Http\Controllers\Admin\PortfolioController::class, 'destroy'])->name('portfolios.destroy');
     Route::resource('rubrics', \App\Http\Controllers\Admin\RubricCriteriaController::class)->except(['show']);
     Route::post('rubrics/{rubric}/toggle-active', [\App\Http\Controllers\Admin\RubricCriteriaController::class, 'toggleActive'])->name('rubrics.toggle-active');
     Route::resource('academic-years', \App\Http\Controllers\Admin\AcademicYearController::class)->except(['show']);

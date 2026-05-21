@@ -45,11 +45,11 @@ interface Props {
         status: string;
         recommendation: string | null;
         notes: string | null;
+        modules: Module[];
         evaluator: { id: number; name: string } | null;
         subject: {
             id: number; code: string; name: string; units: number; description: string | null;
             academic_year: { id: number; name: string } | null;
-            modules: Module[];
             pre_assessment_questions: { id: number; question: string; sort_order: number }[];
         };
         pre_assessment_attempts: Attempt[];
@@ -149,7 +149,7 @@ export default function ApplicantSubjectShow({ portfolioSubject }: Props) {
                 </Card>
 
                 <Card>
-                    <CardHeader><CardTitle>Modules ({s.modules.length})</CardTitle></CardHeader>
+                    <CardHeader><CardTitle>Modules ({portfolioSubject.modules.length})</CardTitle></CardHeader>
                     <CardContent className="space-y-6">
                         <form onSubmit={uploadModule} className="grid gap-4 rounded-md border p-4 md:grid-cols-2">
                             <div className="space-y-1">
@@ -192,11 +192,11 @@ export default function ApplicantSubjectShow({ portfolioSubject }: Props) {
                             </div>
                         </form>
 
-                        {s.modules.length === 0 ? (
+                        {portfolioSubject.modules.length === 0 ? (
                             <p className="text-sm text-muted-foreground">No modules uploaded yet.</p>
                         ) : (
                             <ul className="divide-y">
-                                {s.modules.map((m) => (
+                                {portfolioSubject.modules.map((m) => (
                                     <li key={m.id} className="flex items-center justify-between py-3">
                                         <div>
                                             <div className="flex items-center gap-2 font-medium"><FileText className="h-4 w-4" /> {m.title}</div>

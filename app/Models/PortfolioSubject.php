@@ -61,4 +61,9 @@ class PortfolioSubject extends Model
     {
         return $this->hasMany(SubjectEvaluation::class);
     }
+
+    public function modules(): HasMany
+    {
+        return $this->hasMany(SubjectModule::class);
+    }
 }

@@ -97,7 +97,7 @@ class SubjectAssignmentController extends Controller
         $portfolioSubject->load([
             'portfolio.user',
             'subject.academicYear',
-            'subject.modules.uploader:id,name',
+            'modules.uploader:id,name',
             'subject.preAssessmentQuestions' => fn ($q) => $q->ordered(),
             'preAssessmentAttempts.answers.question',
             'preAssessmentAttempts.grader:id,name',
@@ -300,7 +300,7 @@ class SubjectAssignmentController extends Controller
     public function downloadModule(SubjectModule $module): BinaryFileResponse
     {
         $allowed = $this->visibleAssignmentsQuery()
-            ->where('subject_id', $module->subject_id)
+            ->whereKey($module->portfolio_subject_id)
             ->exists();
 
         abort_unless($allowed, 403);
@@ -322,10 +322,11 @@ class SubjectAssignmentController extends Controller
         ]);
 
         $file = $request->file('file');
-        $path = $file->store("subjects/{$portfolioSubject->subject_id}/modules", 'public');
+        $path = $file->store("portfolio-subjects/{$portfolioSubject->id}/modules", 'public');
 
         SubjectModule::create([
             'subject_id' => $portfolioSubject->subject_id,
+            'portfolio_subject_id' => $portfolioSubject->id,
             'uploaded_by' => auth()->id(),
             'title' => $data['title'],
             'description' => $data['description'] ?? null,

@@ -1,8 +1,19 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { Eye, Search } from 'lucide-react';
+import { Eye, Search, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import FlashMessages from '@/components/flash-messages';
 import Heading from '@/components/heading';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -249,10 +260,10 @@ export default function Index({ portfolios, statuses, filters }: Props) {
                                                     {portfolio.progress.completed}/{portfolio.progress.required}
                                                 </span>
                                                 <span className={`font-medium ${portfolio.progress.percentage === 100
-                                                        ? 'text-green-600'
-                                                        : portfolio.progress.percentage >= 50
-                                                            ? 'text-amber-600'
-                                                            : 'text-red-600'
+                                                    ? 'text-green-600'
+                                                    : portfolio.progress.percentage >= 50
+                                                        ? 'text-amber-600'
+                                                        : 'text-red-600'
                                                     }`}>
                                                     {portfolio.progress.percentage}%
                                                 </span>
@@ -260,14 +271,14 @@ export default function Index({ portfolios, statuses, filters }: Props) {
                                             <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
                                                 <div
                                                     className={`h-full rounded-full transition-all ${portfolio.progress.percentage === 100
-                                                            ? 'bg-green-500 w-full'
-                                                            : portfolio.progress.percentage >= 75
-                                                                ? 'bg-green-500 w-3/4'
-                                                                : portfolio.progress.percentage >= 50
-                                                                    ? 'bg-amber-500 w-1/2'
-                                                                    : portfolio.progress.percentage >= 25
-                                                                        ? 'bg-red-500 w-1/4'
-                                                                        : 'bg-red-500 w-[5%]'
+                                                        ? 'bg-green-500 w-full'
+                                                        : portfolio.progress.percentage >= 75
+                                                            ? 'bg-green-500 w-3/4'
+                                                            : portfolio.progress.percentage >= 50
+                                                                ? 'bg-amber-500 w-1/2'
+                                                                : portfolio.progress.percentage >= 25
+                                                                    ? 'bg-red-500 w-1/4'
+                                                                    : 'bg-red-500 w-[5%]'
                                                         }`}
                                                 />
                                             </div>
@@ -294,18 +305,46 @@ export default function Index({ portfolios, statuses, filters }: Props) {
                                         {portfolio.assignments.length}
                                     </td>
                                     <td className="px-4 py-3 text-right">
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            asChild
-                                        >
-                                            <Link
-                                                href={`/admin/portfolios/${portfolio.id}`}
+                                        <div className="flex items-center justify-end gap-1">
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                asChild
                                             >
-                                                <Eye className="mr-1 h-4 w-4" />
-                                                View
-                                            </Link>
-                                        </Button>
+                                                <Link
+                                                    href={`/admin/portfolios/${portfolio.id}`}
+                                                >
+                                                    <Eye className="mr-1 h-4 w-4" />
+                                                    View
+                                                </Link>
+                                            </Button>
+                                            <AlertDialog>
+                                                <AlertDialogTrigger asChild>
+                                                    <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                </AlertDialogTrigger>
+                                                <AlertDialogContent>
+                                                    <AlertDialogHeader>
+                                                        <AlertDialogTitle>Delete Portfolio</AlertDialogTitle>
+                                                        <AlertDialogDescription>
+                                                            Are you sure you want to delete <strong>{portfolio.title}</strong> by <strong>{portfolio.user.name}</strong>? This action cannot be undone.
+                                                        </AlertDialogDescription>
+                                                    </AlertDialogHeader>
+                                                    <AlertDialogFooter>
+                                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                        <AlertDialogAction
+                                                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                                            onClick={() =>
+                                                                router.delete(`/admin/portfolios/${portfolio.id}`)
+                                                            }
+                                                        >
+                                                            Delete
+                                                        </AlertDialogAction>
+                                                    </AlertDialogFooter>
+                                                </AlertDialogContent>
+                                            </AlertDialog>
+                                        </div>
                                     </td>
                                 </tr>
                             ))}

@@ -58,6 +58,7 @@ interface Props {
         status: string;
         recommendation: string | null;
         notes: string | null;
+        modules: Module[];
         portfolio: {
             id: number;
             title: string;
@@ -66,7 +67,6 @@ interface Props {
         subject: {
             id: number; code: string; name: string; units: number; description: string | null;
             academic_year: { name: string } | null;
-            modules: Module[];
             pre_assessment_questions: Question[];
         };
         pre_assessment_attempts: Attempt[];
@@ -128,7 +128,7 @@ export default function EvaluatorSubjectShow({ portfolioSubject, rubricByCategor
                 <FlashMessages />
 
                 <Card>
-                    <CardHeader><CardTitle>Modules ({ps.subject.modules.length})</CardTitle></CardHeader>
+                    <CardHeader><CardTitle>Modules ({ps.modules.length})</CardTitle></CardHeader>
                     <CardContent className="space-y-6">
                         <form onSubmit={uploadModule} className="grid gap-4 rounded-md border p-4 md:grid-cols-2">
                             <div className="space-y-1">
@@ -171,11 +171,11 @@ export default function EvaluatorSubjectShow({ portfolioSubject, rubricByCategor
                             </div>
                         </form>
 
-                        {ps.subject.modules.length === 0 ? (
+                        {ps.modules.length === 0 ? (
                             <p className="text-sm text-muted-foreground">No modules.</p>
                         ) : (
                             <ul className="divide-y">
-                                {ps.subject.modules.map((m) => (
+                                {ps.modules.map((m) => (
                                     <li key={m.id} className="flex items-center justify-between py-2">
                                         <div>
                                             <div className="font-medium">{m.title}</div>
