@@ -1,4 +1,6 @@
-import { Download, Eye, FileText } from 'lucide-react';
+import mammoth from 'mammoth/mammoth.browser';
+import { Download, Eye, FileText, Loader2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -26,6 +28,59 @@ function formatFileSize(bytes: number): string {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+const DOCX_MIME_TYPES = [
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/msword',
+];
+
+function DocxPreview({ previewUrl }: { previewUrl: string }) {
+    const [html, setHtml] = useState<string | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        setLoading(true);
+        setHtml(null);
+        setError(null);
+
+        fetch(previewUrl)
+            .then((res) => {
+                if (!res.ok) throw new Error('Failed to fetch file');
+                return res.arrayBuffer();
+            })
+            .then((buffer) => mammoth.convertToHtml({ arrayBuffer: buffer }))
+            .then((result) => setHtml(result.value))
+            .catch(() => setError('Could not render document preview.'))
+            .finally(() => setLoading(false));
+    }, [previewUrl]);
+
+    if (loading) {
+        return (
+            <div className="flex h-[60vh] items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+        );
+    }
+
+    if (error || html === null) {
+        return (
+            <div className="flex h-[60vh] flex-col items-center justify-center text-center">
+                <FileText className="h-16 w-16 text-muted-foreground" />
+                <p className="mt-4 text-sm text-muted-foreground">
+                    {error ?? 'Preview not available.'}
+                </p>
+            </div>
+        );
+    }
+
+    return (
+        <div
+            className="prose prose-sm dark:prose-invert h-[60vh] max-w-none overflow-y-auto rounded-md border p-4"
+            dangerouslySetInnerHTML={{ __html: html }}
+        />
+    );
+}
+
 export default function FilePreviewDialog({
     open,
     onOpenChange,
@@ -38,12 +93,13 @@ export default function FilePreviewDialog({
 
     const isImage = document.mime_type.startsWith('image/');
     const isPdf = document.mime_type === 'application/pdf';
+    const isDocx = DOCX_MIME_TYPES.includes(document.mime_type);
     const previewUrl = `${downloadUrl}${downloadUrl.includes('?') ? '&' : '?'}preview=1`;
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent
-                className={isImage || isPdf ? 'sm:max-w-3xl' : 'sm:max-w-md'}
+                className={isImage || isPdf || isDocx ? 'sm:max-w-3xl' : 'sm:max-w-md'}
             >
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
@@ -65,6 +121,8 @@ export default function FilePreviewDialog({
                             className="h-[60vh] w-full border-0"
                             title={document.file_name}
                         />
+                    ) : isDocx ? (
+                        <DocxPreview previewUrl={previewUrl} />
                     ) : (
                         <div className="flex flex-col items-center justify-center py-12 text-center">
                             <FileText className="h-16 w-16 text-muted-foreground" />

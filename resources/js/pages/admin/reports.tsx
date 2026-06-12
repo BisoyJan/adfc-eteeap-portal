@@ -63,15 +63,6 @@ interface Props {
     evaluatorPerformance: EvaluatorPerformance[];
     recommendationBreakdown: Record<string, number>;
     monthlySubmissions: Record<string, number>;
-    waiverSummary: {
-        total: number;
-        by_status: Record<string, number>;
-        top_courses: Array<{
-            course_code: string;
-            course_name: string;
-            count: number;
-        }>;
-    };
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -144,7 +135,6 @@ export default function Reports({
     evaluatorPerformance,
     recommendationBreakdown,
     monthlySubmissions,
-    waiverSummary,
 }: Props) {
     const totalRecommendations = Object.values(recommendationBreakdown).reduce(
         (sum, count) => sum + count,
@@ -175,10 +165,6 @@ export default function Reports({
                         <Button variant="outline" size="sm" onClick={() => exportCsv('/admin/reports/export/criteria')}>
                             <Download className="mr-1.5 h-4 w-4" />
                             Criteria CSV
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={() => exportCsv('/admin/reports/export/waivers')}>
-                            <Download className="mr-1.5 h-4 w-4" />
-                            Waivers CSV
                         </Button>
                         <Button variant="outline" size="sm" onClick={() => window.print()}>
                             <Printer className="mr-1.5 h-4 w-4" />
@@ -581,57 +567,6 @@ export default function Reports({
                 </div>
             </div>
 
-            {/* Course Waiver Summary */}
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <ClipboardList className="h-5 w-5" />
-                        Course Waiver Recommendations
-                    </CardTitle>
-                    <CardDescription>
-                        Summary of evaluator-recommended course waivers across all portfolios.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="flex gap-6">
-                        <div>
-                            <p className="text-sm text-muted-foreground">Total Waivers</p>
-                            <p className="text-2xl font-bold">{waiverSummary.total}</p>
-                        </div>
-                        <div>
-                            <p className="text-sm text-muted-foreground">Recommended</p>
-                            <p className="text-2xl font-bold text-green-600">{waiverSummary.by_status['recommended'] ?? 0}</p>
-                        </div>
-                        <div>
-                            <p className="text-sm text-muted-foreground">Not Recommended</p>
-                            <p className="text-2xl font-bold text-red-600">{waiverSummary.by_status['not_recommended'] ?? 0}</p>
-                        </div>
-                    </div>
-                    {waiverSummary.top_courses.length > 0 && (
-                        <div className="overflow-x-auto">
-                            <p className="mb-2 text-sm font-medium">Top Waived Courses</p>
-                            <table className="w-full text-sm">
-                                <thead>
-                                    <tr className="border-b">
-                                        <th className="pb-2 text-left font-medium">Course Code</th>
-                                        <th className="pb-2 text-left font-medium">Course Name</th>
-                                        <th className="pb-2 text-right font-medium">Count</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {waiverSummary.top_courses.map((c) => (
-                                        <tr key={c.course_code} className="border-b last:border-0">
-                                            <td className="py-1.5 font-mono">{c.course_code}</td>
-                                            <td className="py-1.5">{c.course_name}</td>
-                                            <td className="py-1.5 text-right">{c.count}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
         </AppLayout>
     );
 }
